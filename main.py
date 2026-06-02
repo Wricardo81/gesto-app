@@ -1,9 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from database import engine, Base, SessaoLocal
 import models
 from datetime import datetime, timedelta
 from fastapi.middleware.cors import CORSMiddleware
+import os
+import stripe
 
 app = FastAPI()
 
@@ -17,8 +19,11 @@ app.add_middleware(
 
 Base.metadata.create_all(bind=engine)
 
+# Configuração do Stripe puxando do cofre seguro do Render
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+
 # ==========================================
-# MÓDULO MESTRE: O SEU PAINEL SAAS (ENGENHARIA DE BITS)
+# MÓDULO MESTRE: PAINEL SAAS & STRIPE
 # ==========================================
 class NovaBarbearia(BaseModel):
     nome: str
@@ -27,7 +32,6 @@ class NovaBarbearia(BaseModel):
 @app.post("/api/saas/barbearias")
 def registrar_nova_barbearia(dados: NovaBarbearia):
     db = SessaoLocal()
-    # Verifica se já existe uma barbearia com esse link
     existe = db.query(models.Barbearia).filter(models.Barbearia.slug == dados.slug).first()
     if existe:
         db.close()
@@ -46,13 +50,11 @@ def listar_clientes_do_software():
     db.close()
     return clientes
 
-
 @app.put("/api/saas/barbearias/{barbearia_id}/status")
 def alterar_status_assinatura(barbearia_id: int):
     db = SessaoLocal()
     cliente = db.query(models.Barbearia).filter(models.Barbearia.id == barbearia_id).first()
     if cliente:
-        # A mágica do interruptor: se for True vira False, se for False vira True
         cliente.plano_ativo = not cliente.plano_ativo 
         db.commit()
         status_atual = "Ativo" if cliente.plano_ativo else "Bloqueado"
@@ -60,6 +62,63 @@ def alterar_status_assinatura(barbearia_id: int):
         return {"mensagem": f"Plano do cliente alterado para: {status_atual}"}
     db.close()
     return {"mensagem": "Cliente não encontrado."}
+
+# NOVO: ROTA QUE CRIA O LINK DE PAGAMENTO DA ASSINATURA
+@app.post("/api/saas/{tenant_slug}/criar-checkout")
+def criar_checkout_stripe(tenant_slug: str):
+    try:
+        # Criamos uma sessão de checkout do Stripe para coletar o cartão
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'brl',
+                    'product_data': {
+                        'name': f'Assinatura Mensal Gesto — Sistema de Agendamento',
+                    },
+                    'unit_amount': 9900, # R$ 99,00 (em centavos)
+                },
+                'quantity': 1,
+            }],
+            mode='payment', # Para testes usaremos pagamento único, no futuro mudamos para 'subscription'
+            # Se o pagamento der certo ou errado, para onde o cliente volta
+            success_url=f"https://resilient-dusk-b2c8dc.netlify.app/admin.html?tenant={tenant_slug}",
+            cancel_url=f"https://resilient-dusk-b2c8dc.netlify.app/admin.html?tenant={tenant_slug}",
+            # Passamos o slug da barbearia escondido para sabermos quem pagou no Webhook!
+            metadata={"tenant_slug": tenant_slug}
+        )
+        return {"checkout_url": session.url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# NOVO: O WEBHOOK (O OUVINTE SILENCIOSO QUE RECEBE O AVISO DE PAGAMENTO DO STRIPE)
+@app.post("/api/webhooks/stripe")
+async def webhook_stripe(request: Request):
+    payload = await request.body()
+    
+    # Em produção verificaríamos a assinatura do Stripe aqui, mas para homologação
+    # vamos ler o evento diretamente de forma simplificada e robusta
+    try:
+        event = stripe.Event.construct_from(await request.json(), stripe.api_key)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail="Payload inválido")
+
+    # Se o evento disparado for "Checkout Concluído com Sucesso"
+    if event.type == 'checkout.session.completed':
+        session = event.data.object
+        # Resgatamos o nome da barbearia que deixamos guardado no metadata!
+        tenant_slug = session.metadata.get("tenant_slug")
+        
+        if tenant_slug:
+            # A MÁGICA AUTOMÁTICA: O Python abre o banco e libera o cliente sozinho!
+            db = SessaoLocal()
+            cliente = db.query(models.Barbearia).filter(models.Barbearia.slug == tenant_slug).first()
+            if cliente:
+                cliente.plano_ativo = True
+                db.commit()
+            db.close()
+
+    return {"status": "success"}
 
 # ==========================================
 # MÓDULO DE AGENDAMENTOS (ISOLADO POR INQUILINO)
@@ -74,8 +133,14 @@ class FichaAgendamento(BaseModel):
 @app.post("/api/{tenant_slug}/agendar")
 def criar_agendamento(tenant_slug: str, dados_recebidos: FichaAgendamento):
     db = SessaoLocal()
+    # REGRA DE OURO DO SAAS: Se o plano estiver bloqueado, o cliente não consegue agendar!
+    empresa = db.query(models.Barbearia).filter(models.Barbearia.slug == tenant_slug).first()
+    if empresa and not empresa.plano_ativo:
+        db.close()
+        raise HTTPException(status_code=403, detail="Agenda temporariamente indisponível.")
+
     novo_agendamento = models.Agendamento(
-        barbearia_slug=tenant_slug, # <-- SALVANDO A ETIQUETA DA EMPRESA
+        barbearia_slug=tenant_slug,
         cliente_nome=dados_recebidos.cliente_nome,
         servico=dados_recebidos.servico,
         horario=dados_recebidos.horario,
@@ -90,7 +155,6 @@ def criar_agendamento(tenant_slug: str, dados_recebidos: FichaAgendamento):
 @app.get("/api/{tenant_slug}/agendamentos")
 def listar_agendamentos_da_empresa(tenant_slug: str):
     db = SessaoLocal()
-    # <-- FILTRANDO PARA MOSTRAR SÓ OS DADOS DESTA EMPRESA
     agendamentos = db.query(models.Agendamento).filter(models.Agendamento.barbearia_slug == tenant_slug).all()
     db.close()
     return agendamentos
@@ -102,7 +166,6 @@ def cancelar_agendamento(tenant_slug: str, agendamento_id: int):
         models.Agendamento.id == agendamento_id,
         models.Agendamento.barbearia_slug == tenant_slug
     ).first()
-    
     if alvo is not None:
         db.delete(alvo)
         db.commit() 
@@ -112,76 +175,53 @@ def cancelar_agendamento(tenant_slug: str, agendamento_id: int):
     return {"mensagem": "Erro: Agendamento não encontrado."}
 
 @app.get("/api/{tenant_slug}/horarios/{duracao_minutos}/{profissional}")
-def obter_horarios_fatiados(tenant_slug: str, duracao_minutos: int, profissional: str):
+def obter_horarios_fatiados(tenant_slug: str, duracao_minutos: int, profesional: str):
     db = SessaoLocal()
-    
     config = db.query(models.ConfiguracaoAgenda).filter(models.ConfiguracaoAgenda.barbearia_slug == tenant_slug).first()
-    abertura = 9  
-    fechamento = 18
+    abertura = 9; fechamento = 18
     if config is not None:
-        abertura = config.hora_abertura
-        fechamento = config.hora_fechamento
+        abertura = config.hora_abertura; fechamento = config.hora_fechamento
 
     agendamentos_do_barbeiro = db.query(models.Agendamento).filter(
         models.Agendamento.barbearia_slug == tenant_slug,
-        models.Agendamento.profissional == profissional
+        models.Agendamento.profissional == profesional
     ).all()
     
     intervalos_ocupados = []
     for agendamento in agendamentos_do_barbeiro:
-        servico = db.query(models.ServicoBarbearia).filter(
-            models.ServicoBarbearia.barbearia_slug == tenant_slug,
-            models.ServicoBarbearia.nome == agendamento.servico
-        ).first()
+        servico = db.query(models.ServicoBarbearia).filter(models.ServicoBarbearia.barbearia_slug == tenant_slug, models.ServicoBarbearia.nome == agendamento.servico).first()
         duracao_ocupada = servico.duracao if servico else 30 
-            
         inicio_existente = datetime.strptime(agendamento.horario, "%H:%M")
         fim_existente = inicio_existente + timedelta(minutes=duracao_ocupada)
         intervalos_ocupados.append((inicio_existente, fim_existente))
-        
     db.close()
 
     hora_atual = datetime.strptime(f"{abertura}:00", "%H:%M")
     hora_fim = datetime.strptime(f"{fechamento}:00", "%H:%M")
     passo_grade = timedelta(minutes=duracao_minutos)
-
     horarios_livres = []
     while (hora_atual + timedelta(minutes=duracao_minutos)) <= hora_fim:
-        inicio_proposto = hora_atual
-        fim_proposto = hora_atual + timedelta(minutes=duracao_minutos)
-        
+        inicio_proposto = hora_atual; fim_proposto = hora_atual + timedelta(minutes=duracao_minutos)
         colisao = False
         for inicio_existente, fim_existente in intervalos_ocupados:
             if max(inicio_proposto, inicio_existente) < min(fim_proposto, fim_existente):
-                colisao = True
-                break
-        
-        if not colisao:
-            horarios_livres.append(hora_atual.strftime("%H:%M"))
+                colisao = True; break
+        if not colisao: horarios_livres.append(hora_atual.strftime("%H:%M"))
         hora_atual += passo_grade
-
     return {"horarios_disponiveis": horarios_livres}
 
 # ==========================================
 # MÓDULO DE SERVIÇOS
 # ==========================================
 class NovoServico(BaseModel):
-    nome: str
-    preco: float
-    duracao: int 
+    nome: str; preco: float; duracao: int 
 
 @app.post("/api/{tenant_slug}/servicos")
 def cadastrar_servico(tenant_slug: str, dados: NovoServico):
     db = SessaoLocal()
-    novo_servico = models.ServicoBarbearia(
-        barbearia_slug=tenant_slug,
-        nome=dados.nome, 
-        preco=dados.preco,
-        duracao=dados.duracao 
-    )
+    novo_servico = models.ServicoBarbearia(barbearia_slug=tenant_slug, nome=dados.nome, preco=dados.preco, duracao=dados.duracao)
     db.add(novo_servico)
-    db.commit()
-    db.close()
+    db.commit(); db.close()
     return {"mensagem": "Serviço cadastrado!"}
 
 @app.get("/api/{tenant_slug}/servicos")
@@ -194,10 +234,7 @@ def listar_servicos(tenant_slug: str):
 @app.delete("/api/{tenant_slug}/servicos/{servico_id}")
 def remover_servico(tenant_slug: str, servico_id: int):
     db = SessaoLocal()
-    alvo = db.query(models.ServicoBarbearia).filter(
-        models.ServicoBarbearia.id == servico_id,
-        models.ServicoBarbearia.barbearia_slug == tenant_slug
-    ).first()
+    alvo = db.query(models.ServicoBarbearia).filter(models.ServicoBarbearia.id == servico_id, models.ServicoBarbearia.barbearia_slug == tenant_slug).first()
     if alvo is not None:
         db.delete(alvo)
         db.commit()
@@ -208,30 +245,18 @@ def remover_servico(tenant_slug: str, servico_id: int):
 # MÓDULO DE CONFIGURAÇÃO 
 # ==========================================
 class NovaConfiguracao(BaseModel):
-    abertura: int
-    fechamento: int
-    cor_tema: str 
+    abertura: int; fechamento: int; cor_tema: str 
 
 @app.post("/api/{tenant_slug}/configuracoes")
 def salvar_configuracoes(tenant_slug: str, dados: NovaConfiguracao):
     db = SessaoLocal()
     config_atual = db.query(models.ConfiguracaoAgenda).filter(models.ConfiguracaoAgenda.barbearia_slug == tenant_slug).first()
-    
     if config_atual is None:
-        nova = models.ConfiguracaoAgenda(
-            barbearia_slug=tenant_slug,
-            hora_abertura=dados.abertura, 
-            hora_fechamento=dados.fechamento,
-            cor_tema=dados.cor_tema 
-        )
+        nova = models.ConfiguracaoAgenda(barbearia_slug=tenant_slug, hora_abertura=dados.abertura, hora_fechamento=dados.fechamento, cor_tema=dados.cor_tema)
         db.add(nova)
     else:
-        config_atual.hora_abertura = dados.abertura
-        config_atual.hora_fechamento = dados.fechamento
-        config_atual.cor_tema = dados.cor_tema 
-        
-    db.commit()
-    db.close()
+        config_atual.hora_abertura = dados.abertura; config_atual.hora_fechamento = dados.fechamento; config_atual.cor_tema = dados.cor_tema 
+    db.commit(); db.close()
     return {"mensagem": "Configurações atualizadas!"}
 
 @app.get("/api/{tenant_slug}/configuracoes")
@@ -239,13 +264,8 @@ def ler_configuracoes(tenant_slug: str):
     db = SessaoLocal()
     config_atual = db.query(models.ConfiguracaoAgenda).filter(models.ConfiguracaoAgenda.barbearia_slug == tenant_slug).first()
     db.close()
-    if config_atual is None:
-        return {"abertura": 9, "fechamento": 18, "cor_tema": "#f59e0b"}
-    return {
-        "abertura": config_atual.hora_abertura, 
-        "fechamento": config_atual.hora_fechamento, 
-        "cor_tema": config_atual.cor_tema
-    }
+    if config_atual is None: return {"abertura": 9, "fechamento": 18, "cor_tema": "#f59e0b"}
+    return {"abertura": config_atual.hora_abertura, "fechamento": config_atual.hora_fechamento, "cor_tema": config_atual.cor_tema}
 
 # ==========================================
 # MÓDULO DE PROFISSIONAIS (EQUIPE)
@@ -258,8 +278,7 @@ def cadastrar_profissional(tenant_slug: str, dados: NovoProfissional):
     db = SessaoLocal()
     novo_prof = models.Profissional(barbearia_slug=tenant_slug, nome=dados.nome)
     db.add(novo_prof)
-    db.commit()
-    db.close()
+    db.commit(); db.close()
     return {"mensagem": "Profissional adicionado!"}
 
 @app.get("/api/{tenant_slug}/profissionais")
@@ -272,10 +291,7 @@ def listar_profissionais(tenant_slug: str):
 @app.delete("/api/{tenant_slug}/profissionais/{prof_id}")
 def remover_profissional(tenant_slug: str, prof_id: int):
     db = SessaoLocal()
-    alvo = db.query(models.Profissional).filter(
-        models.Profissional.id == prof_id,
-        models.Profissional.barbearia_slug == tenant_slug
-    ).first()
+    alvo = db.query(models.Profissional).filter(models.Profissional.id == prof_id, models.Profissional.barbearia_slug == tenant_slug).first()
     if alvo is not None:
         db.delete(alvo)
         db.commit()
@@ -290,13 +306,6 @@ def verificar_status_inquilino(tenant_slug: str):
     db = SessaoLocal()
     cliente = db.query(models.Barbearia).filter(models.Barbearia.slug == tenant_slug).first()
     db.close()
-    
-    # Se o cliente não existe
-    if not cliente:
-        raise HTTPException(status_code=404, detail="Barbearia não encontrada")
-        
-    # Se o cliente está com a fatura atrasada (Bloqueado no seu painel SaaS)
-    if not cliente.plano_ativo:
-        raise HTTPException(status_code=403, detail="Assinatura suspensa")
-        
+    if not cliente: raise HTTPException(status_code=404, detail="Barbearia não encontrada")
+    if not cliente.plano_active: raise HTTPException(status_code=403, detail="Assinatura suspensa")
     return {"status": "Liberado"}

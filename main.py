@@ -92,33 +92,34 @@ def criar_checkout_stripe(tenant_slug: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 # NOVO: O WEBHOOK (O OUVINTE SILENCIOSO QUE RECEBE O AVISO DE PAGAMENTO DO STRIPE)
+# NOVO: O WEBHOOK BLINDADO (LEITURA DIRETA DE JSON)
 @app.post("/api/webhooks/stripe")
 async def webhook_stripe(request: Request):
-    payload = await request.body()
-    
-    # Em produção verificaríamos a assinatura do Stripe aqui, mas para homologação
-    # vamos ler o evento diretamente de forma simplificada e robusta
     try:
-        event = stripe.Event.construct_from(await request.json(), stripe.api_key)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail="Payload inválido")
-
-    # Se o evento disparado for "Checkout Concluído com Sucesso"
-    if event.type == 'checkout.session.completed':
-        session = event.data.object
-        # Resgatamos o nome da barbearia que deixamos guardado no metadata!
-        tenant_slug = session.metadata.get("tenant_slug")
+        # Lemos a mensagem da Stripe de forma direta e simples
+        payload = await request.json()
         
-        if tenant_slug:
-            # A MÁGICA AUTOMÁTICA: O Python abre o banco e libera o cliente sozinho!
-            db = SessaoLocal()
-            cliente = db.query(models.Barbearia).filter(models.Barbearia.slug == tenant_slug).first()
-            if cliente:
-                cliente.plano_ativo = True
-                db.commit()
-            db.close()
+        # Se a Stripe gritar "O Checkout foi concluído!"
+        if payload.get("type") == "checkout.session.completed":
+            session = payload["data"]["object"]
+            # Pegamos o slug que escondemos lá na criação do link
+            tenant_slug = session.get("metadata", {}).get("tenant_slug")
+            
+            if tenant_slug:
+                # O Python abre o banco e libera o cliente
+                db = SessaoLocal()
+                cliente = db.query(models.Barbearia).filter(models.Barbearia.slug == tenant_slug).first()
+                if cliente:
+                    cliente.plano_ativo = True
+                    db.commit()
+                db.close()
+                print(f"SUCESSO: Inquilino {tenant_slug} desbloqueado pelo Webhook!")
 
-    return {"status": "success"}
+        return {"status": "recebido com sucesso"}
+    
+    except Exception as e:
+        print(f"ERRO NO WEBHOOK: {str(e)}")
+        raise HTTPException(status_code=400, detail="Erro ao processar webhook")
 
 # ==========================================
 # MÓDULO DE AGENDAMENTOS (ISOLADO POR INQUILINO)

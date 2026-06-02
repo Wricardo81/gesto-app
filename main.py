@@ -64,10 +64,10 @@ def alterar_status_assinatura(barbearia_id: int):
     return {"mensagem": "Cliente não encontrado."}
 
 # NOVO: ROTA QUE CRIA O LINK DE PAGAMENTO DA ASSINATURA
+# NOVO: ROTA QUE CRIA O LINK DE PAGAMENTO DA ASSINATURA
 @app.post("/api/saas/{tenant_slug}/criar-checkout")
 def criar_checkout_stripe(tenant_slug: str):
     try:
-        # Criamos uma sessão de checkout do Stripe para coletar o cartão
         session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=[{
@@ -76,19 +76,19 @@ def criar_checkout_stripe(tenant_slug: str):
                     'product_data': {
                         'name': f'Assinatura Mensal Gesto — Sistema de Agendamento',
                     },
-                    'unit_amount': 9900, # R$ 99,00 (em centavos)
+                    'unit_amount': 9900, # R$ 99,00
                 },
                 'quantity': 1,
             }],
-            mode='payment', # Para testes usaremos pagamento único, no futuro mudamos para 'subscription'
-            # Se o pagamento der certo ou errado, para onde o cliente volta
-            success_url=f"https://resilient-dusk-b2c8dc.netlify.app/admin.html?tenant={tenant_slug}",
-            cancel_url=f"https://resilient-dusk-b2c8dc.netlify.app/admin.html?tenant={tenant_slug}",
-            # Passamos o slug da barbearia escondido para sabermos quem pagou no Webhook!
+            mode='payment', 
+            # CORREÇÃO: Usando o SEU link real da Netlify!
+            success_url=f"https://gesto-app.netlify.app/admin.html?tenant={tenant_slug}",
+            cancel_url=f"https://gesto-app.netlify.app/admin.html?tenant={tenant_slug}",
             metadata={"tenant_slug": tenant_slug}
         )
         return {"checkout_url": session.url}
     except Exception as e:
+        print(f"Erro no Stripe: {str(e)}") # Vai ajudar a debugar se der erro
         raise HTTPException(status_code=500, detail=str(e))
 
 # NOVO: O WEBHOOK (O OUVINTE SILENCIOSO QUE RECEBE O AVISO DE PAGAMENTO DO STRIPE)

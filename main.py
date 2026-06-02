@@ -306,6 +306,12 @@ def verificar_status_inquilino(tenant_slug: str):
     db = SessaoLocal()
     cliente = db.query(models.Barbearia).filter(models.Barbearia.slug == tenant_slug).first()
     db.close()
-    if not cliente: raise HTTPException(status_code=404, detail="Barbearia não encontrada")
-    if not cliente.plano_active: raise HTTPException(status_code=403, detail="Assinatura suspensa")
+    
+    if not cliente: 
+        raise HTTPException(status_code=404, detail="Barbearia não encontrada")
+        
+    # CORREÇÃO CRUCIAL AQUI: plano_ativo
+    if not cliente.plano_ativo: 
+        raise HTTPException(status_code=403, detail="Assinatura suspensa")
+        
     return {"status": "Liberado"}

@@ -1,17 +1,23 @@
+import os
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
-# Aqui definimos o endereço do nosso banco de dados.
-# Estamos usando o SQLite local. No futuro, trocaremos essa string pela do PostgreSQL!
-URL_DO_BANCO = "sqlite:///./gesto.db"
+# 1. O Python procura a URL do banco na nuvem. Se não achar, usa o SQLite local de emergência.
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./gesto.db")
 
-# O Engine é o motor que efetivamente se comunica com o banco
-engine = create_engine(
-    URL_DO_BANCO, connect_args={"check_same_thread": False}
-)
+# Correção de segurança caso o Render injete a URL com "postgres://" em vez de "postgresql://"
+if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# A Sessão é a nossa "conversa" com o banco (para salvar ou buscar dados)
+# 2. O SQLite exige uma configuração extra que o PostgreSQL não precisa
+if "sqlite" in SQLALCHEMY_DATABASE_URL:
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+    )
+else:
+    engine = create_engine(SQLALCHEMY_DATABASE_URL)
+
 SessaoLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Base é a classe mãe que todas as nossas tabelas vão herdar
 Base = declarative_base()

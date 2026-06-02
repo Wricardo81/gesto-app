@@ -175,7 +175,7 @@ def cancelar_agendamento(tenant_slug: str, agendamento_id: int):
     return {"mensagem": "Erro: Agendamento não encontrado."}
 
 @app.get("/api/{tenant_slug}/horarios/{duracao_minutos}/{profissional}")
-def obter_horarios_fatiados(tenant_slug: str, duracao_minutos: int, profesional: str):
+def obter_horarios_fatiados(tenant_slug: str, duracao_minutos: int, profissional: str): # Correção do 'ss' aqui!
     db = SessaoLocal()
     config = db.query(models.ConfiguracaoAgenda).filter(models.ConfiguracaoAgenda.barbearia_slug == tenant_slug).first()
     abertura = 9; fechamento = 18
@@ -184,7 +184,7 @@ def obter_horarios_fatiados(tenant_slug: str, duracao_minutos: int, profesional:
 
     agendamentos_do_barbeiro = db.query(models.Agendamento).filter(
         models.Agendamento.barbearia_slug == tenant_slug,
-        models.Agendamento.profissional == profesional
+        models.Agendamento.profissional == profissional # Correção do 'ss' aqui também!
     ).all()
     
     intervalos_ocupados = []

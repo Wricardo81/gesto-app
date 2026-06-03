@@ -23,6 +23,7 @@ class Agendamento(Base):
     horario = Column(String)
     valor = Column(Float)
     profissional = Column(String)
+    telefone = Column(String)
 
 # ==========================================
 # 2. TABELA DE SERVIÇOS

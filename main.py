@@ -126,6 +126,7 @@ async def webhook_stripe(request: Request):
 # ==========================================
 class FichaAgendamento(BaseModel):
     cliente_nome: str
+    telefone: str # NOVO CAMPO
     servico: str
     horario: str
     valor: float
@@ -134,7 +135,6 @@ class FichaAgendamento(BaseModel):
 @app.post("/api/{tenant_slug}/agendar")
 def criar_agendamento(tenant_slug: str, dados_recebidos: FichaAgendamento):
     db = SessaoLocal()
-    # REGRA DE OURO DO SAAS: Se o plano estiver bloqueado, o cliente não consegue agendar!
     empresa = db.query(models.Barbearia).filter(models.Barbearia.slug == tenant_slug).first()
     if empresa and not empresa.plano_ativo:
         db.close()
@@ -143,6 +143,7 @@ def criar_agendamento(tenant_slug: str, dados_recebidos: FichaAgendamento):
     novo_agendamento = models.Agendamento(
         barbearia_slug=tenant_slug,
         cliente_nome=dados_recebidos.cliente_nome,
+        telefone=dados_recebidos.telefone, # INJETANDO O TELEFONE AQUI
         servico=dados_recebidos.servico,
         horario=dados_recebidos.horario,
         valor=dados_recebidos.valor,

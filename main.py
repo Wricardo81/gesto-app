@@ -307,3 +307,4 @@ def verificar_status_inquilino(tenant_slug: str):
         raise HTTPException(status_code=403, detail="Assinatura suspensa")
         
     return {"status": "Liberado"}
+    # Patch de reinicialização para forçar a recriação das tabelas no PostgreSQL

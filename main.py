@@ -130,6 +130,7 @@ class FichaAgendamento(BaseModel):
     horario: str
     valor: float
     profissional: str 
+    telefone_cliente: str # NOVO CAMPO OBRIGATÓRIO
 
 @app.post("/api/{tenant_slug}/agendar")
 def criar_agendamento(tenant_slug: str, dados_recebidos: FichaAgendamento):
@@ -145,12 +146,13 @@ def criar_agendamento(tenant_slug: str, dados_recebidos: FichaAgendamento):
         servico=dados_recebidos.servico,
         horario=dados_recebidos.horario,
         valor=dados_recebidos.valor,
-        profissional=dados_recebidos.profissional 
+        profissional=dados_recebidos.profissional,
+        telefone_cliente=dados_recebidos.telefone_cliente # SALVANDO O NÚMERO AQUI!
     )
     db.add(novo_agendamento)
     db.commit()
     db.close()
-    return {"status": "Sucesso", "mensagem": f"Agendamento confirmado com {dados_recebidos.profissional}!"}
+    return {"status": "Sucesso", "mensagem": f"Agendamento confirmado!"}
 
 @app.get("/api/{tenant_slug}/agendamentos")
 def listar_agendamentos_da_empresa(tenant_slug: str):
@@ -248,35 +250,27 @@ def remover_servico(tenant_slug: str, servico_id: int):
 # MÓDULO DE CONFIGURAÇÃO 
 # ==========================================
 class NovaConfiguracao(BaseModel):
-    abertura: int
-    fechamento: int
-    cor_tema: str 
-    telefone: str = "" # Novo campo adicionado!
+    abertura: int; fechamento: int; cor_tema: str; 
+    cor_fundo: str; endereco: str; logo_url: str; instrucoes: str
 
 @app.post("/api/{tenant_slug}/configuracoes")
 def salvar_configuracoes(tenant_slug: str, dados: NovaConfiguracao):
     db = SessaoLocal()
     config_atual = db.query(models.ConfiguracaoAgenda).filter(models.ConfiguracaoAgenda.barbearia_slug == tenant_slug).first()
     
-    # Tratamento de segurança para números de telefone (remove espaços e caracteres especiais)
-    telefone_limpo = ''.join(filter(str.isdigit, dados.telefone))
-
     if config_atual is None:
         nova = models.ConfiguracaoAgenda(
-            barbearia_slug=tenant_slug, 
-            hora_abertura=dados.abertura, 
-            hora_fechamento=dados.fechamento, 
-            cor_tema=dados.cor_tema,
-            telefone=telefone_limpo
+            barbearia_slug=tenant_slug, hora_abertura=dados.abertura, hora_fechamento=dados.fechamento, 
+            cor_tema=dados.cor_tema, cor_fundo=dados.cor_fundo, endereco=dados.endereco, 
+            logo_url=dados.logo_url, instrucoes=dados.instrucoes
         )
         db.add(nova)
     else:
-        config_atual.hora_abertura = dados.abertura
-        config_atual.hora_fechamento = dados.fechamento
-        config_atual.cor_tema = dados.cor_tema 
-        config_atual.telefone = telefone_limpo
-    db.commit()
-    db.close()
+        config_atual.hora_abertura = dados.abertura; config_atual.hora_fechamento = dados.fechamento; 
+        config_atual.cor_tema = dados.cor_tema; config_atual.cor_fundo = dados.cor_fundo;
+        config_atual.endereco = dados.endereco; config_atual.logo_url = dados.logo_url;
+        config_atual.instrucoes = dados.instrucoes
+    db.commit(); db.close()
     return {"mensagem": "Configurações atualizadas!"}
 
 @app.get("/api/{tenant_slug}/configuracoes")
@@ -285,12 +279,12 @@ def ler_configuracoes(tenant_slug: str):
     config_atual = db.query(models.ConfiguracaoAgenda).filter(models.ConfiguracaoAgenda.barbearia_slug == tenant_slug).first()
     db.close()
     if config_atual is None: 
-        return {"abertura": 9, "fechamento": 18, "cor_tema": "#f59e0b", "telefone": ""}
+        return {"abertura": 9, "fechamento": 18, "cor_tema": "#f59e0b", "cor_fundo": "#0f172a", "endereco": "", "logo_url": "", "instrucoes": ""}
     return {
-        "abertura": config_atual.hora_abertura, 
-        "fechamento": config_atual.hora_fechamento, 
-        "cor_tema": config_atual.cor_tema,
-        "telefone": config_atual.telefone
+        "abertura": config_atual.hora_abertura, "fechamento": config_atual.hora_fechamento, 
+        "cor_tema": config_atual.cor_tema, "cor_fundo": config_atual.cor_fundo,
+        "endereco": config_atual.endereco, "logo_url": config_atual.logo_url,
+        "instrucoes": config_atual.instrucoes
     }
 
 # ==========================================

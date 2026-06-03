@@ -211,6 +211,40 @@ def obter_horarios_fatiados(tenant_slug: str, duracao_minutos: int, profissional
     return {"horarios_disponiveis": horarios_livres}
 
 # ==========================================
+# MÓDULO DE SERVIÇOS
+# ==========================================
+class NovoServico(BaseModel):
+    nome: str
+    preco: float
+    duracao: int 
+
+@app.post("/api/{tenant_slug}/servicos")
+def cadastrar_servico(tenant_slug: str, dados: NovoServico):
+    db = SessaoLocal()
+    novo_servico = models.ServicoBarbearia(barbearia_slug=tenant_slug, nome=dados.nome, preco=dados.preco, duracao=dados.duracao)
+    db.add(novo_servico)
+    db.commit()
+    db.close()
+    return {"mensagem": "Serviço cadastrado!"}
+
+@app.get("/api/{tenant_slug}/servicos")
+def listar_servicos(tenant_slug: str):
+    db = SessaoLocal()
+    servicos = db.query(models.ServicoBarbearia).filter(models.ServicoBarbearia.barbearia_slug == tenant_slug).all()
+    db.close()
+    return servicos
+
+@app.delete("/api/{tenant_slug}/servicos/{servico_id}")
+def remover_servico(tenant_slug: str, servico_id: int):
+    db = SessaoLocal()
+    alvo = db.query(models.ServicoBarbearia).filter(models.ServicoBarbearia.id == servico_id, models.ServicoBarbearia.barbearia_slug == tenant_slug).first()
+    if alvo is not None:
+        db.delete(alvo)
+        db.commit()
+    db.close()
+    return {"mensagem": "Serviço removido!"}
+
+# ==========================================
 # MÓDULO DE CONFIGURAÇÃO 
 # ==========================================
 class NovaConfiguracao(BaseModel):

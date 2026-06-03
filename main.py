@@ -126,7 +126,6 @@ async def webhook_stripe(request: Request):
 # ==========================================
 class FichaAgendamento(BaseModel):
     cliente_nome: str
-    telefone: str # NOVO CAMPO
     servico: str
     horario: str
     valor: float
@@ -143,7 +142,6 @@ def criar_agendamento(tenant_slug: str, dados_recebidos: FichaAgendamento):
     novo_agendamento = models.Agendamento(
         barbearia_slug=tenant_slug,
         cliente_nome=dados_recebidos.cliente_nome,
-        telefone=dados_recebidos.telefone, # INJETANDO O TELEFONE AQUI
         servico=dados_recebidos.servico,
         horario=dados_recebidos.horario,
         valor=dados_recebidos.valor,
@@ -213,52 +211,38 @@ def obter_horarios_fatiados(tenant_slug: str, duracao_minutos: int, profissional
     return {"horarios_disponiveis": horarios_livres}
 
 # ==========================================
-# MÓDULO DE SERVIÇOS
-# ==========================================
-class NovoServico(BaseModel):
-    nome: str; preco: float; duracao: int 
-
-@app.post("/api/{tenant_slug}/servicos")
-def cadastrar_servico(tenant_slug: str, dados: NovoServico):
-    db = SessaoLocal()
-    novo_servico = models.ServicoBarbearia(barbearia_slug=tenant_slug, nome=dados.nome, preco=dados.preco, duracao=dados.duracao)
-    db.add(novo_servico)
-    db.commit(); db.close()
-    return {"mensagem": "Serviço cadastrado!"}
-
-@app.get("/api/{tenant_slug}/servicos")
-def listar_servicos(tenant_slug: str):
-    db = SessaoLocal()
-    servicos = db.query(models.ServicoBarbearia).filter(models.ServicoBarbearia.barbearia_slug == tenant_slug).all()
-    db.close()
-    return servicos
-
-@app.delete("/api/{tenant_slug}/servicos/{servico_id}")
-def remover_servico(tenant_slug: str, servico_id: int):
-    db = SessaoLocal()
-    alvo = db.query(models.ServicoBarbearia).filter(models.ServicoBarbearia.id == servico_id, models.ServicoBarbearia.barbearia_slug == tenant_slug).first()
-    if alvo is not None:
-        db.delete(alvo)
-        db.commit()
-    db.close()
-    return {"mensagem": "Serviço removido!"}
-
-# ==========================================
 # MÓDULO DE CONFIGURAÇÃO 
 # ==========================================
 class NovaConfiguracao(BaseModel):
-    abertura: int; fechamento: int; cor_tema: str 
+    abertura: int
+    fechamento: int
+    cor_tema: str 
+    telefone: str = "" # Novo campo adicionado!
 
 @app.post("/api/{tenant_slug}/configuracoes")
 def salvar_configuracoes(tenant_slug: str, dados: NovaConfiguracao):
     db = SessaoLocal()
     config_atual = db.query(models.ConfiguracaoAgenda).filter(models.ConfiguracaoAgenda.barbearia_slug == tenant_slug).first()
+    
+    # Tratamento de segurança para números de telefone (remove espaços e caracteres especiais)
+    telefone_limpo = ''.join(filter(str.isdigit, dados.telefone))
+
     if config_atual is None:
-        nova = models.ConfiguracaoAgenda(barbearia_slug=tenant_slug, hora_abertura=dados.abertura, hora_fechamento=dados.fechamento, cor_tema=dados.cor_tema)
+        nova = models.ConfiguracaoAgenda(
+            barbearia_slug=tenant_slug, 
+            hora_abertura=dados.abertura, 
+            hora_fechamento=dados.fechamento, 
+            cor_tema=dados.cor_tema,
+            telefone=telefone_limpo
+        )
         db.add(nova)
     else:
-        config_atual.hora_abertura = dados.abertura; config_atual.hora_fechamento = dados.fechamento; config_atual.cor_tema = dados.cor_tema 
-    db.commit(); db.close()
+        config_atual.hora_abertura = dados.abertura
+        config_atual.hora_fechamento = dados.fechamento
+        config_atual.cor_tema = dados.cor_tema 
+        config_atual.telefone = telefone_limpo
+    db.commit()
+    db.close()
     return {"mensagem": "Configurações atualizadas!"}
 
 @app.get("/api/{tenant_slug}/configuracoes")
@@ -266,8 +250,14 @@ def ler_configuracoes(tenant_slug: str):
     db = SessaoLocal()
     config_atual = db.query(models.ConfiguracaoAgenda).filter(models.ConfiguracaoAgenda.barbearia_slug == tenant_slug).first()
     db.close()
-    if config_atual is None: return {"abertura": 9, "fechamento": 18, "cor_tema": "#f59e0b"}
-    return {"abertura": config_atual.hora_abertura, "fechamento": config_atual.hora_fechamento, "cor_tema": config_atual.cor_tema}
+    if config_atual is None: 
+        return {"abertura": 9, "fechamento": 18, "cor_tema": "#f59e0b", "telefone": ""}
+    return {
+        "abertura": config_atual.hora_abertura, 
+        "fechamento": config_atual.hora_fechamento, 
+        "cor_tema": config_atual.cor_tema,
+        "telefone": config_atual.telefone
+    }
 
 # ==========================================
 # MÓDULO DE PROFISSIONAIS (EQUIPE)

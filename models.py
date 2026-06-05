@@ -6,10 +6,14 @@ from database import Base
 # ==========================================
 class Barbearia(Base):
     __tablename__ = "barbearias"
+
     id = Column(Integer, primary_key=True, index=True)
-    nome = Column(String) # Ex: "Barbearia do Marcos"
+    nome = Column(String, index=True) # Ex: "Barbearia do Marcos"
     slug = Column(String, unique=True, index=True) # Ex: "barbearia-do-marcos"
-    plano_ativo = Column(Boolean, default=True) # Gatilho para bloquear por falta de pagamento!
+    plano_ativo = Column(Boolean, default=False) # Gatilho para bloquear por falta de pagamento!
+    email = Column(String, unique=True, index=True, nullable=True) 
+    senha_hash = Column(String, nullable=True)
+    
 
 # ==========================================
 # 1. TABELA DE AGENDAMENTOS

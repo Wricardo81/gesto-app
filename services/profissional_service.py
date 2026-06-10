@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from repositories import profissional_repository
 from fastapi import HTTPException
 from pydantic import BaseModel
+import models
 
 
 class NovoProfissional(BaseModel):

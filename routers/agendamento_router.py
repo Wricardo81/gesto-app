@@ -5,6 +5,7 @@ from services import agendamento_service
 
 router = APIRouter()
 
+# Injeção de dependência do banco de dados
 def get_db():
     db = SessaoLocal()
     try:
@@ -12,18 +13,44 @@ def get_db():
     finally:
         db.close()
 
-@router.post("/api/{tenant_slug}/agendar")
-def criar_agendamento(
+# ==========================================
+# 1. ROTA PÚBLICA: CONSULTAR HORÁRIOS
+# ==========================================
+@router.get("/api/{tenant_slug}/horarios/{data}/{duracao_minutos}/{profissional}")
+def consultar_horarios_livres(
     tenant_slug: str, 
-    dados_recebidos: agendamento_service.FichaAgendamento, 
+    data: str, 
+    duracao_minutos: int, 
+    profissional: str, 
     db: Session = Depends(get_db)
 ):
-    # O Router não entende nada de banco de dados, só aciona o Serviço
-    agendamento_service.criar_novo_agendamento(db, tenant_slug, dados_recebidos)
-    return {"status": "Sucesso", "mensagem": "Agendamento confirmado!"}
+    """
+    O cliente seleciona o dia, o serviço e o barbeiro no frontend, 
+    e essa rota devolve exatamente as fatias de tempo disponíveis.
+    """
+    return agendamento_service.obter_horarios_disponiveis(
+        db=db, 
+        tenant_slug=tenant_slug, 
+        data_str=data, 
+        duracao_minutos=duracao_minutos, 
+        profissional=profissional
+    )
 
-
-@router.get("/api/{tenant_slug}/horarios/{duracao_minutos}/{profissional}")
-def listar_horarios_livres(tenant_slug: str, duracao_minutos: int, profissional: str, db: Session = Depends(get_db)):
-    # O router só repassa a bola para o service!
-    return agendamento_service.obter_horarios_disponiveis(db, tenant_slug, duracao_minutos, profissional)
+# ==========================================
+# 2. ROTA PÚBLICA: TRAVAR AGENDAMENTO
+# ==========================================
+@router.post("/api/{tenant_slug}/agendar")
+def confirmar_agendamento(
+    tenant_slug: str, 
+    dados: agendamento_service.FichaAgendamento, 
+    db: Session = Depends(get_db)
+):
+    """
+    O cliente preenche nome e telefone e clica em "Agendar".
+    O serviço assume a bronca de verificar colisões e salvar.
+    """
+    return agendamento_service.criar_novo_agendamento(
+        db=db, 
+        tenant_slug=tenant_slug, 
+        dados=dados
+    )

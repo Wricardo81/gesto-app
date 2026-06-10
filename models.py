@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean
+from sqlalchemy import Column, Integer, String, Float, Boolean, Date
 from database import Base
 
 # ==========================================
@@ -25,6 +25,7 @@ class Agendamento(Base):
     cliente_nome = Column(String)
     servico = Column(String)
     horario = Column(String)
+    data = Column(Date)
     valor = Column(Float)
     profissional = Column(String)
     telefone_cliente = Column(String, default="")

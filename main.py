@@ -6,11 +6,13 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 import stripe
 
+
 # Importando os roteadores refatorados
 from routers import profissional_router
 from routers import agendamento_router
 from routers import servico_router
 from routers import configuracao_router
+from routers import auth_router
 
 app = FastAPI()
 
@@ -32,27 +34,47 @@ app.include_router(profissional_router.router)
 app.include_router(agendamento_router.router)
 app.include_router(servico_router.router)
 app.include_router(configuracao_router.router)
+app.include_router(auth_router.router)
 
 # ==========================================
 # MÓDULO MESTRE: PAINEL SAAS & STRIPE
 # ==========================================
+from security import gerar_hash_senha # Certifique-se de que este import está no topo do main.py!
+
 class NovaBarbearia(BaseModel):
     nome: str
     slug: str
+    email: str  # AGORA O FASTAPI SABE QUE PRECISA LER ISSO
+    senha: str  # AGORA O FASTAPI SABE QUE PRECISA LER ISSO
 
 @app.post("/api/saas/barbearias")
 def registrar_nova_barbearia(dados: NovaBarbearia):
     db = SessaoLocal()
-    existe = db.query(models.Barbearia).filter(models.Barbearia.slug == dados.slug).first()
+    
+    # Verifica se o slug OU o e-mail já existem
+    existe = db.query(models.Barbearia).filter(
+        (models.Barbearia.slug == dados.slug) | (models.Barbearia.email == dados.email)
+    ).first()
+    
     if existe:
         db.close()
-        raise HTTPException(status_code=400, detail="Esse link já está em uso por outro cliente.")
+        raise HTTPException(status_code=400, detail="Esse link ou e-mail já estão em uso.")
         
-    nova = models.Barbearia(nome=dados.nome, slug=dados.slug)
+    # Criptografa a senha plana que veio do Swagger
+    senha_criptografada = gerar_hash_senha(dados.senha)
+    
+    # Salva TUDO no banco de dados
+    nova = models.Barbearia(
+        nome=dados.nome, 
+        slug=dados.slug,
+        email=dados.email,
+        senha_hash=senha_criptografada, 
+        plano_ativo=True 
+    )
     db.add(nova)
     db.commit()
     db.close()
-    return {"status": "Sucesso", "mensagem": f"Inquilino {dados.nome} ativado!"}
+    return {"status": "Sucesso", "mensagem": f"Inquilino {dados.nome} ativado com credenciais!"}
 
 @app.get("/api/saas/barbearias")
 def listar_clientes_do_software():

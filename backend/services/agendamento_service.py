@@ -126,6 +126,7 @@ def criar_novo_agendamento(
         telefone_cliente=dados.telefone_cliente,
         aceita_lembrete_whatsapp=dados.aceita_lembrete_whatsapp,
         aceita_promocoes_whatsapp=dados.aceita_promocoes_whatsapp,
+        status="confirmado",
     )
 
     return agendamento_repository.salvar_agendamento(
@@ -196,14 +197,15 @@ def obter_horarios_disponiveis(
     fechamento = config.hora_fechamento if config else 18
 
     agendamentos = (
-        db.query(models.Agendamento)
-        .filter(
-            models.Agendamento.barbearia_slug == tenant_slug,
-            models.Agendamento.profissional == profissional_nome,
-            models.Agendamento.data == data_alvo,
-        )
-        .all()
+    db.query(models.Agendamento)
+    .filter(
+        models.Agendamento.barbearia_slug == tenant_slug,
+        models.Agendamento.profissional == profissional_nome,
+        models.Agendamento.data == data_alvo,
+        models.Agendamento.status != "cancelado",
     )
+    .all()
+)
 
     intervalos_ocupados = []
 

@@ -50,6 +50,7 @@ class Agendamento(Base):
     valor = Column(Float)
     profissional = Column(String)
     telefone_cliente = Column(String, default="")
+    status = Column(String, default="confirmado", nullable=False, index=True)
 
     aceita_lembrete_whatsapp = Column(Boolean, default=True)
     aceita_promocoes_whatsapp = Column(Boolean, default=False)

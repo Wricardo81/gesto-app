@@ -1,17 +1,25 @@
 from datetime import date
 from typing import Optional
-
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-
 import models
 from database import SessaoLocal
 from security import validar_tenant_logado
 from services import agendamento_service
-
+from pydantic import BaseModel
 
 router = APIRouter()
 
+STATUS_AGENDAMENTO_PERMITIDOS = {
+    "confirmado",
+    "concluido",
+    "cancelado",
+    "faltou",
+}
+
+
+class AtualizarStatusAgendamento(BaseModel):
+    status: str
 
 # ==========================================
 # DEPENDÊNCIA DO BANCO DE DADOS
@@ -74,6 +82,7 @@ def serializar_agendamento_admin(
         "id": agendamento.id,
         "cliente_nome": agendamento.cliente_nome,
         "telefone_cliente": agendamento.telefone_cliente,
+        "status": agendamento.status or "confirmado",
         "servico": agendamento.servico,
         "profissional": agendamento.profissional,
         "data": (
@@ -127,10 +136,19 @@ def listar_agendamentos_admin(
         .all()
     )
 
+    agendamentos_faturaveis = [
+    agendamento
+    for agendamento in agendamentos
+    if (agendamento.status or "confirmado") in [
+        "confirmado",
+        "concluido",
+    ]
+]
+
     faturamento_previsto = sum(
-        float(agendamento.valor or 0)
-        for agendamento in agendamentos
-    )
+    float(agendamento.valor or 0)
+    for agendamento in agendamentos_faturaveis
+)
 
     return {
         "total_agendamentos": len(agendamentos),
@@ -139,4 +157,46 @@ def listar_agendamentos_admin(
             serializar_agendamento_admin(agendamento)
             for agendamento in agendamentos
         ],
+    }
+
+
+@router.put("/api/{tenant_slug}/admin/agendamentos/{agendamento_id}/status")
+def atualizar_status_agendamento_admin(
+    tenant_slug: str,
+    agendamento_id: int,
+    dados: AtualizarStatusAgendamento,
+    db: Session = Depends(get_db),
+    _tenant_autorizado: str = Depends(validar_tenant_logado),
+):
+    novo_status = dados.status.strip().lower()
+
+    if novo_status not in STATUS_AGENDAMENTO_PERMITIDOS:
+        raise HTTPException(
+            status_code=422,
+            detail="Status de agendamento inválido.",
+        )
+
+    agendamento = (
+        db.query(models.Agendamento)
+        .filter(
+            models.Agendamento.id == agendamento_id,
+            models.Agendamento.barbearia_slug == tenant_slug,
+        )
+        .first()
+    )
+
+    if not agendamento:
+        raise HTTPException(
+            status_code=404,
+            detail="Agendamento não encontrado.",
+        )
+
+    agendamento.status = novo_status
+
+    db.commit()
+    db.refresh(agendamento)
+
+    return {
+        "mensagem": "Status atualizado com sucesso.",
+        "agendamento": serializar_agendamento_admin(agendamento),
     }

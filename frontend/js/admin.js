@@ -42,6 +42,29 @@ function valorCampo(id, padrao = "") {
     return elemento.value?.trim?.() ?? padrao;
 }
 
+function traduzirStatusAgendamento(status) {
+    const mapa = {
+        confirmado: "Confirmado",
+        concluido: "Concluído",
+        cancelado: "Cancelado",
+        faltou: "Faltou",
+    };
+
+    return mapa[status] || "Confirmado";
+}
+
+
+function classeStatusAgendamento(status) {
+    const mapa = {
+        confirmado: "status-confirmado",
+        concluido: "status-concluido",
+        cancelado: "status-cancelado",
+        faltou: "status-faltou",
+    };
+
+    return mapa[status] || "status-confirmado";
+}
+
 
 function marcarCheckbox(id, valor) {
     const elemento = document.getElementById(id);
@@ -309,6 +332,40 @@ function iniciarPainel() {
     atualizarLinkPublico();
     registrarListenersDePreview();
 
+    async function atualizarStatusAgendamento(id, status) {
+        const confirmarAlteracao = confirm(
+            `Deseja marcar este agendamento como "${traduzirStatusAgendamento(status)}"?`
+        );
+    
+        if (!confirmarAlteracao) {
+            return;
+        }
+    
+        try {
+            await apiRequest(
+                `/api/${tenantSlugLogado}/admin/agendamentos/${id}/status`,
+                {
+                    method: "PUT",
+                    auth: true,
+                    body: {
+                        status,
+                    },
+                }
+            );
+    
+            exibirMensagemPainel(
+                "Status do agendamento atualizado com sucesso."
+            );
+    
+            await carregarAgendamentos();
+    
+        } catch (erro) {
+            tratarErro(erro);
+        }
+    }
+
+
+    window.atualizarStatusAgendamento = atualizarStatusAgendamento;
     carregarTudo();
 }
 
@@ -879,13 +936,42 @@ async function carregarAgendamentos() {
                 agendamento.profissional,
                 formatarMoeda(agendamento.valor),
             ];
-
+            
             for (const valor of colunas) {
                 const td = document.createElement("td");
                 td.textContent = valor || "-";
                 tr.appendChild(td);
             }
-
+            
+            const status = agendamento.status || "confirmado";
+            
+            const tdStatus = document.createElement("td");
+            tdStatus.innerHTML = `
+                <span class="badge-status ${classeStatusAgendamento(status)}">
+                    ${traduzirStatusAgendamento(status)}
+                </span>
+            `;
+            tr.appendChild(tdStatus);
+            
+            const tdAcoes = document.createElement("td");
+                tdAcoes.innerHTML = `
+        <div class="acoes-agendamento">
+            <button type="button" onclick="atualizarStatusAgendamento(${agendamento.id}, 'confirmado')">
+                Confirmar
+            </button>
+            <button type="button" onclick="atualizarStatusAgendamento(${agendamento.id}, 'concluido')">
+                Concluir
+            </button>
+            <button type="button" onclick="atualizarStatusAgendamento(${agendamento.id}, 'cancelado')">
+                Cancelar
+            </button>
+            <button type="button" onclick="atualizarStatusAgendamento(${agendamento.id}, 'faltou')">
+                Faltou
+            </button>
+        </div>
+    `;
+            tr.appendChild(tdAcoes);
+            
             tbody.appendChild(tr);
         }
 

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Engenharia de Bits — SaaS Control</title>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+    <style>
+        :root {
+            --bg-principal: #020617;
+            --bg-card: #0f172a;
+            --texto-principal: #f8fafc;
+            --texto-secundario: #94a3b8;
+            --cor-foco: #3b82f6;
+            --cor-sucesso: #10b981;
+            --cor-perigo: #ef4444;
+            --borda: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 40px 20px;
+            background: var(--bg-principal);
+            color: var(--texto-principal);
+            font-family: "Inter", sans-serif;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--borda);
+        }
+
+        .header h1 {
+            margin: 0;
+            color: var(--cor-foco);
+            font-size: 24px;
+        }
+
+        .header span {
+            color: var(--texto-secundario);
+            font-size: 14px;
+        }
+
+        .form-nova-barbearia {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            align-items: end;
+            padding: 20px;
+            margin-bottom: 30px;
+            background: var(--bg-card);
+            border: 1px solid var(--borda);
+            border-radius: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--texto-secundario);
+            font-size: 13px;
+        }
+
+        input {
+            width: 100%;
+            padding: 11px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--borda);
+            border-radius: 8px;
+            color: white;
+            font-family: inherit;
+        }
+
+        button {
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .btn-criar,
+        .btn-login {
+            padding: 11px 20px;
+            background: var(--cor-foco);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+        }
+
+        .btn-sair {
+            padding: 9px 14px;
+            background: transparent;
+            border: 1px solid var(--borda);
+            border-radius: 8px;
+            color: var(--texto-principal);
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border: 1px solid var(--borda);
+            border-radius: 12px;
+        }
+
+        .tabela-clientes {
+            width: 100%;
+            min-width: 850px;
+            border-collapse: collapse;
+            background: var(--bg-card);
+        }
+
+        .tabela-clientes th,
+        .tabela-clientes td {
+            padding: 15px;
+            border-bottom: 1px solid var(--borda);
+            text-align: left;
+        }
+
+        .tabela-clientes th {
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--texto-secundario);
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .tabela-clientes tr:last-child td {
+            border-bottom: none;
+        }
+
+        small {
+            color: var(--texto-secundario);
+            font-size: 12px;
+            line-height: 1.8;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-ativo {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--cor-sucesso);
+        }
+
+        .status-bloqueado {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--cor-perigo);
+        }
+
+        .btn-acao {
+            padding: 7px 12px;
+            background: transparent;
+            border: 1px solid var(--borda);
+            border-radius: 6px;
+            color: var(--texto-principal);
+        }
+
+        .mensagem-tabela {
+            color: var(--texto-secundario);
+            text-align: center !important;
+        }
+
+        #tela-login-saas {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: var(--bg-principal);
+        }
+
+        .login-box {
+            width: 100%;
+            max-width: 410px;
+            padding: 35px;
+            background: var(--bg-card);
+            border: 1px solid var(--borda);
+            border-radius: 16px;
+        }
+
+        .login-box h2 {
+            margin-top: 0;
+            color: var(--cor-foco);
+        }
+
+        .login-box p {
+            color: var(--texto-secundario);
+            font-size: 14px;
+        }
+
+        .login-box input {
+            margin-bottom: 14px;
+        }
+
+        .btn-login {
+            width: 100%;
+        }
+
+        #msg-erro-login-saas {
+            display: none;
+            margin-top: 15px;
+            color: var(--cor-perigo);
+        }
+    </style>
+</head>
+
+<body>
+    <section id="tela-login-saas">
+        <div class="login-box">
+            <h2>Painel Mestre</h2>
+
+            <p>
+                Área restrita à administração da plataforma.
+            </p>
+
+            <form id="form-login-saas">
+                <input
+                    id="login-saas-email"
+                    type="email"
+                    placeholder="E-mail administrativo"
+                    required
+                >
+
+                <input
+                    id="login-saas-senha"
+                    type="password"
+                    placeholder="Senha"
+                    required
+                >
+
+                <button
+                    id="btn-login-saas"
+                    class="btn-login"
+                    type="submit"
+                >
+                    Entrar no Painel Mestre
+                </button>
+            </form>
+
+            <p id="msg-erro-login-saas"></p>
+        </div>
+    </section>
+
+    <main
+        id="painel-saas"
+        class="container"
+        style="display: none;"
+    >
+        <header class="header">
+            <div>
+                <h1>Engenharia de Bits</h1>
+                <span>Painel Mestre do SaaS</span>
+            </div>
+
+            <button
+                id="btn-sair-saas"
+                class="btn-sair"
+                type="button"
+            >
+                Sair
+            </button>
+        </header>
+
+        <form
+            id="form-nova-barbearia"
+            class="form-nova-barbearia"
+        >
+            <div class="form-group">
+                <label for="novo-nome">
+                    Nome comercial
+                </label>
+
+                <input
+                    id="novo-nome"
+                    type="text"
+                    placeholder="Ex: Barbearia Vintage"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="novo-slug">
+                    Slug do link público
+                </label>
+
+                <input
+                    id="novo-slug"
+                    type="text"
+                    placeholder="Ex: barbearia-vintage"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="novo-email">
+                    E-mail de acesso
+                </label>
+
+                <input
+                    id="novo-email"
+                    type="email"
+                    placeholder="cliente@empresa.com"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="nova-senha">
+                    Senha inicial
+                </label>
+
+                <input
+                    id="nova-senha"
+                    type="password"
+                    placeholder="Mínimo de 8 caracteres"
+                    minlength="8"
+                    required
+                >
+            </div>
+
+            <button
+                class="btn-criar"
+                type="submit"
+            >
+                Ativar cliente
+            </button>
+        </form>
+
+        <div class="table-wrapper">
+            <table class="tabela-clientes">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Empresa</th>
+                        <th>Slug</th>
+                        <th>Status financeiro</th>
+                        <th>Ação manual</th>
+                    </tr>
+                </thead>
+
+                <tbody id="lista-clientes"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="./js/api.js?v=2"></script>
+    <script src="./js/saas.js?v=2"></script>
+</body>
+</html>

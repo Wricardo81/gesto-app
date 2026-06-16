@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendamento Online</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-principal: #0f172a;
+            --bg-card: #1e293b;
+            --texto-principal: #f8fafc;
+            --texto-secundario: #94a3b8;
+            --borda-suave: rgba(255, 255, 255, 0.08);
+            --destaque: #f59e0b;
+            --sucesso: #10b981;
+            --erro: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Inter", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(245, 158, 11, 0.16), transparent 30%),
+                var(--bg-principal);
+            color: var(--texto-principal);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 560px;
+        }
+
+        .hero-marca {
+            background: rgba(30, 41, 59, 0.82);
+            border: 1px solid var(--borda-suave);
+            border-radius: 24px;
+            overflow: hidden;
+            margin-bottom: 22px;
+            box-shadow: 0 14px 40px rgba(0,0,0,0.22);
+        }
+
+        .banner-loja {
+            min-height: 130px;
+            background:
+                linear-gradient(135deg, rgba(245,158,11,0.22), rgba(15,23,42,0.72)),
+                rgba(255,255,255,0.04);
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .conteudo-marca {
+            padding: 0 20px 22px;
+            text-align: center;
+        }
+
+        .logo-loja {
+            width: 92px;
+            height: 92px;
+            border-radius: 24px;
+            margin: -46px auto 14px;
+            background: #0f172a;
+            border: 4px solid var(--bg-card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            color: var(--texto-secundario);
+            font-weight: 800;
+            position: relative;
+            z-index: 2;
+        }
+
+        .logo-loja img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .header-loja h1 {
+            color: var(--destaque);
+            margin: 0 0 6px;
+            font-size: 27px;
+            letter-spacing: -0.8px;
+        }
+
+        .header-loja p {
+            color: var(--texto-secundario);
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .mensagem-publica {
+            margin-top: 14px;
+            padding: 12px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--borda-suave);
+            color: var(--texto-principal);
+            font-size: 14px;
+            line-height: 1.5;
+            display: none;
+        }
+
+        .links-marca {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+    .links-marca a {
+        color: var(--texto-principal);
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 700;
+        border: 1px solid var(--borda-suave);
+        border-radius: 999px;
+        padding: 8px 11px;
+        background: rgba(255,255,255,0.035);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: 0.2s;
+    }
+
+    .links-marca a:hover {
+        border-color: var(--destaque);
+        transform: translateY(-1px);
+    }
+
+    .link-icone {
+        font-size: 15px;
+        line-height: 1;
+    }
+
+        .secao {
+            background: rgba(30, 41, 59, 0.86);
+            border: 1px solid var(--borda-suave);
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 18px;
+            box-shadow: 0 10px 28px rgba(0,0,0,0.15);
+        }
+
+        .secao h3 {
+            margin: 0 0 15px;
+            font-size: 16px;
+            border-bottom: 1px solid var(--borda-suave);
+            padding-bottom: 10px;
+        }
+
+        .grid-opcoes {
+            display: grid;
+            gap: 10px;
+        }
+
+        .btn-opcao {
+            background: transparent;
+            border: 1px solid var(--borda-suave);
+            color: var(--texto-principal);
+            padding: 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 14px;
+            transition: 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-opcao:hover {
+            border-color: var(--destaque);
+        }
+
+        .btn-opcao.selecionado {
+            background: var(--destaque);
+            color: #000;
+            border-color: var(--destaque);
+            font-weight: 800;
+        }
+
+        .grid-horarios {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .btn-horario {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--borda-suave);
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: 0.2s;
+        }
+
+        .btn-horario:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .btn-horario.selecionado {
+            background: var(--destaque);
+            color: #000;
+            font-weight: 800;
+            border-color: var(--destaque);
+        }
+
+        .input-form {
+            width: 100%;
+            padding: 13px;
+            margin-bottom: 13px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--borda-suave);
+            border-radius: 10px;
+            color: white;
+            font-family: inherit;
+        }
+
+        .input-form:focus {
+            outline: none;
+            border-color: var(--destaque);
+        }
+
+        .checkbox-consentimento {
+            display: none;
+            gap: 10px;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.035);
+            border: 1px solid var(--borda-suave);
+            color: var(--texto-secundario);
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .checkbox-consentimento input {
+            margin-top: 2px;
+        }
+
+        .btn-finalizar {
+            width: 100%;
+            background: var(--destaque);
+            color: #000;
+            padding: 16px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-finalizar:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .carregando {
+            text-align: center;
+            color: var(--destaque);
+            padding: 20px;
+            display: none;
+        }
+
+        .mensagem-status {
+            min-height: 22px;
+            margin: 15px 0 0;
+            font-size: 14px;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        .mensagem-status.sucesso {
+            color: var(--sucesso);
+        }
+
+        .mensagem-status.erro {
+            color: var(--erro);
+        }
+
+        .mensagem-status.informacao {
+            color: var(--texto-secundario);
+        }
+
+        .horarios-vazios {
+            grid-column: 1 / -1;
+            color: var(--texto-secundario);
+            font-size: 14px;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        @media (max-width: 520px) {
+            body {
+                padding: 14px;
+            }
+
+            .grid-horarios {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .btn-opcao {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <section class="hero-marca">
+            <div id="banner-loja" class="banner-loja"></div>
+
+            <div class="conteudo-marca">
+                <div id="logo-loja" class="logo-loja">
+                    Logo
+                </div>
+
+                <div class="header-loja">
+                    <h1 id="nome-loja">Carregando...</h1>
+                    <p id="telefone-loja">Agende seu horário conosco</p>
+                    <p id="endereco-loja"></p>
+                </div>
+
+                <div id="mensagem-publica" class="mensagem-publica"></div>
+
+                <div id="links-marca" class="links-marca"></div>
+            </div>
+        </section>
+
+        <div class="secao">
+            <h3>1. Escolha o serviço</h3>
+            <div id="lista-servicos" class="grid-opcoes">
+                Carregando cardápio...
+            </div>
+        </div>
+
+        <div class="secao">
+            <h3>2. Escolha o profissional</h3>
+            <div id="lista-profissionais" class="grid-opcoes">
+                Carregando equipe...
+            </div>
+        </div>
+
+        <div class="secao">
+            <h3>3. Data e horário</h3>
+            <input type="date" id="input-data" class="input-form">
+            <div id="msg-horarios" class="carregando">
+                Buscando horários disponíveis...
+            </div>
+            <div id="lista-horarios" class="grid-horarios"></div>
+        </div>
+
+        <div class="secao">
+            <h3>4. Seus dados</h3>
+
+            <input type="text" id="cliente-nome" class="input-form" placeholder="Seu nome completo">
+            <input type="tel" id="cliente-telefone" class="input-form" placeholder="Seu WhatsApp">
+
+            <label id="box-lembrete-whatsapp" class="checkbox-consentimento">
+                <input type="checkbox" id="aceita-lembrete-whatsapp" checked>
+                <span>Quero receber lembrete deste agendamento pelo WhatsApp.</span>
+            </label>
+
+            <label id="box-promocoes-whatsapp" class="checkbox-consentimento">
+                <input type="checkbox" id="aceita-promocoes-whatsapp">
+                <span>Quero receber promoções e novidades pelo WhatsApp.</span>
+            </label>
+
+            <button id="btn-agendar" class="btn-finalizar" type="button" disabled>
+                Confirmar Agendamento
+            </button>
+
+            <p id="mensagem-status" class="mensagem-status" aria-live="polite"></p>
+        </div>
+    </div>
+
+    <script src="./js/api.js?v=7"></script>
+    <script src="./js/agendamento.js?v=7"></script>
+</body>
+</html>

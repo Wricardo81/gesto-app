@@ -1,0 +1,33 @@
+﻿# Ambientes virtuais
+.venv/
+venv/
+env/
+
+# Variáveis sensíveis
+.env
+.env.local
+.env.*.local
+
+# Banco local
+*.db
+gesto.db
+
+# Uploads de clientes
+uploads/
+backend/uploads/
+backend/uploads_antigo/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# VS Code / sistema
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Node / frontend futuro
+node_modules/
+dist/
+build/

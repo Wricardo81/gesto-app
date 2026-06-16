@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gesto SaaS — Painel do Admin</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-principal: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-suave: rgba(255, 255, 255, 0.035);
+            --texto-principal: #f8fafc;
+            --texto-secundario: #94a3b8;
+            --borda-suave: rgba(255, 255, 255, 0.08);
+            --destaque: #f59e0b;
+            --cor-perigo: #ef4444;
+            --cor-sucesso: #10b981;
+            --cor-info: #38bdf8;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Inter", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(245, 158, 11, 0.14), transparent 28%),
+                radial-gradient(circle at top right, rgba(56, 189, 248, 0.08), transparent 30%),
+                var(--bg-principal);
+            color: var(--texto-principal);
+            margin: 0;
+            min-height: 100vh;
+            padding: 32px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1180px;
+            margin: 0 auto;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            margin-bottom: 26px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid var(--borda-suave);
+        }
+
+        h1 {
+            font-size: 30px;
+            color: var(--texto-principal);
+            margin: 0 0 8px;
+            letter-spacing: -0.8px;
+        }
+
+        .subtitulo {
+            color: var(--texto-secundario);
+            font-size: 15px;
+            margin: 0;
+        }
+
+        .aviso-tenant {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            color: var(--destaque);
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .header-botoes {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-secundario,
+        .btn-recarregar {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--borda-suave);
+            color: var(--texto-principal);
+            padding: 10px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-secundario:hover,
+        .btn-recarregar:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+        .btn-add {
+            background: var(--destaque);
+            color: #0f172a;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-add:hover {
+            filter: brightness(1.08);
+            transform: translateY(-1px);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .metric-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.88), rgba(15, 23, 42, 0.65));
+            border: 1px solid var(--borda-suave);
+            border-radius: 18px;
+            padding: 20px;
+            min-height: 118px;
+            box-shadow: 0 10px 26px rgba(0,0,0,0.18);
+        }
+
+        .metric-card p {
+            margin: 0 0 12px;
+            color: var(--texto-secundario);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1.1px;
+            font-weight: 800;
+        }
+
+        .metric-card strong {
+            display: block;
+            font-size: 26px;
+            letter-spacing: -0.7px;
+        }
+
+        .metric-card small {
+            display: block;
+            color: var(--texto-secundario);
+            margin-top: 8px;
+            font-size: 12px;
+        }
+
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .bloco-config {
+            background: rgba(30, 41, 59, 0.86);
+            border: 1px solid var(--borda-suave);
+            border-radius: 18px;
+            padding: 22px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 26px rgba(0,0,0,0.15);
+        }
+
+        .bloco-config h3 {
+            margin: 0 0 6px;
+            font-size: 17px;
+            color: var(--texto-principal);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .descricao-bloco {
+            margin: 0 0 18px;
+            color: var(--texto-secundario);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .form-grid.tres {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .campo {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .campo.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 13px;
+            color: var(--texto-secundario);
+            font-weight: 700;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--borda-suave);
+            border-radius: 10px;
+            color: white;
+            font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        textarea {
+            min-height: 92px;
+            resize: vertical;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--destaque);
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        input[type="color"] {
+            padding: 3px;
+            height: 44px;
+            cursor: pointer;
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            border: 1px solid var(--borda-suave);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.025);
+        }
+
+        .checkbox-row input {
+            width: auto;
+        }
+
+        .preview-marca {
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            gap: 14px;
+            align-items: center;
+            padding: 14px;
+            background: rgba(255,255,255,0.035);
+            border: 1px solid var(--borda-suave);
+            border-radius: 14px;
+            margin-bottom: 16px;
+        }
+
+        .preview-logo-box {
+            width: 80px;
+            height: 80px;
+            border-radius: 18px;
+            background: rgba(15,23,42,0.9);
+            border: 1px solid var(--borda-suave);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            color: var(--texto-secundario);
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .preview-logo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .preview-marca strong {
+            display: block;
+            font-size: 18px;
+            margin-bottom: 6px;
+        }
+
+        .preview-marca span {
+            color: var(--texto-secundario);
+            font-size: 13px;
+            word-break: break-word;
+        }
+
+        .form-linha {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+            align-items: center;
+        }
+
+        .item-lista {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 15px;
+            background: rgba(255,255,255,0.025);
+            border: 1px solid var(--borda-suave);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .btn-del-mini {
+            background: transparent;
+            color: var(--cor-perigo);
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 700;
+            opacity: 0.85;
+            transition: 0.2s;
+        }
+
+        .btn-del-mini:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+
+        .mensagem-vazia {
+            text-align: center;
+            color: var(--texto-secundario);
+            font-weight: 500;
+            padding: 28px 0;
+            background: rgba(255,255,255,0.02);
+            border-radius: 12px;
+            border: 1px dashed var(--borda-suave);
+        }
+
+        .tabela-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 760px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--borda-suave);
+            text-align: left;
+            font-size: 13px;
+        }
+
+        th {
+            color: var(--texto-secundario);
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.8px;
+        }
+
+        td {
+            color: var(--texto-principal);
+        }
+
+        .mensagem-tabela {
+            text-align: center;
+            color: var(--texto-secundario);
+            padding: 18px;
+        }
+
+        #mensagem-painel {
+            display: none;
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--borda-suave);
+            background: rgba(16, 185, 129, 0.12);
+            color: var(--cor-sucesso);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        #tela-login {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-principal);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-box {
+            background: var(--bg-card);
+            padding: 40px;
+            border-radius: 18px;
+            border: 1px solid var(--borda-suave);
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .login-box input {
+            margin-bottom: 15px;
+        }
+
+        .btn-login {
+            width: 100%;
+            background: var(--destaque);
+            color: #0f172a;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-login:hover {
+            filter: brightness(1.1);
+        }
+
+        @media (max-width: 980px) {
+            .dashboard-grid,
+            .layout-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid,
+            .form-grid.tres {
+                grid-template-columns: 1fr;
+            }
+
+            .topbar {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 20px 12px;
+            }
+
+            .form-linha {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .dashboard-grid {
+                gap: 10px;
+            }
+
+            .metric-card {
+                min-height: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="tela-login">
+        <div class="login-box">
+            <h2 style="color: var(--destaque); margin-bottom: 10px;">
+                Gesto Admin
+            </h2>
+
+            <p style="color: var(--texto-secundario); font-size: 14px; margin-bottom: 30px;">
+                Faça login para gerenciar sua empresa
+            </p>
+
+            <form onsubmit="realizarLogin(event)">
+                <input type="email" id="login-email" placeholder="Seu e-mail" required>
+                <input type="password" id="login-senha" placeholder="Sua senha" required>
+
+                <button type="submit" class="btn-login" id="btn-submit-login">
+                    Entrar no Sistema
+                </button>
+            </form>
+
+            <p id="msg-erro-login" style="color: var(--cor-perigo); font-size: 14px; margin-top: 15px; display: none;">
+                Credenciais inválidas.
+            </p>
+        </div>
+    </div>
+
+    <main class="container" id="painel-principal" style="display: none;">
+        <div class="topbar">
+            <div>
+                <h1>
+                    Painel da Empresa
+                    <span id="tag-tenant" class="aviso-tenant">...</span>
+                </h1>
+
+                <p class="subtitulo">
+                    Gerencie marca, agenda, serviços, profissionais e comunicação.
+                </p>
+            </div>
+
+            <div class="header-botoes">
+                <a id="link-pagina-publica" class="btn-secundario" href="#" target="_blank">
+                    Ver página pública
+                </a>
+
+                <button class="btn-recarregar" onclick="carregarTudo()">
+                    Atualizar
+                </button>
+
+                <button class="btn-recarregar" onclick="fazerLogout()">
+                    Sair da Conta
+                </button>
+            </div>
+        </div>
+
+        <div id="mensagem-painel"></div>
+
+        <section class="dashboard-grid">
+            <div class="metric-card">
+                <p>Faturamento previsto</p>
+                <strong id="visor-faturamento">R$ 0,00</strong>
+                <small>Com base nos agendamentos cadastrados.</small>
+            </div>
+
+            <div class="metric-card">
+                <p>Agendamentos</p>
+                <strong id="visor-total-agendamentos">0</strong>
+                <small>Total encontrado no período.</small>
+            </div>
+
+            <div class="metric-card">
+                <p>Ticket médio</p>
+                <strong id="visor-ticket-medio">R$ 0,00</strong>
+                <small>Faturamento dividido por agendamentos.</small>
+            </div>
+
+            <div class="metric-card">
+                <p>Status</p>
+                <strong style="color: var(--cor-sucesso);">Ativo</strong>
+                <small>Empresa liberada para receber reservas.</small>
+            </div>
+        </section>
+
+        <section class="layout-grid">
+            <div>
+                <section class="bloco-config">
+                    <h3>Identidade visual da marca 🎨</h3>
+
+                    <p class="descricao-bloco">
+                        Esses dados serão usados na página pública de agendamento e nas futuras mensagens automáticas.
+                    </p>
+
+                    <div class="preview-marca">
+                        <div class="preview-logo-box" id="preview-logo-box">
+                            Logo
+                        </div>
+
+                        <div>
+                            <strong id="preview-nome-publico">Nome da empresa</strong>
+                            <span id="preview-endereco">Endereço ainda não informado.</span>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="campo">
+                            <label>Nome público da marca</label>
+                            <input type="text" id="nome-publico" placeholder="Ex: Barbearia do Marcos">
+                        </div>
+
+                        <div class="campo">
+                            <label>WhatsApp comercial</label>
+                            <input type="text" id="whatsapp-comercial" placeholder="Ex: 81999999999">
+                        </div>
+
+                        <div class="campo full">
+                            <label>Logo URL</label>
+                            <input type="url" id="logo-url" placeholder="https://exemplo.com/logo.png">
+                        </div>
+                        
+                        <div class="campo full">
+                            <label>Enviar logotipo</label>
+                            <input type="file" id="logo-arquivo" accept="image/png,image/jpeg,image/webp">
+                        </div>
+                        
+                        <div class="campo full">
+                            <label>Logomarca / banner URL</label>
+                            <input type="url" id="logomarca-url" placeholder="https://exemplo.com/banner.png">
+                        </div>
+                        
+                        <div class="campo full">
+                            <label>Enviar logomarca / banner</label>
+                            <input type="file" id="logomarca-arquivo" accept="image/png,image/jpeg,image/webp">
+                        </div>
+                    </div>
+
+                    <div class="form-grid tres">
+                        <div class="campo">
+                            <label>Abre às</label>
+                            <input type="number" id="hora-abertura" min="0" max="23">
+                        </div>
+
+                        <div class="campo">
+                            <label>Fecha às</label>
+                            <input type="number" id="hora-fechamento" min="0" max="23">
+                        </div>
+
+                        <div class="campo">
+                            <label>Cor principal</label>
+                            <input type="color" id="cor-tema">
+                        </div>
+
+                        <div class="campo">
+                            <label>Cor de fundo</label>
+                            <input type="color" id="cor-fundo">
+                        </div>
+                    </div>
+                </section>
+
+                <section class="bloco-config">
+                    <h3>Comunicação e localização 📍</h3>
+
+                    <p class="descricao-bloco">
+                        Configure endereço, mensagem pública e canais sociais que aparecerão para os clientes.
+                    </p>
+
+                    <div class="form-grid">
+                        <div class="campo full">
+                            <label>Endereço</label>
+                            <input type="text" id="endereco" placeholder="Rua, número, bairro, cidade">
+                        </div>
+
+                        <div class="campo full">
+                            <label>Link do Google Maps</label>
+                            <input type="url" id="google-maps-url" placeholder="https://maps.google.com/...">
+                        </div>
+
+                        <div class="campo full">
+                            <label>Mensagem pública para clientes</label>
+                            <textarea id="mensagem-publica" placeholder="Ex: Chegue com 10 minutos de antecedência."></textarea>
+                        </div>
+
+                        <div class="campo full">
+                            <label>Instruções internas / observações</label>
+                            <textarea id="instrucoes" placeholder="Observações sobre atendimento, regras ou instruções."></textarea>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="bloco-config">
+                    <h3>Redes sociais e site 🌐</h3>
+
+                    <div class="form-grid">
+                        <div class="campo">
+                            <label>Instagram</label>
+                            <input type="url" id="instagram-url" placeholder="https://instagram.com/suaempresa">
+                        </div>
+
+                        <div class="campo">
+                            <label>Facebook</label>
+                            <input type="url" id="facebook-url" placeholder="https://facebook.com/suaempresa">
+                        </div>
+
+                        <div class="campo">
+                            <label>TikTok</label>
+                            <input type="url" id="tiktok-url" placeholder="https://tiktok.com/@suaempresa">
+                        </div>
+
+                        <div class="campo">
+                            <label>Site</label>
+                            <input type="url" id="site-url" placeholder="https://suaempresa.com.br">
+                        </div>
+                    </div>
+                </section>
+
+                <section class="bloco-config">
+                    <h3>WhatsApp e consentimento 💬</h3>
+
+                    <p class="descricao-bloco">
+                        Por enquanto salvamos as preferências. O disparo automático será implementado em uma sprint futura.
+                    </p>
+
+                    <div class="form-grid">
+                        <label class="checkbox-row">
+                            <input type="checkbox" id="captar-whatsapp-lembretes">
+                            Captar autorização para lembretes pelo WhatsApp
+                        </label>
+
+                        <label class="checkbox-row">
+                            <input type="checkbox" id="captar-whatsapp-promocoes">
+                            Captar autorização para promoções pelo WhatsApp
+                        </label>
+                    </div>
+
+                    <button class="btn-add" onclick="salvarConfiguracao()">
+                        Salvar identidade e comunicação
+                    </button>
+                </section>
+            </div>
+
+            <aside>
+                <section class="bloco-config">
+                    <h3>Equipe de profissionais 💈</h3>
+
+                    <p class="descricao-bloco">
+                        Cadastre quem poderá receber agendamentos.
+                    </p>
+
+                    <div class="form-linha">
+                        <input type="text" id="novo-prof-nome" placeholder="Nome do profissional">
+                        <button class="btn-add" onclick="salvarProfissional()">Adicionar</button>
+                    </div>
+
+                    <div id="lista-equipe"></div>
+                </section>
+
+                <section class="bloco-config">
+                    <h3>Cardápio de serviços 📋</h3>
+
+                    <p class="descricao-bloco">
+                        Cadastre preço e duração dos serviços oferecidos.
+                    </p>
+
+                    <div class="form-grid">
+                        <div class="campo full">
+                            <label>Nome do serviço</label>
+                            <input type="text" id="novo-servico-nome" placeholder="Ex: Corte Degradê">
+                        </div>
+
+                        <div class="campo">
+                            <label>Preço</label>
+                            <input type="number" id="novo-servico-preco" placeholder="35.00" step="0.01">
+                        </div>
+
+                        <div class="campo">
+                            <label>Duração</label>
+                            <input type="number" id="novo-servico-duracao" placeholder="30" min="1">
+                        </div>
+                    </div>
+
+                    <button class="btn-add" onclick="salvarServico()">
+                        Adicionar serviço
+                    </button>
+
+                    <div id="lista-cardapio" style="margin-top: 16px;"></div>
+                </section>
+            </aside>
+        </section>
+
+        <section class="bloco-config">
+            <h3>Agenda e faturamento 📊</h3>
+
+            <p class="descricao-bloco">
+                Consulte os agendamentos recebidos e o faturamento previsto.
+            </p>
+
+            <div class="form-grid tres">
+                <div class="campo">
+                    <label>Data inicial</label>
+                    <input type="date" id="filtro-data-inicio">
+                </div>
+
+                <div class="campo">
+                    <label>Data final</label>
+                    <input type="date" id="filtro-data-fim">
+                </div>
+
+                <div class="campo">
+                    <label>&nbsp;</label>
+                    <button class="btn-add" onclick="carregarAgendamentos()">
+                        Filtrar agenda
+                    </button>
+                </div>
+            </div>
+
+            <div class="tabela-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Hora</th>
+                            <th>Cliente</th>
+                            <th>Telefone</th>
+                            <th>Serviço</th>
+                            <th>Profissional</th>
+                            <th>Valor</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="lista-agendamentos">
+                        <tr>
+                            <td colspan="7" class="mensagem-tabela">
+                                Nenhum agendamento encontrado.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="./js/api.js?v=11"></script>
+    <script src="./js/auth.js?v=11"></script>
+    <script src="./js/admin.js?v=11"></script>
+</body>
+</html>

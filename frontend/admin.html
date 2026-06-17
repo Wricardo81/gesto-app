@@ -220,7 +220,8 @@
         }
 
         input,
-        textarea {
+        textarea,
+        select {
             width: 100%;
             padding: 12px;
             background: rgba(15, 23, 42, 0.8);
@@ -238,7 +239,8 @@
         }
 
         input:focus,
-        textarea:focus {
+        textarea:focus,
+        select:focus {
             outline: none;
             border-color: var(--destaque);
             background: rgba(15, 23, 42, 0.95);
@@ -885,6 +887,14 @@
             <button
                 type="button"
                 class="admin-tab"
+                data-secao="secao-bloqueios-agenda"
+            >
+                Bloqueios
+            </button>
+
+            <button
+                type="button"
+                class="admin-tab"
                 data-secao="secao-clientes-crm"
             >
                 Clientes / CRM
@@ -1193,6 +1203,114 @@
                     </table>
                 </div>
             </section>
+
+            <section class="bloco-config secao-admin" id="secao-bloqueios-agenda">
+                <h3>Bloqueios de agenda ⛔</h3>
+            
+                <p class="descricao-bloco">
+                    Bloqueie horários específicos, períodos ou dias inteiros para impedir
+                    novos agendamentos na página pública.
+                </p>
+            
+                <form id="form-bloqueio-agenda" class="form-grid tres">
+                    <div class="campo">
+                        <label>Profissional</label>
+                        <select id="bloqueio-profissional" class="input-admin">
+                            <option value="">Todos os profissionais</option>
+                        </select>
+                    </div>
+            
+                    <div class="campo">
+                        <label>Data</label>
+                        <input type="date" id="bloqueio-data" required>
+                    </div>
+            
+                    <div class="campo">
+                        <label>Dia inteiro</label>
+                        <select id="bloqueio-dia-inteiro" class="input-admin">
+                            <option value="false">Não, apenas um intervalo</option>
+                            <option value="true">Sim, bloquear o dia todo</option>
+                        </select>
+                    </div>
+            
+                    <div class="campo">
+                        <label>Horário inicial</label>
+                        <input type="time" id="bloqueio-horario-inicio">
+                    </div>
+            
+                    <div class="campo">
+                        <label>Horário final</label>
+                        <input type="time" id="bloqueio-horario-fim">
+                    </div>
+            
+                    <div class="campo">
+                        <label>Motivo</label>
+                        <input
+                            type="text"
+                            id="bloqueio-motivo"
+                            placeholder="Ex: Almoço, folga, consulta médica"
+                        >
+                    </div>
+            
+                    <div class="campo full">
+                        <button type="submit" class="btn-add">
+                            Criar bloqueio
+                        </button>
+                    </div>
+                </form>
+            
+                <div class="form-grid tres" style="margin-top: 16px;">
+                    <div class="campo">
+                        <label>Filtrar bloqueios por data</label>
+                        <input type="date" id="filtro-data-bloqueios">
+                    </div>
+            
+                    <div class="campo">
+                        <label>&nbsp;</label>
+                        <button
+                            type="button"
+                            class="btn-add"
+                            onclick="carregarBloqueiosAgenda()"
+                        >
+                            Filtrar bloqueios
+                        </button>
+                    </div>
+            
+                    <div class="campo">
+                        <label>&nbsp;</label>
+                        <button
+                            type="button"
+                            class="btn-secundario"
+                            onclick="limparFiltroBloqueiosAgenda()"
+                        >
+                            Limpar filtro
+                        </button>
+                    </div>
+                </div>
+            
+                <div class="tabela-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Profissional</th>
+                                <th>Tipo</th>
+                                <th>Intervalo</th>
+                                <th>Motivo</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+            
+                        <tbody id="lista-bloqueios-agenda">
+                            <tr>
+                                <td colspan="6" class="mensagem-tabela">
+                                    Carregando bloqueios...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
             
             <section class="bloco-config secao-admin" id="secao-clientes-crm">
                 <h3>Clientes / CRM 👥</h3>
@@ -1298,8 +1416,8 @@
     </main>
     
 
-    <script src="./js/api.js?v=24"></script>
-    <script src="./js/auth.js?v=24"></script>
-    <script src="./js/admin.js?v=24"></script>
+    <script src="./js/api.js?v=28"></script>
+    <script src="./js/auth.js?v=28"></script>
+    <script src="./js/admin.js?v=28"></script>
 </body>
 </html>

@@ -2,6 +2,7 @@ let tenantSlugLogado = "";
 let configuracaoAtual = {};
 let listenersDePreviewRegistrados = false;
 let listenersCRMRegistrados = false;
+let listenersBloqueiosRegistrados = false;
 
 /* =========================================================
    UTILITÁRIOS
@@ -421,6 +422,7 @@ function iniciarPainel() {
         registrarListenersDePreview();
         registrarListenersCRM();
         inicializarNavegacaoAdmin();
+        registrarListenersBloqueiosAgenda();
         
         carregarTudo();
 
@@ -1512,6 +1514,275 @@ async function carregarClientesCRM(busca = "") {
     }
 }
 
+function obterValorCampo(id, padrao = "") {
+    const campo = document.getElementById(id);
+
+    if (!campo) {
+        return padrao;
+    }
+
+    return campo.value || padrao;
+}
+
+
+function configurarDiaInteiroBloqueio() {
+    const campoDiaInteiro = document.getElementById("bloqueio-dia-inteiro");
+    const campoInicio = document.getElementById("bloqueio-horario-inicio");
+    const campoFim = document.getElementById("bloqueio-horario-fim");
+
+    if (!campoDiaInteiro || !campoInicio || !campoFim) {
+        return;
+    }
+
+    const diaInteiro = campoDiaInteiro.value === "true";
+
+    campoInicio.disabled = diaInteiro;
+    campoFim.disabled = diaInteiro;
+
+    if (diaInteiro) {
+        campoInicio.value = "";
+        campoFim.value = "";
+    }
+}
+
+
+function registrarListenersBloqueiosAgenda() {
+    if (listenersBloqueiosRegistrados) {
+        return;
+    }
+
+    listenersBloqueiosRegistrados = true;
+
+    const form = document.getElementById("form-bloqueio-agenda");
+    const campoDiaInteiro = document.getElementById("bloqueio-dia-inteiro");
+
+    if (form) {
+        form.addEventListener("submit", criarBloqueioAgenda);
+    }
+
+    if (campoDiaInteiro) {
+        campoDiaInteiro.addEventListener(
+            "change",
+            configurarDiaInteiroBloqueio
+        );
+    }
+
+    configurarDiaInteiroBloqueio();
+}
+
+
+async function carregarProfissionaisBloqueio() {
+    const select = document.getElementById("bloqueio-profissional");
+
+    if (!select) {
+        return;
+    }
+
+    select.innerHTML = `
+        <option value="">Todos os profissionais</option>
+    `;
+
+    try {
+        const profissionais = await apiRequest(
+            `/api/${tenantSlugLogado}/profissionais`
+        );
+
+        for (const profissional of profissionais) {
+            const option = document.createElement("option");
+
+            option.value = profissional.nome;
+            option.textContent = profissional.nome;
+
+            select.appendChild(option);
+        }
+
+    } catch (erro) {
+        console.error("Erro ao carregar profissionais para bloqueio:", erro);
+    }
+}
+
+
+async function carregarBloqueiosAgenda() {
+    const tbody = document.getElementById("lista-bloqueios-agenda");
+
+    if (!tbody) {
+        return;
+    }
+
+    const dataFiltro = obterValorCampo("filtro-data-bloqueios", "");
+    const params = new URLSearchParams();
+
+    if (dataFiltro) {
+        params.set("data", dataFiltro);
+    }
+
+    const query = params.toString();
+
+    const endpoint = query
+        ? `/api/${tenantSlugLogado}/admin/bloqueios?${query}`
+        : `/api/${tenantSlugLogado}/admin/bloqueios`;
+
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="6" class="mensagem-tabela">
+                Carregando bloqueios...
+            </td>
+        </tr>
+    `;
+
+    try {
+        const bloqueios = await apiRequest(
+            endpoint,
+            {
+                auth: true,
+            }
+        );
+
+        tbody.innerHTML = "";
+
+        if (!bloqueios.length) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="mensagem-tabela">
+                        Nenhum bloqueio encontrado.
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
+
+        for (const bloqueio of bloqueios) {
+            const tr = document.createElement("tr");
+
+            const profissional = bloqueio.profissional || "Todos";
+            const tipo = bloqueio.dia_inteiro ? "Dia inteiro" : "Intervalo";
+            const intervalo = bloqueio.dia_inteiro
+                ? "Dia todo"
+                : `${bloqueio.horario_inicio || "-"} até ${bloqueio.horario_fim || "-"}`;
+
+            tr.innerHTML = `
+                <td>${formatarDataBR(bloqueio.data)}</td>
+                <td>${profissional}</td>
+                <td>${tipo}</td>
+                <td>${intervalo}</td>
+                <td>${bloqueio.motivo || "-"}</td>
+                <td>
+                    <button
+                        type="button"
+                        class="btn-del-mini"
+                        onclick="removerBloqueioAgenda(${bloqueio.id})"
+                    >
+                        Remover
+                    </button>
+                </td>
+            `;
+
+            tbody.appendChild(tr);
+        }
+
+    } catch (erro) {
+        tratarErro(erro);
+    }
+}
+
+
+async function criarBloqueioAgenda(event) {
+    event.preventDefault();
+
+    const profissional = obterValorCampo("bloqueio-profissional", "");
+    const data = obterValorCampo("bloqueio-data", "");
+    const diaInteiro = obterValorCampo("bloqueio-dia-inteiro", "false") === "true";
+    const horarioInicio = obterValorCampo("bloqueio-horario-inicio", "");
+    const horarioFim = obterValorCampo("bloqueio-horario-fim", "");
+    const motivo = obterValorCampo("bloqueio-motivo", "");
+
+    if (!data) {
+        alert("Informe a data do bloqueio.");
+        return;
+    }
+
+    if (!diaInteiro && (!horarioInicio || !horarioFim)) {
+        alert("Informe horário inicial e final para bloqueio parcial.");
+        return;
+    }
+
+    try {
+        await apiRequest(
+            `/api/${tenantSlugLogado}/admin/bloqueios`,
+            {
+                method: "POST",
+                auth: true,
+                body: {
+                    profissional: profissional || null,
+                    data,
+                    horario_inicio: diaInteiro ? null : horarioInicio,
+                    horario_fim: diaInteiro ? null : horarioFim,
+                    dia_inteiro: diaInteiro,
+                    motivo: motivo || null,
+                },
+            }
+        );
+
+        document.getElementById("form-bloqueio-agenda").reset();
+
+        configurarDiaInteiroBloqueio();
+
+        await carregarBloqueiosAgenda();
+
+        await carregarAgendamentos();
+
+        alert("Bloqueio criado com sucesso.");
+
+    } catch (erro) {
+        tratarErro(erro);
+    }
+}
+
+
+async function removerBloqueioAgenda(bloqueioId) {
+    const confirmar = window.confirm(
+        "Deseja remover este bloqueio de agenda?"
+    );
+
+    if (!confirmar) {
+        return;
+    }
+
+    try {
+        await apiRequest(
+            `/api/${tenantSlugLogado}/admin/bloqueios/${bloqueioId}`,
+            {
+                method: "DELETE",
+                auth: true,
+            }
+        );
+
+        await carregarBloqueiosAgenda();
+
+        alert("Bloqueio removido com sucesso.");
+
+    } catch (erro) {
+        tratarErro(erro);
+    }
+}
+
+
+function limparFiltroBloqueiosAgenda() {
+    const filtro = document.getElementById("filtro-data-bloqueios");
+
+    if (filtro) {
+        filtro.value = "";
+    }
+
+    carregarBloqueiosAgenda();
+}
+
+
+window.carregarBloqueiosAgenda = carregarBloqueiosAgenda;
+window.removerBloqueioAgenda = removerBloqueioAgenda;
+window.limparFiltroBloqueiosAgenda = limparFiltroBloqueiosAgenda;
+
 
 async function carregarTudo() {
     await Promise.all([
@@ -1520,6 +1791,8 @@ async function carregarTudo() {
         carregarServicos(),
         carregarAgendamentos(),
         carregarClientesCRM(),
+        carregarProfissionaisBloqueio(),
+        carregarBloqueiosAgenda(),
     ]);
 }
 

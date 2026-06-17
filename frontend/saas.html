@@ -231,6 +231,134 @@
             color: var(--cor-perigo);
         }
 
+        .btn-menu-saas {
+            display: none;
+            width: 100%;
+            margin-bottom: 12px;
+            padding: 13px 16px;
+            background: var(--cor-foco);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 800;
+        }
+
+        .saas-tabs {
+            position: sticky;
+            top: 12px;
+            z-index: 50;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 12px;
+            margin-bottom: 24px;
+            background: rgba(2, 6, 23, 0.88);
+            border: 1px solid var(--borda);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .saas-tab {
+            background: rgba(255,255,255,0.04);
+            color: var(--texto-principal);
+            border: 1px solid var(--borda);
+            border-radius: 999px;
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .saas-tab:hover {
+            border-color: var(--cor-foco);
+        }
+
+        .saas-tab.ativa {
+            background: var(--cor-foco);
+            color: white;
+            border-color: var(--cor-foco);
+        }
+
+        .secao-saas:not(.ativa) {
+            display: none !important;
+        }
+
+        .dashboard-saas {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 30px;
+        }
+
+        .card-metrica-saas {
+            padding: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--borda);
+            border-radius: 16px;
+            box-shadow: 0 16px 38px rgba(0,0,0,0.18);
+        }
+
+        .card-metrica-saas span {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--texto-secundario);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 800;
+        }
+
+        .card-metrica-saas strong {
+            display: block;
+            font-size: 26px;
+            margin-bottom: 8px;
+        }
+
+        .card-metrica-saas small {
+            color: var(--texto-secundario);
+        }
+
+        @media (max-width: 900px) {
+            .dashboard-saas {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 24px 14px;
+            }
+
+            .header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .btn-menu-saas {
+                display: block;
+            }
+
+            .saas-tabs {
+                display: none;
+                position: static;
+                grid-template-columns: 1fr;
+            }
+
+            .saas-tabs.aberto {
+                display: grid;
+            }
+
+            .saas-tab {
+                width: 100%;
+                border-radius: 12px;
+                text-align: left;
+            }
+
+            .dashboard-saas {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .rodape-creditos {
             margin-top: 36px;
             padding: 20px 16px;
@@ -322,6 +450,76 @@
             </button>
         </header>
 
+        <button
+            type="button"
+            class="btn-menu-saas"
+            onclick="alternarMenuSaas()"
+        >
+            ☰ Menu do SaaS
+        </button>
+
+        <nav class="saas-tabs" id="saas-tabs">
+            <button
+                type="button"
+                class="saas-tab ativa"
+                data-secao="secao-saas-dashboard"
+            >
+                Visão geral
+            </button>
+
+            <button
+                type="button"
+                class="saas-tab"
+                data-secao="secao-saas-empresas"
+            >
+                Empresas
+            </button>
+
+            <button
+                type="button"
+                class="saas-tab"
+                data-secao="secao-saas-criar"
+            >
+                Criar empresa
+            </button>
+        </nav>
+
+        <section
+            class="secao-saas ativa"
+            id="secao-saas-dashboard"
+        >
+            <div class="dashboard-saas">
+                <div class="card-metrica-saas">
+                    <span>Total de empresas</span>
+                    <strong id="visor-saas-total">0</strong>
+                    <small>Empresas cadastradas na plataforma.</small>
+                </div>
+
+                <div class="card-metrica-saas">
+                    <span>Empresas ativas</span>
+                    <strong id="visor-saas-ativas">0</strong>
+                    <small>Clientes com acesso liberado.</small>
+                </div>
+
+                <div class="card-metrica-saas">
+                    <span>Empresas bloqueadas</span>
+                    <strong id="visor-saas-bloqueadas">0</strong>
+                    <small>Clientes com acesso suspenso.</small>
+                </div>
+
+                <div class="card-metrica-saas">
+                    <span>MRR previsto</span>
+                    <strong id="visor-saas-mrr">R$ 0,00</strong>
+                    <small>Baseado em R$ 99 por empresa ativa.</small>
+                </div>
+            </div>
+        </section>
+
+        <section
+            class="secao-saas"
+            id="secao-saas-criar"
+        >
+
         <form
             id="form-nova-barbearia"
             class="form-nova-barbearia"
@@ -387,6 +585,13 @@
             </button>
         </form>
 
+    </section>
+
+    <section
+        class="secao-saas"
+        id="secao-saas-empresas"
+    >
+
         <div class="table-wrapper">
             <table class="tabela-clientes">
                 <thead>
@@ -402,6 +607,8 @@
                 <tbody id="lista-clientes"></tbody>
             </table>
         </div>
+    </section>
+
     </main>
 
     <footer class="rodape-creditos">
@@ -419,7 +626,7 @@
         </span>
     </footer>
 
-    <script src="./js/api.js?v=2"></script>
-    <script src="./js/saas.js?v=2"></script>
+    <script src="./js/api.js?v=27"></script>
+    <script src="./js/saas.js?v=27"></script>
 </body>
 </html>

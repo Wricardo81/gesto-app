@@ -183,6 +183,41 @@ function criarCelula(texto) {
     return td;
 }
 
+function formatarMoedaSaas(valor) {
+    return Number(valor || 0).toLocaleString(
+        "pt-BR",
+        {
+            style: "currency",
+            currency: "BRL",
+        }
+    );
+}
+
+
+function atualizarResumoSaas(clientes) {
+    const total = clientes.length;
+
+    const ativos = clientes.filter(
+        cliente => Boolean(cliente.plano_ativo)
+    ).length;
+
+    const bloqueados = total - ativos;
+
+    const mrrPrevisto = ativos * 99;
+
+    document.getElementById("visor-saas-total").textContent =
+        total;
+
+    document.getElementById("visor-saas-ativas").textContent =
+        ativos;
+
+    document.getElementById("visor-saas-bloqueadas").textContent =
+        bloqueados;
+
+    document.getElementById("visor-saas-mrr").textContent =
+        formatarMoedaSaas(mrrPrevisto);
+}
+
 
 async function carregarClientes() {
     const tbody = document
@@ -194,6 +229,8 @@ async function carregarClientes() {
         const clientes = await saasRequest(
             "/api/saas/barbearias"
         );
+        
+        atualizarResumoSaas(clientes);
 
         if (!clientes.length) {
             const tr =
@@ -393,6 +430,74 @@ async function alterarStatus(id) {
     }
 }
 
+function alternarMenuSaas() {
+    const menu = document.getElementById("saas-tabs");
+
+    if (!menu) {
+        return;
+    }
+
+    menu.classList.toggle("aberto");
+}
+
+
+function mostrarSecaoSaas(secaoId) {
+    const secoes = document.querySelectorAll(".secao-saas");
+    const botoes = document.querySelectorAll(".saas-tab");
+
+    secoes.forEach((secao) => {
+        secao.classList.toggle(
+            "ativa",
+            secao.id === secaoId
+        );
+    });
+
+    botoes.forEach((botao) => {
+        botao.classList.toggle(
+            "ativa",
+            botao.dataset.secao === secaoId
+        );
+    });
+
+    localStorage.setItem(
+        "gesto_saas_secao_ativa",
+        secaoId
+    );
+
+    const menu = document.getElementById("saas-tabs");
+
+    if (menu) {
+        menu.classList.remove("aberto");
+    }
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+    });
+}
+
+
+function inicializarNavegacaoSaas() {
+    const botoes = document.querySelectorAll(".saas-tab");
+
+    botoes.forEach((botao) => {
+        botao.addEventListener("click", () => {
+            mostrarSecaoSaas(botao.dataset.secao);
+        });
+    });
+
+    const secaoSalva = localStorage.getItem(
+        "gesto_saas_secao_ativa"
+    );
+
+    mostrarSecaoSaas(
+        secaoSalva || "secao-saas-dashboard"
+    );
+}
+
+
+window.alternarMenuSaas = alternarMenuSaas;
+
 
 async function iniciarPainelSaas() {
     document
@@ -416,7 +521,9 @@ async function iniciarPainelSaas() {
         .addEventListener(
             "click",
             fazerLogoutSaas
-        );
+    );
+    
+    inicializarNavegacaoSaas();
 
     if (!obterTokenSaas()) {
         exibirLoginSaas();
@@ -426,6 +533,12 @@ async function iniciarPainelSaas() {
     exibirPainelSaas();
 
     await carregarClientes();
+
+    mostrarSecaoSaas("secao-saas-empresas");
+
+    alert(
+        "Empresa criada com sucesso."
+    );
 }
 
 

@@ -34,6 +34,7 @@ class Agendamento(Base):
     )
 
     id = Column(Integer, primary_key=True, index=True)
+    codigo_publico = Column(String, unique=True, index=True, nullable=True)
     barbearia_slug = Column(String, index=True)
     cliente_nome = Column(String)
     servico = Column(String)

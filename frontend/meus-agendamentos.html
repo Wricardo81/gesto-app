@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Meus Agendamentos | Gesto</title>
+
+    <style>
+        :root {
+            --cor-fundo: #0f172a;
+            --cor-card: #111827;
+            --cor-card-2: #020617;
+            --cor-destaque: #f59e0b;
+            --texto-principal: #f8fafc;
+            --texto-secundario: #94a3b8;
+            --borda-suave: rgba(148, 163, 184, 0.22);
+            --cor-sucesso: #10b981;
+            --cor-perigo: #ef4444;
+            --cor-alerta: #f59e0b;
+            --cor-info: #38bdf8;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, Helvetica, sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(245, 158, 11, 0.12), transparent 32%),
+                var(--cor-fundo);
+            color: var(--texto-principal);
+        }
+
+        .pagina {
+            width: min(1080px, 94vw);
+            margin: 0 auto;
+            padding: 32px 0 60px;
+        }
+
+        .topo-publico {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .marca {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .marca-logo {
+            width: 58px;
+            height: 58px;
+            border-radius: 18px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--borda-suave);
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            font-weight: 900;
+            color: var(--cor-destaque);
+        }
+
+        .marca-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .marca h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .marca p {
+            margin: 4px 0 0;
+            color: var(--texto-secundario);
+            font-size: 14px;
+        }
+
+        .link-voltar {
+            color: var(--cor-destaque);
+            text-decoration: none;
+            font-weight: 800;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 999px;
+            padding: 11px 16px;
+        }
+
+        .card {
+            background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.02));
+            border: 1px solid var(--borda-suave);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.28);
+        }
+
+        .card h2 {
+            margin: 0 0 8px;
+            font-size: 28px;
+        }
+
+        .card > p {
+            margin: 0 0 22px;
+            color: var(--texto-secundario);
+            line-height: 1.6;
+        }
+
+        .form-busca {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            border: 1px solid var(--borda-suave);
+            border-radius: 14px;
+            background: rgba(2, 6, 23, 0.7);
+            color: var(--texto-principal);
+            padding: 14px;
+            outline: none;
+            font-size: 15px;
+        }
+
+        textarea {
+            min-height: 84px;
+            resize: vertical;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: var(--cor-destaque);
+        }
+
+        button {
+            border: none;
+            border-radius: 14px;
+            padding: 14px 18px;
+            font-weight: 900;
+            cursor: pointer;
+            background: var(--cor-destaque);
+            color: #111827;
+        }
+
+        button:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .mensagem {
+            display: none;
+            margin: 14px 0 0;
+            padding: 13px 14px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .mensagem.sucesso {
+            display: block;
+            background: rgba(16, 185, 129, 0.12);
+            color: var(--cor-sucesso);
+        }
+
+        .mensagem.erro {
+            display: block;
+            background: rgba(239, 68, 68, 0.12);
+            color: var(--cor-perigo);
+        }
+
+        .resumo {
+            display: none;
+            margin: 22px 0;
+            color: var(--texto-secundario);
+            font-size: 14px;
+        }
+
+        .lista-agendamentos {
+            display: grid;
+            gap: 14px;
+            margin-top: 18px;
+        }
+
+        .agendamento-card {
+            border: 1px solid var(--borda-suave);
+            background: rgba(2, 6, 23, 0.38);
+            border-radius: 20px;
+            padding: 18px;
+        }
+
+        .agendamento-topo {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: flex-start;
+            margin-bottom: 14px;
+        }
+
+        .agendamento-topo h3 {
+            margin: 0;
+            font-size: 19px;
+        }
+
+        .agendamento-topo p {
+            margin: 5px 0 0;
+            color: var(--texto-secundario);
+            font-size: 13px;
+        }
+
+        .badge-status {
+            display: inline-flex;
+            padding: 7px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 900;
+            border: 1px solid var(--borda-suave);
+            white-space: nowrap;
+        }
+
+        .status-confirmado {
+            color: var(--cor-info);
+            background: rgba(56, 189, 248, 0.12);
+            border-color: rgba(56, 189, 248, 0.22);
+        }
+
+        .status-concluido {
+            color: var(--cor-sucesso);
+            background: rgba(16, 185, 129, 0.12);
+            border-color: rgba(16, 185, 129, 0.22);
+        }
+
+        .status-cancelado {
+            color: var(--cor-perigo);
+            background: rgba(239, 68, 68, 0.12);
+            border-color: rgba(239, 68, 68, 0.22);
+        }
+
+        .status-faltou {
+            color: var(--cor-alerta);
+            background: rgba(245, 158, 11, 0.12);
+            border-color: rgba(245, 158, 11, 0.22);
+        }
+
+        .dados-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .dado {
+            padding: 12px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.035);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .dado small {
+            display: block;
+            color: var(--texto-secundario);
+            font-size: 11px;
+            margin-bottom: 5px;
+        }
+
+        .dado strong {
+            font-size: 14px;
+        }
+
+        .aviso-cancelamento {
+            color: var(--texto-secundario);
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 12px 0;
+        }
+
+        .acoes-card {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .btn-secundario {
+            background: rgba(255,255,255,0.06);
+            color: var(--texto-principal);
+            border: 1px solid var(--borda-suave);
+        }
+
+        .btn-perigo {
+            background: var(--cor-perigo);
+            color: white;
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.78);
+            backdrop-filter: blur(8px);
+        }
+
+        .modal-card {
+            position: relative;
+            width: min(520px, 96vw);
+            background: var(--cor-card);
+            border: 1px solid var(--borda-suave);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+        }
+
+        .modal-card h3 {
+            margin: 0 0 8px;
+        }
+
+        .modal-card p {
+            color: var(--texto-secundario);
+            line-height: 1.5;
+        }
+
+        .modal-acoes {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        @media (max-width: 760px) {
+            .topo-publico {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .form-busca {
+                grid-template-columns: 1fr;
+            }
+
+            .dados-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .agendamento-topo {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="pagina">
+        <header class="topo-publico">
+            <div class="marca">
+                <div class="marca-logo" id="marca-logo">
+                    G
+                </div>
+
+                <div>
+                    <h1 id="nome-estabelecimento">
+                        Meus Agendamentos
+                    </h1>
+                    <p>
+                        Consulte seus horários e cancele quando permitido.
+                    </p>
+                </div>
+            </div>
+
+            <a
+                href="./agendamento.html"
+                id="link-voltar-agendamento"
+                class="link-voltar"
+            >
+                Fazer novo agendamento
+            </a>
+        </header>
+
+        <section class="card">
+            <h2>Consultar meus agendamentos</h2>
+
+            <p>
+                Digite o telefone usado no agendamento para visualizar seus
+                próximos horários, histórico e opções de cancelamento.
+            </p>
+
+            <form class="form-busca" id="form-busca-agendamentos">
+                <input
+                    type="tel"
+                    id="telefone-cliente"
+                    placeholder="Digite seu WhatsApp ou telefone"
+                    required
+                >
+
+                <button type="submit" id="btn-buscar">
+                    Buscar
+                </button>
+            </form>
+
+            <div id="mensagem" class="mensagem"></div>
+
+            <div id="resumo-agendamentos" class="resumo"></div>
+
+            <div
+                id="lista-agendamentos"
+                class="lista-agendamentos"
+            ></div>
+        </section>
+    </main>
+
+    <div id="modal-cancelamento" class="modal">
+        <div class="modal-overlay" onclick="fecharModalCancelamento()"></div>
+
+        <div class="modal-card">
+            <h3>Cancelar agendamento</h3>
+
+            <p id="texto-cancelamento">
+                Informe o motivo do cancelamento.
+            </p>
+
+            <textarea
+                id="motivo-cancelamento"
+                placeholder="Ex: Não poderei comparecer no horário marcado."
+            ></textarea>
+
+            <div class="modal-acoes">
+                <button
+                    type="button"
+                    class="btn-secundario"
+                    onclick="fecharModalCancelamento()"
+                >
+                    Voltar
+                </button>
+
+                <button
+                    type="button"
+                    class="btn-perigo"
+                    onclick="confirmarCancelamentoCliente()"
+                >
+                    Confirmar cancelamento
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="./js/api.js?v=19"></script>
+    <script src="./js/meus-agendamentos.js?v=19"></script>
+</body>
+</html>

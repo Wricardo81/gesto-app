@@ -310,6 +310,17 @@
             text-align: center;
         }
 
+        .link-meus-agendamentos {
+            display: inline-flex;
+            margin-top: 12px;
+            color: var(--cor-destaque, #f59e0b);
+            font-weight: 800;
+            text-decoration: none;
+            border: 1px solid rgba(245, 158, 11, 0.28);
+            border-radius: 999px;
+            padding: 10px 14px;
+        }
+
         @media (max-width: 520px) {
             body {
                 padding: 14px;
@@ -336,6 +347,12 @@
                 <div id="logo-loja" class="logo-loja">
                     Logo
                 </div>
+
+                <a href="#"
+                    id="link-meus-agendamentos"
+                    class="link-meus-agendamentos"
+                >Meus agendamentos
+                </a>
 
                 <div class="header-loja">
                     <h1 id="nome-loja">Carregando...</h1>
@@ -396,7 +413,7 @@
         </div>
     </div>
 
-    <script src="./js/api.js?v=7"></script>
-    <script src="./js/agendamento.js?v=7"></script>
+    <script src="./js/api.js?v=20"></script>
+    <script src="./js/agendamento.js?v=20"></script>
 </body>
 </html>

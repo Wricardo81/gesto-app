@@ -92,6 +92,16 @@ function obterTenantPelaUrl() {
 async function iniciarAplicativo() {
     tenantSlug = obterTenantPelaUrl();
 
+    function configurarLinkMeusAgendamentos() {
+        const link = document.getElementById("link-meus-agendamentos");
+    
+        if (!link || !tenantSlug) {
+            return;
+        }
+    
+        link.href = `./meus-agendamentos.html?tenant=${tenantSlug}`;
+    }
+
     if (!tenantSlug) {
         exibirMensagem(
             "Link de agendamento inválido. Solicite um novo link ao estabelecimento.",
@@ -136,6 +146,7 @@ async function iniciarAplicativo() {
         );
     }
 
+    configurarLinkMeusAgendamentos();
     atualizarBotaoFinalizar();
 }
 

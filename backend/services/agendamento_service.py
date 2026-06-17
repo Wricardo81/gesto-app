@@ -3,6 +3,7 @@ from datetime import date, datetime, timedelta
 from fastapi import HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from uuid import uuid4
 
 import models
 from repositories import agendamento_repository
@@ -116,6 +117,7 @@ def criar_novo_agendamento(
         )
 
     novo_agendamento = models.Agendamento(
+        codigo_publico=uuid4().hex,
         barbearia_slug=tenant_slug,
         cliente_nome=dados.cliente_nome,
         servico=servico.nome,
@@ -129,10 +131,33 @@ def criar_novo_agendamento(
         status="confirmado",
     )
 
-    return agendamento_repository.salvar_agendamento(
+    agendamento_salvo = agendamento_repository.salvar_agendamento(
         db=db,
         agendamento=novo_agendamento,
     )
+
+    if isinstance(agendamento_salvo, dict):
+        agendamento_salvo["codigo_publico"] = novo_agendamento.codigo_publico
+        return agendamento_salvo
+
+    return {
+        "barbearia_slug": novo_agendamento.barbearia_slug,
+        "cliente_nome": novo_agendamento.cliente_nome,
+        "telefone_cliente": novo_agendamento.telefone_cliente,
+        "servico": novo_agendamento.servico,
+        "profissional": novo_agendamento.profissional,
+        "data": (
+            novo_agendamento.data.isoformat()
+            if hasattr(novo_agendamento.data, "isoformat")
+            else str(novo_agendamento.data)
+        ),
+        "horario": novo_agendamento.horario,
+        "valor": novo_agendamento.valor,
+        "status": novo_agendamento.status,
+        "codigo_publico": novo_agendamento.codigo_publico,
+        "id": novo_agendamento.id,
+    }
+
 
 
 # ==========================================
@@ -197,15 +222,15 @@ def obter_horarios_disponiveis(
     fechamento = config.hora_fechamento if config else 18
 
     agendamentos = (
-    db.query(models.Agendamento)
-    .filter(
-        models.Agendamento.barbearia_slug == tenant_slug,
-        models.Agendamento.profissional == profissional_nome,
-        models.Agendamento.data == data_alvo,
-        models.Agendamento.status != "cancelado",
+        db.query(models.Agendamento)
+        .filter(
+            models.Agendamento.barbearia_slug == tenant_slug,
+            models.Agendamento.profissional == profissional_nome,
+            models.Agendamento.data == data_alvo,
+            models.Agendamento.status != "cancelado",
+        )
+        .all()
     )
-    .all()
-)
 
     intervalos_ocupados = []
 

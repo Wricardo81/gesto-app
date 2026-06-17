@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -17,6 +17,10 @@ STATUS_AGENDAMENTO_PERMITIDOS = {
     "faltou",
 }
 
+
+class CancelarAgendamentoCliente(BaseModel):
+    telefone_cliente: str
+    motivo_cancelamento: str | None = None
 
 class AtualizarStatusAgendamento(BaseModel):
     status: str
@@ -81,11 +85,126 @@ def confirmar_agendamento(
 # 3. FUNÇÃO AUXILIAR: SERIALIZAR AGENDAMENTO
 # ==========================================
 
+def serializar_agendamento_publico(
+    agendamento: models.Agendamento,
+) -> dict:
+    return {
+        "id": agendamento.id,
+        "codigo_publico": agendamento.codigo_publico,
+        "cliente_nome": agendamento.cliente_nome,
+        "servico": agendamento.servico,
+        "profissional": agendamento.profissional,
+        "data": (
+            agendamento.data.isoformat()
+            if hasattr(agendamento.data, "isoformat")
+            else str(agendamento.data)
+        ),
+        "horario": agendamento.horario,
+        "valor": float(agendamento.valor or 0),
+        "status": agendamento.status or "confirmado",
+        "motivo_cancelamento": agendamento.motivo_cancelamento,
+        "cancelado_por": agendamento.cancelado_por,
+        "cancelado_em": (
+            agendamento.cancelado_em.isoformat()
+            if agendamento.cancelado_em
+            else None
+        ),
+    }
+
+
+def obter_configuracao_cancelamento(
+    db: Session,
+    tenant_slug: str,
+) -> int:
+    configuracao = (
+        db.query(models.ConfiguracaoAgenda)
+        .filter(
+            models.ConfiguracaoAgenda.barbearia_slug == tenant_slug
+        )
+        .first()
+    )
+
+    if not configuracao:
+        return 3
+
+    return int(
+        configuracao.limite_cancelamento_horas
+        if configuracao.limite_cancelamento_horas is not None
+        else 3
+    )
+
+
+def obter_data_hora_agendamento(
+    agendamento: models.Agendamento,
+) -> datetime:
+    try:
+        horario = datetime.strptime(
+            agendamento.horario,
+            "%H:%M",
+        ).time()
+
+        return datetime.combine(
+            agendamento.data,
+            horario,
+        )
+
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Horário do agendamento está inválido.",
+        )
+
+
+def calcular_permissao_cancelamento_cliente(
+    agendamento: models.Agendamento,
+    limite_cancelamento_horas: int,
+) -> dict:
+    status = agendamento.status or "confirmado"
+    agora = datetime.now()
+    data_hora_agendada = obter_data_hora_agendamento(agendamento)
+
+    if status == "cancelado":
+        return {
+            "pode_cancelar": False,
+            "motivo": "Este agendamento já está cancelado.",
+        }
+
+    if status in ["concluido", "faltou"]:
+        return {
+            "pode_cancelar": False,
+            "motivo": "Este agendamento não pode mais ser cancelado.",
+        }
+
+    if agora >= data_hora_agendada:
+        return {
+            "pode_cancelar": False,
+            "motivo": "Este agendamento já passou.",
+        }
+
+    prazo_limite = data_hora_agendada - timedelta(
+        hours=max(0, limite_cancelamento_horas)
+    )
+
+    if agora > prazo_limite:
+        return {
+            "pode_cancelar": False,
+            "motivo": (
+                "O prazo para cancelamento online expirou. "
+                "Entre em contato com o estabelecimento."
+            ),
+        }
+
+    return {
+        "pode_cancelar": True,
+        "motivo": "",
+    }
+
 def serializar_agendamento_admin(
     agendamento: models.Agendamento,
 ) -> dict:
     return {
         "id": agendamento.id,
+        "codigo_publico": agendamento.codigo_publico,
         "cliente_nome": agendamento.cliente_nome,
         "telefone_cliente": agendamento.telefone_cliente,
         "status": agendamento.status or "confirmado",
@@ -364,4 +483,175 @@ def obter_historico_cliente_admin(
             serializar_agendamento_admin(agendamento)
             for agendamento in historico
         ],
+    }
+
+@router.get("/api/{tenant_slug}/agendamentos/publico")
+def listar_agendamentos_cliente_publico(
+    tenant_slug: str,
+    telefone: str = Query(...),
+    db: Session = Depends(get_db),
+):
+    telefone_normalizado = normalizar_telefone_cliente(telefone)
+
+    if not telefone_normalizado:
+        raise HTTPException(
+            status_code=422,
+            detail="Telefone inválido.",
+        )
+
+    limite_cancelamento_horas = obter_configuracao_cancelamento(
+        db,
+        tenant_slug,
+    )
+
+    agendamentos = (
+        db.query(models.Agendamento)
+        .filter(
+            models.Agendamento.barbearia_slug == tenant_slug,
+        )
+        .order_by(
+            models.Agendamento.data.desc(),
+            models.Agendamento.horario.desc(),
+        )
+        .all()
+    )
+
+    agendamentos_cliente = [
+        agendamento
+        for agendamento in agendamentos
+        if normalizar_telefone_cliente(
+            agendamento.telefone_cliente
+        ) == telefone_normalizado
+    ]
+
+    return {
+        "telefone": telefone_normalizado,
+        "limite_cancelamento_horas": limite_cancelamento_horas,
+        "total": len(agendamentos_cliente),
+        "agendamentos": [
+            {
+                **serializar_agendamento_publico(agendamento),
+                **calcular_permissao_cancelamento_cliente(
+                    agendamento,
+                    limite_cancelamento_horas,
+                ),
+            }
+            for agendamento in agendamentos_cliente
+        ],
+    }
+
+
+@router.get("/api/{tenant_slug}/agendamentos/publico/{codigo_publico}")
+def obter_agendamento_cliente_publico(
+    tenant_slug: str,
+    codigo_publico: str,
+    db: Session = Depends(get_db),
+):
+    agendamento = (
+        db.query(models.Agendamento)
+        .filter(
+            models.Agendamento.barbearia_slug == tenant_slug,
+            models.Agendamento.codigo_publico == codigo_publico,
+        )
+        .first()
+    )
+
+    if not agendamento:
+        raise HTTPException(
+            status_code=404,
+            detail="Agendamento não encontrado.",
+        )
+
+    limite_cancelamento_horas = obter_configuracao_cancelamento(
+        db,
+        tenant_slug,
+    )
+
+    return {
+        "limite_cancelamento_horas": limite_cancelamento_horas,
+        "agendamento": {
+            **serializar_agendamento_publico(agendamento),
+            **calcular_permissao_cancelamento_cliente(
+                agendamento,
+                limite_cancelamento_horas,
+            ),
+        },
+    }
+
+
+@router.put("/api/{tenant_slug}/agendamentos/publico/{codigo_publico}/cancelar")
+def cancelar_agendamento_cliente_publico(
+    tenant_slug: str,
+    codigo_publico: str,
+    dados: CancelarAgendamentoCliente,
+    db: Session = Depends(get_db),
+):
+    telefone_normalizado = normalizar_telefone_cliente(
+        dados.telefone_cliente
+    )
+
+    if not telefone_normalizado:
+        raise HTTPException(
+            status_code=422,
+            detail="Telefone inválido.",
+        )
+
+    agendamento = (
+        db.query(models.Agendamento)
+        .filter(
+            models.Agendamento.barbearia_slug == tenant_slug,
+            models.Agendamento.codigo_publico == codigo_publico,
+        )
+        .first()
+    )
+
+    if not agendamento:
+        raise HTTPException(
+            status_code=404,
+            detail="Agendamento não encontrado.",
+        )
+
+    telefone_agendamento = normalizar_telefone_cliente(
+        agendamento.telefone_cliente
+    )
+
+    if telefone_agendamento != telefone_normalizado:
+        raise HTTPException(
+            status_code=403,
+            detail="Telefone não corresponde ao agendamento.",
+        )
+
+    limite_cancelamento_horas = obter_configuracao_cancelamento(
+        db,
+        tenant_slug,
+    )
+
+    permissao = calcular_permissao_cancelamento_cliente(
+        agendamento,
+        limite_cancelamento_horas,
+    )
+
+    if not permissao["pode_cancelar"]:
+        raise HTTPException(
+            status_code=403,
+            detail=permissao["motivo"],
+        )
+
+    motivo = (
+        dados.motivo_cancelamento.strip()
+        if dados.motivo_cancelamento
+        else "Cancelado pelo cliente"
+    )
+
+    agendamento.status = "cancelado"
+    agendamento.motivo_cancelamento = motivo
+    agendamento.cancelado_por = "cliente"
+    agendamento.cancelado_em = datetime.utcnow()
+
+    db.commit()
+    db.refresh(agendamento)
+
+    return {
+        "mensagem": "Agendamento cancelado com sucesso.",
+        "agendamento": serializar_agendamento_publico(agendamento),
     }

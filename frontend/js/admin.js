@@ -317,6 +317,74 @@ async function realizarLogin(event) {
     }
 }
 
+function alternarMenuAdmin() {
+    const menu = document.getElementById("admin-tabs");
+
+    if (!menu) {
+        return;
+    }
+
+    menu.classList.toggle("aberto");
+}
+
+
+function mostrarSecaoAdmin(secaoId) {
+    const secoes = document.querySelectorAll(".secao-admin");
+    const botoes = document.querySelectorAll(".admin-tab");
+
+    secoes.forEach((secao) => {
+        secao.classList.toggle(
+            "ativa",
+            secao.id === secaoId
+        );
+    });
+
+    botoes.forEach((botao) => {
+        botao.classList.toggle(
+            "ativa",
+            botao.dataset.secao === secaoId
+        );
+    });
+
+    localStorage.setItem(
+        "gesto_admin_secao_ativa",
+        secaoId
+    );
+
+    const menu = document.getElementById("admin-tabs");
+
+    if (menu) {
+        menu.classList.remove("aberto");
+    }
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+    });
+}
+
+
+function inicializarNavegacaoAdmin() {
+    const botoes = document.querySelectorAll(".admin-tab");
+
+    botoes.forEach((botao) => {
+        botao.addEventListener("click", () => {
+            mostrarSecaoAdmin(botao.dataset.secao);
+        });
+    });
+
+    const secaoSalva = localStorage.getItem(
+        "gesto_admin_secao_ativa"
+    );
+
+    mostrarSecaoAdmin(
+        secaoSalva || "secao-dashboard"
+    );
+}
+
+
+window.alternarMenuAdmin = alternarMenuAdmin;
+
 
 function iniciarPainel() {
     if (!existeSessaoLocal()) {
@@ -352,6 +420,7 @@ function iniciarPainel() {
         atualizarLinkPublico();
         registrarListenersDePreview();
         registrarListenersCRM();
+        inicializarNavegacaoAdmin();
         
         carregarTudo();
 

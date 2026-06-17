@@ -77,7 +77,7 @@ class ConfiguracaoAgenda(Base):
 
     hora_abertura = Column(Integer, default=9)
     hora_fechamento = Column(Integer, default=18)
-
+    limite_cancelamento_horas = Column(Integer, default=3, nullable=False)
     cor_tema = Column(String, default="#f59e0b")
     cor_fundo = Column(String, default="#0f172a")
     endereco = Column(String, default="")

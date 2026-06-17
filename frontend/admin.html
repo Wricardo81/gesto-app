@@ -777,6 +777,25 @@
                             <input type="number" id="hora-fechamento" min="0" max="23">
                         </div>
 
+                        <div class="campo-form">
+                            <label for="limite-cancelamento-horas">
+                                Limite para cancelamento pelo cliente
+                            </label>
+                        
+                            <input
+                                type="number"
+                                id="limite-cancelamento-horas"
+                                min="0"
+                                step="1"
+                                placeholder="Ex: 3"
+                            >
+                        
+                            <small>
+                                Quantas horas antes do atendimento o cliente poderá cancelar sozinho.
+                                Use 0 para permitir cancelamento até o horário do atendimento.
+                            </small>
+                        </div>
+
                         <div class="campo">
                             <label>Cor principal</label>
                             <input type="color" id="cor-tema">
@@ -973,8 +992,8 @@
         </section>
     </main>
 
-    <script src="./js/api.js?v=17"></script>
-    <script src="./js/auth.js?v=17"></script>
-    <script src="./js/admin.js?v=17"></script>
+    <script src="./js/api.js?v=18"></script>
+    <script src="./js/auth.js?v=18"></script>
+    <script src="./js/admin.js?v=18"></script>
 </body>
 </html>

@@ -471,6 +471,9 @@ async function carregarConfiguracaoAtual() {
         const campoFacebook = document.getElementById("facebook-url");
         const campoTiktok = document.getElementById("tiktok-url");
         const campoSite = document.getElementById("site-url");
+        const campoLimiteCancelamento = document.getElementById(
+            "limite-cancelamento-horas"
+        );
 
         if (campoAbertura) campoAbertura.value = config.abertura ?? 9;
         if (campoFechamento) campoFechamento.value = config.fechamento ?? 18;
@@ -494,6 +497,10 @@ async function carregarConfiguracaoAtual() {
         if (campoFacebook) campoFacebook.value = config.facebook_url || "";
         if (campoTiktok) campoTiktok.value = config.tiktok_url || "";
         if (campoSite) campoSite.value = config.site_url || "";
+        if (campoLimiteCancelamento) {
+            campoLimiteCancelamento.value =
+                config.limite_cancelamento_horas ?? 3;
+        }
 
         marcarCheckbox(
             "captar-whatsapp-lembretes",
@@ -532,6 +539,9 @@ async function salvarConfiguracao(opcoes = {}) {
         const payload = {
             abertura,
             fechamento,
+            limite_cancelamento_horas: Number(
+                valorCampo("limite-cancelamento-horas", 3)
+            ),
             cor_tema: valorCampo("cor-tema", "#f59e0b"),
             cor_fundo: valorCampo("cor-fundo", "#0f172a"),
             endereco: valorCampo(

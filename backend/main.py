@@ -21,6 +21,7 @@ from routers import saas_router
 from routers import upload_router
 from routers import cliente_router
 from routers import bloqueio_router
+from routers import agenda_router
 
 app = FastAPI()
 
@@ -59,6 +60,7 @@ app.include_router(saas_router.router)
 app.include_router(upload_router.router)
 app.include_router(cliente_router.router)
 app.include_router(bloqueio_router.router)
+app.include_router(agenda_router.router)
 
 # ==========================================
 # MÓDULO MESTRE: PAINEL SAAS & STRIPE

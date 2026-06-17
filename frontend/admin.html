@@ -713,6 +713,37 @@
             display: none !important;
         }
 
+        .rodape-creditos {
+            margin-top: 36px;
+            padding: 20px 16px;
+            text-align: center;
+            border-top: 1px solid var(--borda-suave, rgba(255,255,255,0.12));
+            color: var(--texto-secundario, #94a3b8);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .rodape-creditos strong {
+            display: block;
+            color: var(--texto-principal, #f8fafc);
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        .rodape-creditos span {
+            display: block;
+        }
+
+        .rodape-creditos a {
+            color: var(--destaque, var(--cor-destaque, #f59e0b));
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .rodape-creditos a:hover {
+            text-decoration: underline;
+        }
+
         @media (max-width: 760px) {
             .btn-menu-mobile {
                 display: block;
@@ -1249,7 +1280,23 @@
                     </table>
                 </div>
             </section>
+
+            <footer class="rodape-creditos">
+                <strong>Desenvolvido por Engenharia de Bits</strong>
+            
+                <span>
+                    E-mail:
+                    <a href="mailto:Engenhariadebits@hotmail.com">
+                        Engenhariadebits@hotmail.com
+                    </a>
+                </span>
+            
+                <span>
+                    Redes sociais: @engenhariadebits
+                </span>
+            </footer>
     </main>
+    
 
     <script src="./js/api.js?v=24"></script>
     <script src="./js/auth.js?v=24"></script>

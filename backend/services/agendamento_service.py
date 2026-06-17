@@ -164,6 +164,41 @@ def criar_novo_agendamento(
 # MOTOR DE HORÁRIOS DISPONÍVEIS
 # ==========================================
 
+def horario_atinge_bloqueio(
+    horario: str,
+    duracao_minutos: int,
+    bloqueio: models.BloqueioAgenda,
+) -> bool:
+    if bloqueio.dia_inteiro:
+        return True
+
+    if not bloqueio.horario_inicio or not bloqueio.horario_fim:
+        return False
+
+    inicio_proposto = datetime.strptime(
+        horario,
+        "%H:%M",
+    )
+
+    fim_proposto = inicio_proposto + timedelta(
+        minutes=duracao_minutos
+    )
+
+    inicio_bloqueio = datetime.strptime(
+        bloqueio.horario_inicio,
+        "%H:%M",
+    )
+
+    fim_bloqueio = datetime.strptime(
+        bloqueio.horario_fim,
+        "%H:%M",
+    )
+
+    return (
+        max(inicio_proposto, inicio_bloqueio)
+        < min(fim_proposto, fim_bloqueio)
+    )
+
 def horario_ainda_pode_ser_agendado(
     data_agendamento: date,
     horario: str,
@@ -294,13 +329,43 @@ def obter_horarios_disponiveis(
                 "%H:%M"
             )
 
-            if horario_ainda_pode_ser_agendado(
-                data_alvo,
-                horario_formatado,
+            existe_bloqueio = any(
+                horario_atinge_bloqueio(
+                    horario_formatado,
+                    duracao_minutos,
+                    bloqueio,
+                )
+                for bloqueio in bloqueios_relevantes
+            )
+
+            if (
+                not existe_bloqueio
+                and horario_ainda_pode_ser_agendado(
+                    data_alvo,
+                    horario_formatado,
+                )
             ):
                 horarios_livres.append(
                     horario_formatado
                 )
+
+            bloqueios = (
+            db.query(models.BloqueioAgenda)
+            .filter(
+                models.BloqueioAgenda.barbearia_slug == tenant_slug,
+                models.BloqueioAgenda.data == data_alvo,
+            )
+            .all()
+        )
+
+        bloqueios_relevantes = [
+            bloqueio
+            for bloqueio in bloqueios
+            if (
+                not bloqueio.profissional
+                or bloqueio.profissional == profissional_nome
+            )
+        ]
 
         hora_atual += passo_grade
 

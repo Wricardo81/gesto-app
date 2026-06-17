@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Float, Date, DateTime, Boolean, UniqueConstraint
+from sqlalchemy import Boolean, Column, Date, DateTime, Float, Integer, String, UniqueConstraint
 
 from database import Base
+from datetime import datetime
 
 
 # ==========================================
@@ -110,3 +111,26 @@ class Profissional(Base):
     id = Column(Integer, primary_key=True, index=True)
     barbearia_slug = Column(String, index=True)
     nome = Column(String)
+
+class BloqueioAgenda(Base):
+    __tablename__ = "bloqueios_agenda"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    barbearia_slug = Column(String, index=True, nullable=False)
+
+    # Se profissional for None ou vazio, o bloqueio vale para todos.
+    profissional = Column(String, index=True, nullable=True)
+
+    data = Column(Date, index=True, nullable=False)
+
+    # Para bloqueio parcial.
+    horario_inicio = Column(String, nullable=True)
+    horario_fim = Column(String, nullable=True)
+
+    # Se True, bloqueia o dia inteiro.
+    dia_inteiro = Column(Boolean, default=False, nullable=False)
+
+    motivo = Column(String, nullable=True)
+
+    criado_em = Column(DateTime, default=datetime.utcnow, nullable=False)

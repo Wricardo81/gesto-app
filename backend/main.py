@@ -19,6 +19,7 @@ from routers import configuracao_router
 from routers import auth_router
 from routers import saas_router
 from routers import upload_router
+from routers import cliente_router
 
 app = FastAPI()
 
@@ -55,6 +56,7 @@ app.include_router(configuracao_router.router)
 app.include_router(auth_router.router)
 app.include_router(saas_router.router)
 app.include_router(upload_router.router)
+app.include_router(cliente_router.router)
 
 # ==========================================
 # MÓDULO MESTRE: PAINEL SAAS & STRIPE

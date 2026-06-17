@@ -1,6 +1,7 @@
 let tenantSlugLogado = "";
 let configuracaoAtual = {};
 let listenersDePreviewRegistrados = false;
+let listenersCRMRegistrados = false;
 
 /* =========================================================
    UTILITÁRIOS
@@ -348,8 +349,11 @@ function iniciarPainel() {
         .getElementById("tag-tenant")
         .innerText = `@${tenantSlugLogado}`;
 
-    atualizarLinkPublico();
-    registrarListenersDePreview();
+        atualizarLinkPublico();
+        registrarListenersDePreview();
+        registrarListenersCRM();
+        
+        carregarTudo();
 
     async function atualizarStatusAgendamento(id, status) {
         const confirmarAlteracao = confirm(
@@ -1300,6 +1304,145 @@ async function abrirHistoricoCliente(telefone) {
 window.abrirHistoricoCliente = abrirHistoricoCliente;
 window.fecharHistoricoCliente = fecharHistoricoCliente;
 
+function registrarListenersCRM() {
+    if (listenersCRMRegistrados) {
+        return;
+    }
+
+    listenersCRMRegistrados = true;
+
+    const inputBusca = document.getElementById("busca-clientes-crm");
+    const botaoBuscar = document.getElementById("btn-buscar-clientes-crm");
+    const botaoLimpar = document.getElementById("btn-limpar-busca-clientes-crm");
+
+    if (botaoBuscar) {
+        botaoBuscar.addEventListener("click", () => {
+            carregarClientesCRM(
+                inputBusca?.value || ""
+            );
+        });
+    }
+
+    if (botaoLimpar) {
+        botaoLimpar.addEventListener("click", () => {
+            if (inputBusca) {
+                inputBusca.value = "";
+            }
+
+            carregarClientesCRM();
+        });
+    }
+
+    if (inputBusca) {
+        inputBusca.addEventListener("keydown", (evento) => {
+            if (evento.key === "Enter") {
+                evento.preventDefault();
+
+                carregarClientesCRM(
+                    inputBusca.value || ""
+                );
+            }
+        });
+    }
+}
+
+
+async function carregarClientesCRM(busca = "") {
+    const tbody = document.getElementById("lista-clientes-crm");
+
+    if (!tbody) {
+        return;
+    }
+
+    const parametros = new URLSearchParams();
+
+    if (busca.trim()) {
+        parametros.set("busca", busca.trim());
+    }
+
+    const query = parametros.toString();
+
+    const endpoint = query
+        ? `/api/${tenantSlugLogado}/admin/clientes?${query}`
+        : `/api/${tenantSlugLogado}/admin/clientes`;
+
+    try {
+        const dados = await apiRequest(
+            endpoint,
+            {
+                auth: true,
+            }
+        );
+
+        document.getElementById("visor-total-clientes").textContent =
+            dados.total_clientes || 0;
+
+        document.getElementById("visor-clientes-recorrentes").textContent =
+            dados.clientes_recorrentes || 0;
+
+        document.getElementById("visor-faturamento-crm").textContent =
+            formatarMoeda(dados.faturamento_total_concluido || 0);
+
+        document.getElementById("visor-ticket-medio-crm").textContent =
+            formatarMoeda(dados.ticket_medio_geral || 0);
+
+        tbody.innerHTML = "";
+
+        if (!dados.clientes || !dados.clientes.length) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="11" class="mensagem-tabela">
+                        Nenhum cliente encontrado.
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
+
+        for (const cliente of dados.clientes) {
+            const tr = document.createElement("tr");
+
+            tr.innerHTML = `
+                <td>
+                    <span class="cliente-nome-crm">
+                        ${cliente.nome || "Cliente"}
+                    </span>
+
+                    <span class="cliente-detalhe-crm">
+                        Último serviço:
+                        ${cliente.ultimo_servico || "-"}
+                    </span>
+                </td>
+
+                <td>${cliente.telefone || "-"}</td>
+                <td>${cliente.total_agendamentos || 0}</td>
+                <td>${cliente.total_concluidos || 0}</td>
+                <td>${cliente.total_cancelados || 0}</td>
+                <td>${cliente.total_faltas || 0}</td>
+                <td>${formatarMoeda(cliente.faturamento_total_concluido || 0)}</td>
+                <td>${formatarMoeda(cliente.ticket_medio || 0)}</td>
+                <td>${formatarDataBR(cliente.ultima_visita)}</td>
+                <td>${formatarDataBR(cliente.proximo_agendamento)}</td>
+                <td>
+                    <button
+                        type="button"
+                        class="btn-mini-crm"
+                        onclick="abrirHistoricoCliente('${cliente.telefone}')"
+                    >
+                        Histórico
+                    </button>
+                </td>
+            `;
+
+            tbody.appendChild(tr);
+        }
+
+    } catch (erro) {
+        tratarErro(erro);
+    }
+}
+
 
 async function carregarTudo() {
     await Promise.all([
@@ -1307,6 +1450,7 @@ async function carregarTudo() {
         carregarEquipe(),
         carregarServicos(),
         carregarAgendamentos(),
+        carregarClientesCRM(),
     ]);
 }
 

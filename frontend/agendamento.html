@@ -32,7 +32,8 @@
             margin: 0;
             padding: 20px;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
             min-height: 100vh;
         }
 
@@ -322,6 +323,8 @@
         }
 
         .rodape-creditos {
+            width: 100%;
+            max-width: 560px;
             margin-top: 36px;
             padding: 20px 16px;
             text-align: center;
@@ -350,6 +353,111 @@
 
         .rodape-creditos a:hover {
             text-decoration: underline;
+        }
+
+        .btn-menu-publico {
+            display: none;
+            width: 100%;
+            margin-bottom: 12px;
+            background: var(--destaque);
+            color: #0f172a;
+            border: none;
+            padding: 13px 16px;
+            border-radius: 12px;
+            font-weight: 900;
+            cursor: pointer;
+        }
+
+        .etapas-agendamento {
+            position: sticky;
+            top: 12px;
+            z-index: 20;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 10px;
+            margin-bottom: 18px;
+            background: rgba(15, 23, 42, 0.88);
+            border: 1px solid var(--borda-suave);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .etapa-agendamento {
+            flex: 1;
+            min-width: 96px;
+            background: rgba(255,255,255,0.04);
+            color: var(--texto-principal);
+            border: 1px solid var(--borda-suave);
+            border-radius: 999px;
+            padding: 10px 12px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .etapa-agendamento:hover {
+            border-color: var(--destaque);
+        }
+
+        .etapa-agendamento.ativa {
+            background: var(--destaque);
+            color: #0f172a;
+            border-color: var(--destaque);
+        }
+
+        .secao-agendamento:not(.ativa) {
+            display: none;
+        }
+
+        .acoes-etapa {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .btn-voltar-etapa,
+        .btn-avancar-etapa {
+            width: 100%;
+            border: 1px solid var(--borda-suave);
+            border-radius: 12px;
+            padding: 13px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .btn-voltar-etapa {
+            background: rgba(255,255,255,0.04);
+            color: var(--texto-principal);
+        }
+
+        .btn-avancar-etapa {
+            background: var(--destaque);
+            color: #0f172a;
+            border-color: var(--destaque);
+        }
+
+        @media (max-width: 520px) {
+            .btn-menu-publico {
+                display: block;
+            }
+
+            .etapas-agendamento {
+                display: none;
+                position: static;
+            }
+
+            .etapas-agendamento.aberto {
+                display: grid;
+                grid-template-columns: 1fr;
+            }
+
+            .etapa-agendamento {
+                width: 100%;
+                border-radius: 12px;
+                text-align: left;
+            }
         }
 
         @media (max-width: 520px) {
@@ -397,31 +505,126 @@
             </div>
         </section>
 
-        <div class="secao">
+        <button
+            type="button"
+            class="btn-menu-publico"
+            onclick="alternarMenuPublico()"
+        >
+            ☰ Etapas do agendamento
+        </button>
+
+        <nav class="etapas-agendamento" id="etapas-agendamento">
+            <button
+                type="button"
+                class="etapa-agendamento ativa"
+                data-etapa="etapa-servico"
+            >
+                1. Serviço
+            </button>
+
+            <button
+                type="button"
+                class="etapa-agendamento"
+                data-etapa="etapa-profissional"
+            >
+                2. Profissional
+            </button>
+
+            <button
+                type="button"
+                class="etapa-agendamento"
+                data-etapa="etapa-horario"
+            >
+                3. Horário
+            </button>
+
+            <button
+                type="button"
+                class="etapa-agendamento"
+                data-etapa="etapa-dados"
+            >
+                4. Confirmar
+            </button>
+        </nav>
+
+        <div class="secao secao-agendamento ativa" id="etapa-servico">
             <h3>1. Escolha o serviço</h3>
             <div id="lista-servicos" class="grid-opcoes">
                 Carregando cardápio...
             </div>
+            <div class="acoes-etapa">
+                <button
+                    type="button"
+                    class="btn-avancar-etapa"
+                    onclick="mostrarEtapaPublica('etapa-profissional')"
+                >
+                    Próximo: profissional
+                </button>
+            </div>
         </div>
 
-        <div class="secao">
+        <div class="secao secao-agendamento" id="etapa-profissional">
             <h3>2. Escolha o profissional</h3>
             <div id="lista-profissionais" class="grid-opcoes">
                 Carregando equipe...
             </div>
+            <div class="acoes-etapa">
+                <button
+                    type="button"
+                    class="btn-voltar-etapa"
+                    onclick="mostrarEtapaPublica('etapa-servico')"
+                >
+                    Voltar
+                </button>
+            
+                <button
+                    type="button"
+                    class="btn-avancar-etapa"
+                    onclick="mostrarEtapaPublica('etapa-horario')"
+                >
+                    Próximo: data e horário
+                </button>
+            </div>
         </div>
 
-        <div class="secao">
+        <div class="secao secao-agendamento" id="etapa-horario">
             <h3>3. Data e horário</h3>
             <input type="date" id="input-data" class="input-form">
             <div id="msg-horarios" class="carregando">
                 Buscando horários disponíveis...
             </div>
             <div id="lista-horarios" class="grid-horarios"></div>
+            <div class="acoes-etapa">
+                <button
+                    type="button"
+                    class="btn-voltar-etapa"
+                    onclick="mostrarEtapaPublica('etapa-profissional')"
+                >
+                    Voltar
+                </button>
+            
+                <button
+                    type="button"
+                    class="btn-avancar-etapa"
+                    onclick="mostrarEtapaPublica('etapa-dados')"
+                >
+                    Próximo: confirmar
+                </button>
+            </div>
         </div>
 
-        <div class="secao">
+        <div class="secao secao-agendamento" id="etapa-dados">
             <h3>4. Seus dados</h3>
+
+            <div class="acoes-etapa">
+                <button
+                    type="button"
+                    class="btn-voltar-etapa"
+                    onclick="mostrarEtapaPublica('etapa-horario')"
+                >
+                    Voltar para horários
+                </button>
+            </div>
 
             <input type="text" id="cliente-nome" class="input-form" placeholder="Seu nome completo">
             <input type="tel" id="cliente-telefone" class="input-form" placeholder="Seu WhatsApp">
@@ -459,7 +662,7 @@
         </span>
     </footer>
 
-    <script src="./js/api.js?v=20"></script>
-    <script src="./js/agendamento.js?v=20"></script>
+    <script src="./js/api.js?v=26"></script>
+    <script src="./js/agendamento.js?v=26"></script>
 </body>
 </html>

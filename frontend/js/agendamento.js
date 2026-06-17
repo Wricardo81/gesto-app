@@ -89,6 +89,65 @@ function obterTenantPelaUrl() {
    CARREGAMENTO INICIAL
 ========================================================= */
 
+function alternarMenuPublico() {
+    const menu = document.getElementById("etapas-agendamento");
+
+    if (!menu) {
+        return;
+    }
+
+    menu.classList.toggle("aberto");
+}
+
+
+function mostrarEtapaPublica(etapaId) {
+    const secoes = document.querySelectorAll(".secao-agendamento");
+    const botoes = document.querySelectorAll(".etapa-agendamento");
+
+    secoes.forEach((secao) => {
+        secao.classList.toggle(
+            "ativa",
+            secao.id === etapaId
+        );
+    });
+
+    botoes.forEach((botao) => {
+        botao.classList.toggle(
+            "ativa",
+            botao.dataset.etapa === etapaId
+        );
+    });
+
+    const menu = document.getElementById("etapas-agendamento");
+
+    if (menu) {
+        menu.classList.remove("aberto");
+    }
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+    });
+}
+
+
+function inicializarNavegacaoPublica() {
+    const botoes = document.querySelectorAll(".etapa-agendamento");
+
+    botoes.forEach((botao) => {
+        botao.addEventListener("click", () => {
+            mostrarEtapaPublica(botao.dataset.etapa);
+        });
+    });
+
+    mostrarEtapaPublica("etapa-servico");
+}
+
+
+window.alternarMenuPublico = alternarMenuPublico;
+window.mostrarEtapaPublica = mostrarEtapaPublica;
+
+
 async function iniciarAplicativo() {
     tenantSlug = obterTenantPelaUrl();
 
@@ -147,6 +206,7 @@ async function iniciarAplicativo() {
     }
 
     configurarLinkMeusAgendamentos();
+    inicializarNavegacaoPublica();
     atualizarBotaoFinalizar();
 }
 
@@ -498,6 +558,7 @@ function selecionarServico(botaoSelecionado, servico) {
 
     buscarHorariosLivres();
     atualizarBotaoFinalizar();
+    mostrarEtapaPublica("etapa-profissional");
 }
 
 
@@ -560,6 +621,7 @@ function selecionarProfissional(
 
     buscarHorariosLivres();
     atualizarBotaoFinalizar();
+    mostrarEtapaPublica("etapa-horario");
 }
 
 
@@ -713,6 +775,7 @@ function selecionarHorario(
     reserva.horario = horario;
 
     atualizarBotaoFinalizar();
+    mostrarEtapaPublica("etapa-dados");
 }
 
 

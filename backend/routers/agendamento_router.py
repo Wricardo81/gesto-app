@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -20,6 +20,12 @@ STATUS_AGENDAMENTO_PERMITIDOS = {
 
 class AtualizarStatusAgendamento(BaseModel):
     status: str
+
+class CancelarAgendamentoAdmin(BaseModel):
+    motivo_cancelamento: str
+
+class AtualizarObservacaoInternaAgendamento(BaseModel):
+    observacao_interna: str = ""
 
 # ==========================================
 # DEPENDÊNCIA DO BANCO DE DADOS
@@ -98,6 +104,14 @@ def serializar_agendamento_admin(
         "aceita_promocoes_whatsapp": bool(
             agendamento.aceita_promocoes_whatsapp
         ),
+        "motivo_cancelamento": agendamento.motivo_cancelamento,
+        "cancelado_por": agendamento.cancelado_por,
+        "cancelado_em": (
+            agendamento.cancelado_em.isoformat()
+            if agendamento.cancelado_em
+            else None
+        ),
+        "observacao_interna": agendamento.observacao_interna,
     }
 
 
@@ -193,10 +207,161 @@ def atualizar_status_agendamento_admin(
 
     agendamento.status = novo_status
 
+    if novo_status != "cancelado":
+        agendamento.motivo_cancelamento = None
+        agendamento.cancelado_por = None
+        agendamento.cancelado_em = None
+
     db.commit()
     db.refresh(agendamento)
 
     return {
         "mensagem": "Status atualizado com sucesso.",
         "agendamento": serializar_agendamento_admin(agendamento),
+    }
+
+
+@router.put("/api/{tenant_slug}/admin/agendamentos/{agendamento_id}/cancelar")
+def cancelar_agendamento_admin(
+    tenant_slug: str,
+    agendamento_id: int,
+    dados: CancelarAgendamentoAdmin,
+    db: Session = Depends(get_db),
+    _tenant_autorizado: str = Depends(validar_tenant_logado),
+):
+    motivo = dados.motivo_cancelamento.strip()
+
+    if not motivo:
+        raise HTTPException(
+            status_code=422,
+            detail="Informe o motivo do cancelamento.",
+        )
+
+    agendamento = (
+        db.query(models.Agendamento)
+        .filter(
+            models.Agendamento.id == agendamento_id,
+            models.Agendamento.barbearia_slug == tenant_slug,
+        )
+        .first()
+    )
+
+    if not agendamento:
+        raise HTTPException(
+            status_code=404,
+            detail="Agendamento não encontrado.",
+        )
+
+    agendamento.status = "cancelado"
+    agendamento.motivo_cancelamento = motivo
+    agendamento.cancelado_por = "admin"
+    agendamento.cancelado_em = datetime.utcnow()
+
+    db.commit()
+    db.refresh(agendamento)
+
+    return {
+        "mensagem": "Agendamento cancelado com sucesso.",
+        "agendamento": serializar_agendamento_admin(agendamento),
+    }
+
+
+@router.put("/api/{tenant_slug}/admin/agendamentos/{agendamento_id}/observacao")
+def atualizar_observacao_interna_agendamento(
+    tenant_slug: str,
+    agendamento_id: int,
+    dados: AtualizarObservacaoInternaAgendamento,
+    db: Session = Depends(get_db),
+    _tenant_autorizado: str = Depends(validar_tenant_logado),
+):
+    agendamento = (
+        db.query(models.Agendamento)
+        .filter(
+            models.Agendamento.id == agendamento_id,
+            models.Agendamento.barbearia_slug == tenant_slug,
+        )
+        .first()
+    )
+
+    if not agendamento:
+        raise HTTPException(
+            status_code=404,
+            detail="Agendamento não encontrado.",
+        )
+
+    agendamento.observacao_interna = dados.observacao_interna.strip()
+
+    db.commit()
+    db.refresh(agendamento)
+
+    return {
+        "mensagem": "Observação interna atualizada com sucesso.",
+        "agendamento": serializar_agendamento_admin(agendamento),
+    }
+
+
+def normalizar_telefone_cliente(telefone: str) -> str:
+    return "".join(
+        caractere
+        for caractere in str(telefone or "")
+        if caractere.isdigit()
+    )
+
+
+@router.get("/api/{tenant_slug}/admin/clientes/historico")
+def obter_historico_cliente_admin(
+    tenant_slug: str,
+    telefone: str = Query(...),
+    db: Session = Depends(get_db),
+    _tenant_autorizado: str = Depends(validar_tenant_logado),
+):
+    telefone_normalizado = normalizar_telefone_cliente(telefone)
+
+    if not telefone_normalizado:
+        raise HTTPException(
+            status_code=422,
+            detail="Telefone inválido.",
+        )
+
+    agendamentos = (
+        db.query(models.Agendamento)
+        .filter(
+            models.Agendamento.barbearia_slug == tenant_slug,
+        )
+        .order_by(
+            models.Agendamento.data.desc(),
+            models.Agendamento.horario.desc(),
+        )
+        .all()
+    )
+
+    historico = [
+        agendamento
+        for agendamento in agendamentos
+        if normalizar_telefone_cliente(
+            agendamento.telefone_cliente
+        ) == telefone_normalizado
+    ]
+
+    faturamento_total = sum(
+        float(agendamento.valor or 0)
+        for agendamento in historico
+        if (agendamento.status or "confirmado") == "concluido"
+    )
+
+    cancelamentos = [
+        agendamento
+        for agendamento in historico
+        if (agendamento.status or "") == "cancelado"
+    ]
+
+    return {
+        "telefone": telefone_normalizado,
+        "total_agendamentos": len(historico),
+        "total_cancelamentos": len(cancelamentos),
+        "faturamento_total_concluido": faturamento_total,
+        "agendamentos": [
+            serializar_agendamento_admin(agendamento)
+            for agendamento in historico
+        ],
     }

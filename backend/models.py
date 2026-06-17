@@ -1,12 +1,4 @@
-from sqlalchemy import (
-    Boolean,
-    Column,
-    Date,
-    Float,
-    Integer,
-    String,
-    UniqueConstraint,
-)
+from sqlalchemy import Column, Integer, String, Float, Date, DateTime, Boolean, UniqueConstraint
 
 from database import Base
 
@@ -51,6 +43,11 @@ class Agendamento(Base):
     profissional = Column(String)
     telefone_cliente = Column(String, default="")
     status = Column(String, default="confirmado", nullable=False, index=True)
+
+    motivo_cancelamento = Column(String, nullable=True)
+    cancelado_por = Column(String, nullable=True)
+    cancelado_em = Column(DateTime, nullable=True)
+    observacao_interna = Column(String, nullable=True)
 
     aceita_lembrete_whatsapp = Column(Boolean, default=True)
     aceita_promocoes_whatsapp = Column(Boolean, default=False)

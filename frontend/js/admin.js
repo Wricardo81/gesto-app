@@ -31,6 +31,25 @@ function formatarDataBR(dataISO) {
     return `${partes[2]}/${partes[1]}/${partes[0]}`;
 }
 
+function formatarDataHoraBR(dataHoraISO) {
+    if (!dataHoraISO) {
+        return "-";
+    }
+
+    const data = new Date(dataHoraISO);
+
+    if (Number.isNaN(data.getTime())) {
+        return dataHoraISO;
+    }
+
+    return data.toLocaleString("pt-BR");
+}
+
+
+function normalizarTelefoneCliente(telefone) {
+    return String(telefone || "").replace(/\D/g, "");
+}
+
 
 function valorCampo(id, padrao = "") {
     const elemento = document.getElementById(id);
@@ -954,23 +973,60 @@ async function carregarAgendamentos() {
             tr.appendChild(tdStatus);
             
             const tdAcoes = document.createElement("td");
-                tdAcoes.innerHTML = `
-        <div class="acoes-agendamento">
-            <button type="button" onclick="atualizarStatusAgendamento(${agendamento.id}, 'confirmado')">
-                Confirmar
-            </button>
-            <button type="button" onclick="atualizarStatusAgendamento(${agendamento.id}, 'concluido')">
-                Concluir
-            </button>
-            <button type="button" onclick="atualizarStatusAgendamento(${agendamento.id}, 'cancelado')">
-                Cancelar
-            </button>
-            <button type="button" onclick="atualizarStatusAgendamento(${agendamento.id}, 'faltou')">
-                Faltou
-            </button>
-        </div>
-    `;
+            const observacaoEscapada = String(
+                agendamento.observacao_interna || ""
+            ).replace(/'/g, "\\'");
+            
+            tdAcoes.innerHTML = `
+                <div class="acoes-agendamento">
+                    <button type="button" onclick="atualizarStatusAgendamento(${agendamento.id}, 'confirmado')">
+                        Confirmar
+                    </button>
+            
+                    <button type="button" onclick="atualizarStatusAgendamento(${agendamento.id}, 'concluido')">
+                        Concluir
+                    </button>
+            
+                    <button type="button" onclick="cancelarAgendamentoComMotivo(${agendamento.id})">
+                        Cancelar
+                    </button>
+            
+                    <button type="button" onclick="atualizarStatusAgendamento(${agendamento.id}, 'faltou')">
+                        Faltou
+                    </button>
+            
+                    <button type="button" onclick="abrirHistoricoCliente('${agendamento.telefone_cliente || ""}')">
+                        Histórico
+                    </button>
+            
+                    <button type="button" onclick="atualizarObservacaoAgendamento(${agendamento.id}, '${observacaoEscapada}')">
+                        Obs.
+                    </button>
+                </div>
+            `;
             tr.appendChild(tdAcoes);
+
+            if (agendamento.motivo_cancelamento || agendamento.observacao_interna) {
+                const trDetalhes = document.createElement("tr");
+            
+                trDetalhes.innerHTML = `
+                    <td colspan="9" class="linha-detalhes-agendamento">
+                        ${
+                            agendamento.motivo_cancelamento
+                                ? `<strong>Cancelamento:</strong> ${agendamento.motivo_cancelamento}`
+                                : ""
+                        }
+            
+                        ${
+                            agendamento.observacao_interna
+                                ? `<br><strong>Observação interna:</strong> ${agendamento.observacao_interna}`
+                                : ""
+                        }
+                    </td>
+                `;
+            
+                tbody.appendChild(trDetalhes);
+            }    
             
             tbody.appendChild(tr);
         }
@@ -1000,6 +1056,240 @@ async function carregarAgendamentos() {
 /* =========================================================
    CARREGAMENTO INICIAL
 ========================================================= */
+
+async function cancelarAgendamentoComMotivo(id) {
+    const motivo = prompt(
+        "Informe o motivo do cancelamento:"
+    );
+
+    if (motivo === null) {
+        return;
+    }
+
+    const motivoTratado = motivo.trim();
+
+    if (!motivoTratado) {
+        alert("O motivo do cancelamento é obrigatório.");
+        return;
+    }
+
+    try {
+        await apiRequest(
+            `/api/${tenantSlugLogado}/admin/agendamentos/${id}/cancelar`,
+            {
+                method: "PUT",
+                auth: true,
+                body: {
+                    motivo_cancelamento: motivoTratado,
+                },
+            }
+        );
+
+        exibirMensagemPainel(
+            "Agendamento cancelado com sucesso."
+        );
+
+        await carregarAgendamentos();
+
+    } catch (erro) {
+        tratarErro(erro);
+    }
+}
+
+
+async function atualizarObservacaoAgendamento(id, observacaoAtual = "") {
+    const observacao = prompt(
+        "Observação interna deste agendamento:",
+        observacaoAtual || ""
+    );
+
+    if (observacao === null) {
+        return;
+    }
+
+    try {
+        await apiRequest(
+            `/api/${tenantSlugLogado}/admin/agendamentos/${id}/observacao`,
+            {
+                method: "PUT",
+                auth: true,
+                body: {
+                    observacao_interna: observacao.trim(),
+                },
+            }
+        );
+
+        exibirMensagemPainel(
+            "Observação interna atualizada com sucesso."
+        );
+
+        await carregarAgendamentos();
+
+    } catch (erro) {
+        tratarErro(erro);
+    }
+}
+
+
+window.cancelarAgendamentoComMotivo = cancelarAgendamentoComMotivo;
+window.atualizarObservacaoAgendamento = atualizarObservacaoAgendamento;
+
+
+function garantirModalHistoricoCliente() {
+    let modal = document.getElementById("modal-historico-cliente");
+
+    if (modal) {
+        return modal;
+    }
+
+    modal = document.createElement("div");
+    modal.id = "modal-historico-cliente";
+    modal.className = "modal-historico-cliente";
+    modal.style.display = "none";
+
+    modal.innerHTML = `
+        <div class="modal-historico-overlay" onclick="fecharHistoricoCliente()"></div>
+
+        <div class="modal-historico-card">
+            <div class="modal-historico-header">
+                <div>
+                    <h2>Histórico do Cliente</h2>
+                    <p id="historico-cliente-resumo">
+                        Carregando informações...
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    class="btn-fechar-modal"
+                    onclick="fecharHistoricoCliente()"
+                >
+                    ×
+                </button>
+            </div>
+
+            <div id="historico-cliente-conteudo" class="historico-cliente-conteudo">
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    return modal;
+}
+
+
+function fecharHistoricoCliente() {
+    const modal = document.getElementById("modal-historico-cliente");
+
+    if (modal) {
+        modal.style.display = "none";
+    }
+}
+
+
+async function abrirHistoricoCliente(telefone) {
+    const telefoneNormalizado = normalizarTelefoneCliente(telefone);
+
+    if (!telefoneNormalizado) {
+        alert("Este agendamento não possui telefone válido.");
+        return;
+    }
+
+    const modal = garantirModalHistoricoCliente();
+    const resumo = document.getElementById("historico-cliente-resumo");
+    const conteudo = document.getElementById("historico-cliente-conteudo");
+
+    modal.style.display = "flex";
+    resumo.textContent = "Carregando histórico...";
+    conteudo.innerHTML = "";
+
+    try {
+        const dados = await apiRequest(
+            `/api/${tenantSlugLogado}/admin/clientes/historico?telefone=${telefoneNormalizado}`,
+            {
+                auth: true,
+            }
+        );
+
+        resumo.textContent = `
+            Telefone: ${dados.telefone}
+            • ${dados.total_agendamentos} agendamento(s)
+            • ${dados.total_cancelamentos} cancelamento(s)
+            • ${formatarMoeda(dados.faturamento_total_concluido)} concluído(s)
+        `;
+
+        if (!dados.agendamentos || !dados.agendamentos.length) {
+            conteudo.innerHTML = `
+                <p class="mensagem-vazia">
+                    Nenhum histórico encontrado para este cliente.
+                </p>
+            `;
+            return;
+        }
+
+        conteudo.innerHTML = dados.agendamentos
+            .map((agendamento) => {
+                const status = agendamento.status || "confirmado";
+
+                return `
+                    <div class="card-historico-cliente">
+                        <div class="card-historico-topo">
+                            <strong>${agendamento.servico || "-"}</strong>
+
+                            <span class="badge-status ${classeStatusAgendamento(status)}">
+                                ${traduzirStatusAgendamento(status)}
+                            </span>
+                        </div>
+
+                        <p>
+                            <strong>Data:</strong>
+                            ${formatarDataBR(agendamento.data)}
+                            às ${agendamento.horario || "-"}
+                        </p>
+
+                        <p>
+                            <strong>Profissional:</strong>
+                            ${agendamento.profissional || "-"}
+                        </p>
+
+                        <p>
+                            <strong>Valor:</strong>
+                            ${formatarMoeda(agendamento.valor)}
+                        </p>
+
+                        ${
+                            agendamento.motivo_cancelamento
+                                ? `<p><strong>Motivo do cancelamento:</strong> ${agendamento.motivo_cancelamento}</p>`
+                                : ""
+                        }
+
+                        ${
+                            agendamento.cancelado_em
+                                ? `<p><strong>Cancelado em:</strong> ${formatarDataHoraBR(agendamento.cancelado_em)}</p>`
+                                : ""
+                        }
+
+                        ${
+                            agendamento.observacao_interna
+                                ? `<p><strong>Observação interna:</strong> ${agendamento.observacao_interna}</p>`
+                                : ""
+                        }
+                    </div>
+                `;
+            })
+            .join("");
+
+    } catch (erro) {
+        tratarErro(erro);
+        fecharHistoricoCliente();
+    }
+}
+
+
+window.abrirHistoricoCliente = abrirHistoricoCliente;
+window.fecharHistoricoCliente = fecharHistoricoCliente;
+
 
 async function carregarTudo() {
     await Promise.all([

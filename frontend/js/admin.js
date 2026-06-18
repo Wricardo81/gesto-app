@@ -6,6 +6,9 @@ let listenersBloqueiosRegistrados = false;
 let listenersAgendaVisualRegistrados = false;
 const secoesAdminCarregadas = new Set();
 const secoesAdminCarregando = new Set();
+let timeoutAtualizacaoAgendaVisual = null;
+let agendaVisualEmCarregamento = false;
+let agendaVisualRecarregarDepois = false;
 
 /* =========================================================
    UTILITÁRIOS
@@ -471,7 +474,9 @@ function iniciarPainel() {
             );
     
             await carregarAgendamentos();
-            await carregarAgendaVisualDia();
+            await carregarAgendaVisualDia({
+                forcar: true,
+            });
 
             invalidarSecoesAdmin([
                 "secao-dashboard",
@@ -1272,7 +1277,9 @@ async function cancelarAgendamentoComMotivo(id) {
         );
 
         await carregarAgendamentos();
-        await carregarAgendaVisualDia();
+        await carregarAgendaVisualDia({
+            forcar: true,
+        });
 
         invalidarSecoesAdmin([
             "secao-dashboard",
@@ -1844,8 +1851,10 @@ async function criarBloqueioAgenda(event) {
         configurarDiaInteiroBloqueio();
 
         await carregarBloqueiosAgenda();
-        await carregarAgendaVisualDia();
         await carregarAgendamentos();
+        await carregarAgendaVisualDia({
+            forcar: true,
+        });
 
         invalidarSecoesAdmin([
             "secao-agenda",
@@ -1879,7 +1888,9 @@ async function removerBloqueioAgenda(bloqueioId) {
         );
 
         await carregarBloqueiosAgenda();
-        await carregarAgendaVisualDia();
+        await carregarAgendaVisualDia({
+            forcar: true,
+        });
 
         invalidarSecoesAdmin([
             "secao-agenda",
@@ -1921,6 +1932,82 @@ function obterDataLocalAdmin() {
 }
 
 
+function formatarHorarioAtualizacao() {
+    return new Date().toLocaleTimeString(
+        "pt-BR",
+        {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+        }
+    );
+}
+
+
+function atualizarTextoUltimaAtualizacaoAgenda() {
+    const elemento = document.getElementById("agenda-dia-atualizacao");
+
+    if (!elemento) {
+        return;
+    }
+
+    elemento.textContent = `Última atualização: ${formatarHorarioAtualizacao()}`;
+}
+
+
+function horarioParaMinutos(horario) {
+    const partes = String(horario || "").split(":");
+
+    if (partes.length < 2) {
+        return null;
+    }
+
+    const horas = Number(partes[0]);
+    const minutos = Number(partes[1]);
+
+    if (
+        Number.isNaN(horas)
+        || Number.isNaN(minutos)
+    ) {
+        return null;
+    }
+
+    return horas * 60 + minutos;
+}
+
+
+function slotEstaNoPeriodoAtual(horario, dataAgenda) {
+    if (dataAgenda !== obterDataLocalAdmin()) {
+        return false;
+    }
+
+    const inicioSlot = horarioParaMinutos(horario);
+
+    if (inicioSlot === null) {
+        return false;
+    }
+
+    const agora = new Date();
+    const minutosAgora = agora.getHours() * 60 + agora.getMinutes();
+
+    return (
+        minutosAgora >= inicioSlot
+        && minutosAgora < inicioSlot + 30
+    );
+}
+
+
+function agendarAtualizacaoAgendaVisual() {
+    clearTimeout(timeoutAtualizacaoAgendaVisual);
+
+    timeoutAtualizacaoAgendaVisual = setTimeout(() => {
+        carregarAgendaVisualDia({
+            forcar: true,
+        });
+    }, 350);
+}
+
+
 function registrarListenersAgendaVisual() {
     if (listenersAgendaVisualRegistrados) {
         return;
@@ -1936,11 +2023,11 @@ function registrarListenersAgendaVisual() {
     }
 
     if (campoData) {
-        campoData.addEventListener("change", carregarAgendaVisualDia);
+        campoData.addEventListener("change", agendarAtualizacaoAgendaVisual);
     }
 
     if (campoProfissional) {
-        campoProfissional.addEventListener("change", carregarAgendaVisualDia);
+        campoProfissional.addEventListener("change", agendarAtualizacaoAgendaVisual);
     }
 }
 
@@ -2185,6 +2272,10 @@ function renderizarAgendaVisualDia(dados) {
         return;
     }
 
+    const horariosDaGrade = new Set(
+        linhaDoTempo.map((slot) => slot.horario)
+    );
+    
     for (const slot of linhaDoTempo) {
         const eventosDoHorario = eventos.filter((evento) => {
             return eventoPertenceAoHorario(
@@ -2192,16 +2283,23 @@ function renderizarAgendaVisualDia(dados) {
                 slot.horario
             );
         });
-
+    
+        const horarioAtual = slotEstaNoPeriodoAtual(
+            slot.horario,
+            dados.data
+        );
+    
         const linha = document.createElement("div");
-
-        linha.className = "agenda-linha-horario";
-
+    
+        linha.className = horarioAtual
+            ? "agenda-linha-horario horario-atual"
+            : "agenda-linha-horario";
+    
         linha.innerHTML = `
-            <div class="agenda-horario-label">
+            <div class="agenda-horario-label ${horarioAtual ? "agora" : ""}">
                 ${slot.horario}
             </div>
-
+    
             <div class="agenda-eventos-slot">
                 ${
                     eventosDoHorario.length
@@ -2212,16 +2310,56 @@ function renderizarAgendaVisualDia(dados) {
                 }
             </div>
         `;
-
+    
         container.appendChild(linha);
     }
+    
+    const eventosForaDaGrade = eventos.filter((evento) => {
+        const horarioEvento = String(
+            evento.horario
+            || evento.horario_inicio
+            || ""
+        );
+    
+        return (
+            horarioEvento
+            && !horariosDaGrade.has(horarioEvento)
+        );
+    });
+    
+    if (eventosForaDaGrade.length) {
+        const blocoForaDaGrade = document.createElement("div");
+    
+        blocoForaDaGrade.className = "agenda-eventos-fora-grade";
+    
+        blocoForaDaGrade.innerHTML = `
+            <h4>Eventos fora da grade de horários</h4>
+    
+            ${
+                eventosForaDaGrade
+                    .map(renderizarEventoAgendaVisual)
+                    .join("")
+            }
+        `;
+    
+        container.appendChild(blocoForaDaGrade);
+    }
+    
+    atualizarTextoUltimaAtualizacaoAgenda();
 }
 
 
-async function carregarAgendaVisualDia() {
+async function carregarAgendaVisualDia(opcoes = {}) {
     if (!adminProntoParaRequisicao()) {
         return;
     }
+
+    if (agendaVisualEmCarregamento) {
+        agendaVisualRecarregarDepois = true;
+        return;
+    }
+
+    agendaVisualEmCarregamento = true;
     
     const container = document.getElementById("agenda-visual-lista");
 
@@ -2265,6 +2403,17 @@ async function carregarAgendaVisualDia() {
 
     } catch (erro) {
         tratarErro(erro);
+
+    } finally {
+        agendaVisualEmCarregamento = false;
+
+        if (agendaVisualRecarregarDepois) {
+            agendaVisualRecarregarDepois = false;
+
+            carregarAgendaVisualDia({
+                forcar: true,
+            });
+        }
     }
 }
 

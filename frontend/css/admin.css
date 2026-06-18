@@ -960,3 +960,51 @@
                 min-height: auto;
             }
         }
+
+#agenda-dia-atualizacao {
+    display: inline-block;
+    margin-top: 6px;
+    color: var(--texto-secundario);
+    font-size: 12px;
+}
+
+.agenda-linha-horario.horario-atual .agenda-eventos-slot {
+    border-color: var(--destaque);
+    background: rgba(245, 158, 11, 0.08);
+}
+
+.agenda-horario-label.agora {
+    color: var(--destaque);
+}
+
+.agenda-horario-label.agora::after {
+    content: "Agora";
+    display: block;
+    width: fit-content;
+    margin-top: 4px;
+    margin-left: auto;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: rgba(245, 158, 11, 0.14);
+    color: var(--destaque);
+    font-size: 10px;
+    font-weight: 900;
+}
+
+.agenda-eventos-fora-grade {
+    margin-top: 18px;
+    padding: 14px;
+    border: 1px dashed var(--cor-alerta, #f59e0b);
+    border-radius: 14px;
+    background: rgba(245, 158, 11, 0.08);
+}
+
+.agenda-eventos-fora-grade h4 {
+    margin: 0 0 10px;
+    color: var(--destaque);
+    font-size: 14px;
+}
+
+.agenda-eventos-fora-grade .agenda-evento-card {
+    margin-top: 8px;
+}

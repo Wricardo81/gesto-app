@@ -3,6 +3,7 @@ let configuracaoAtual = {};
 let listenersDePreviewRegistrados = false;
 let listenersCRMRegistrados = false;
 let listenersBloqueiosRegistrados = false;
+let listenersAgendaVisualRegistrados = false;
 
 /* =========================================================
    UTILITÁRIOS
@@ -423,7 +424,7 @@ function iniciarPainel() {
         registrarListenersCRM();
         inicializarNavegacaoAdmin();
         registrarListenersBloqueiosAgenda();
-        
+        registrarListenersAgendaVisual();        
         carregarTudo();
 
     async function atualizarStatusAgendamento(id, status) {
@@ -452,6 +453,7 @@ function iniciarPainel() {
             );
     
             await carregarAgendamentos();
+            await carregarAgendaVisualDia();
     
         } catch (erro) {
             tratarErro(erro);
@@ -1175,6 +1177,7 @@ async function cancelarAgendamentoComMotivo(id) {
         );
 
         await carregarAgendamentos();
+        await carregarAgendaVisualDia();
 
     } catch (erro) {
         tratarErro(erro);
@@ -1729,7 +1732,7 @@ async function criarBloqueioAgenda(event) {
         configurarDiaInteiroBloqueio();
 
         await carregarBloqueiosAgenda();
-
+        await carregarAgendaVisualDia();
         await carregarAgendamentos();
 
         alert("Bloqueio criado com sucesso.");
@@ -1759,6 +1762,7 @@ async function removerBloqueioAgenda(bloqueioId) {
         );
 
         await carregarBloqueiosAgenda();
+        await carregarAgendaVisualDia();
 
         alert("Bloqueio removido com sucesso.");
 
@@ -1784,6 +1788,363 @@ window.removerBloqueioAgenda = removerBloqueioAgenda;
 window.limparFiltroBloqueiosAgenda = limparFiltroBloqueiosAgenda;
 
 
+function obterDataLocalAdmin() {
+    const hoje = new Date();
+
+    const ano = hoje.getFullYear();
+    const mes = String(hoje.getMonth() + 1).padStart(2, "0");
+    const dia = String(hoje.getDate()).padStart(2, "0");
+
+    return `${ano}-${mes}-${dia}`;
+}
+
+
+function registrarListenersAgendaVisual() {
+    if (listenersAgendaVisualRegistrados) {
+        return;
+    }
+
+    listenersAgendaVisualRegistrados = true;
+
+    const campoData = document.getElementById("agenda-visual-data");
+    const campoProfissional = document.getElementById("agenda-visual-profissional");
+
+    if (campoData && !campoData.value) {
+        campoData.value = obterDataLocalAdmin();
+    }
+
+    if (campoData) {
+        campoData.addEventListener("change", carregarAgendaVisualDia);
+    }
+
+    if (campoProfissional) {
+        campoProfissional.addEventListener("change", carregarAgendaVisualDia);
+    }
+}
+
+
+function preencherProfissionaisAgendaVisual(profissionais) {
+    const select = document.getElementById("agenda-visual-profissional");
+
+    if (!select) {
+        return;
+    }
+
+    const valorAtual = select.value;
+
+    select.innerHTML = `
+        <option value="">Todos os profissionais</option>
+    `;
+
+    for (const profissional of profissionais || []) {
+        const option = document.createElement("option");
+
+        option.value = profissional.nome;
+        option.textContent = profissional.nome;
+
+        select.appendChild(option);
+    }
+
+    if (valorAtual) {
+        select.value = valorAtual;
+    }
+}
+
+
+function eventoPertenceAoHorario(evento, horario) {
+    const inicio = String(
+        evento.horario
+        || evento.horario_inicio
+        || ""
+    );
+
+    return inicio === horario;
+}
+
+
+function renderizarAcoesAgendaVisual(evento) {
+    if (evento.tipo === "bloqueio") {
+        return `
+            <div class="agenda-evento-acoes">
+                <button
+                    type="button"
+                    onclick="removerBloqueioAgenda(${evento.id})"
+                >
+                    Remover bloqueio
+                </button>
+            </div>
+        `;
+    }
+
+    const status = evento.status || "confirmado";
+
+    if (status === "cancelado") {
+        return "";
+    }
+
+    return `
+        <div class="agenda-evento-acoes">
+            <button
+                type="button"
+                onclick="atualizarStatusAgendamento(${evento.id}, 'confirmado')"
+            >
+                Confirmar
+            </button>
+
+            <button
+                type="button"
+                onclick="atualizarStatusAgendamento(${evento.id}, 'concluido')"
+            >
+                Concluir
+            </button>
+
+            <button
+                type="button"
+                onclick="cancelarAgendamentoComMotivo(${evento.id})"
+            >
+                Cancelar
+            </button>
+
+            <button
+                type="button"
+                onclick="atualizarStatusAgendamento(${evento.id}, 'faltou')"
+            >
+                Faltou
+            </button>
+
+            <button
+                type="button"
+                onclick="abrirHistoricoCliente('${evento.telefone_cliente || ""}')"
+            >
+                Histórico
+            </button>
+        </div>
+    `;
+}
+
+
+function renderizarEventoAgendaVisual(evento) {
+    if (evento.tipo === "bloqueio") {
+        return `
+            <article class="agenda-evento-card bloqueio">
+                <div class="agenda-evento-topo">
+                    <div>
+                        <strong>Bloqueio de agenda</strong>
+                        <br>
+                        <small>
+                            ${evento.horario_inicio || "-"}
+                            até
+                            ${evento.horario_fim || "-"}
+                        </small>
+                    </div>
+
+                    <span class="badge-status status-cancelado">
+                        Bloqueado
+                    </span>
+                </div>
+
+                <div class="agenda-evento-info">
+                    <span>
+                        Profissional:
+                        ${evento.profissional_label || evento.profissional || "Todos"}
+                    </span>
+
+                    <span>
+                        Tipo:
+                        ${evento.dia_inteiro ? "Dia inteiro" : "Intervalo"}
+                    </span>
+
+                    <span>
+                        Motivo:
+                        ${evento.motivo || "-"}
+                    </span>
+                </div>
+
+                ${renderizarAcoesAgendaVisual(evento)}
+            </article>
+        `;
+    }
+
+    const status = evento.status || "confirmado";
+
+    return `
+        <article class="agenda-evento-card agendamento">
+            <div class="agenda-evento-topo">
+                <div>
+                    <strong>
+                        ${evento.horario || "-"} — ${evento.cliente_nome || "Cliente"}
+                    </strong>
+                    <br>
+                    <small>
+                        ${evento.servico || "-"}
+                        •
+                        ${evento.profissional || "-"}
+                    </small>
+                </div>
+
+                <span class="badge-status ${classeStatusAgendamento(status)}">
+                    ${traduzirStatusAgendamento(status)}
+                </span>
+            </div>
+
+            <div class="agenda-evento-info">
+                <span>
+                    Telefone:
+                    ${evento.telefone_cliente || "-"}
+                </span>
+
+                <span>
+                    Valor:
+                    ${formatarMoeda(evento.valor || 0)}
+                </span>
+
+                <span>
+                    Duração:
+                    ${evento.duracao_minutos || 30} min
+                </span>
+
+                ${
+                    evento.observacao_interna
+                        ? `<span>Obs.: ${evento.observacao_interna}</span>`
+                        : ""
+                }
+            </div>
+
+            ${renderizarAcoesAgendaVisual(evento)}
+        </article>
+    `;
+}
+
+
+function renderizarAgendaVisualDia(dados) {
+    const container = document.getElementById("agenda-visual-lista");
+
+    if (!container) {
+        return;
+    }
+
+    preencherProfissionaisAgendaVisual(dados.profissionais || []);
+
+    const resumo = dados.resumo || {};
+
+    document.getElementById("agenda-dia-total").textContent =
+        resumo.total_agendamentos || 0;
+
+    document.getElementById("agenda-dia-confirmados").textContent =
+        resumo.confirmados || 0;
+
+    document.getElementById("agenda-dia-concluidos").textContent =
+        resumo.concluidos || 0;
+
+    document.getElementById("agenda-dia-cancelados").textContent =
+        resumo.cancelados || 0;
+
+    document.getElementById("agenda-dia-faltas").textContent =
+        resumo.faltas || 0;
+
+    document.getElementById("agenda-dia-previsto").textContent =
+        formatarMoeda(resumo.faturamento_previsto || 0);
+
+    document.getElementById("agenda-dia-faturado").textContent =
+        formatarMoeda(resumo.faturamento_concluido || 0);
+
+    const linhaDoTempo = dados.linha_do_tempo || [];
+    const eventos = dados.eventos || [];
+
+    container.innerHTML = "";
+
+    if (!linhaDoTempo.length) {
+        container.innerHTML = `
+            <div class="mensagem-vazia">
+                Nenhum horário configurado para esta data.
+            </div>
+        `;
+
+        return;
+    }
+
+    for (const slot of linhaDoTempo) {
+        const eventosDoHorario = eventos.filter((evento) => {
+            return eventoPertenceAoHorario(
+                evento,
+                slot.horario
+            );
+        });
+
+        const linha = document.createElement("div");
+
+        linha.className = "agenda-linha-horario";
+
+        linha.innerHTML = `
+            <div class="agenda-horario-label">
+                ${slot.horario}
+            </div>
+
+            <div class="agenda-eventos-slot">
+                ${
+                    eventosDoHorario.length
+                        ? eventosDoHorario
+                            .map(renderizarEventoAgendaVisual)
+                            .join("")
+                        : `<div class="agenda-slot-vazio">Livre</div>`
+                }
+            </div>
+        `;
+
+        container.appendChild(linha);
+    }
+}
+
+
+async function carregarAgendaVisualDia() {
+    const container = document.getElementById("agenda-visual-lista");
+
+    if (!container) {
+        return;
+    }
+
+    const data = obterValorCampo(
+        "agenda-visual-data",
+        obterDataLocalAdmin()
+    );
+
+    const profissional = obterValorCampo(
+        "agenda-visual-profissional",
+        ""
+    );
+
+    const params = new URLSearchParams();
+
+    params.set("data", data);
+
+    if (profissional) {
+        params.set("profissional", profissional);
+    }
+
+    container.innerHTML = `
+        <div class="mensagem-vazia">
+            Carregando agenda visual...
+        </div>
+    `;
+
+    try {
+        const dados = await apiRequest(
+            `/api/${tenantSlugLogado}/admin/agenda-dia?${params.toString()}`,
+            {
+                auth: true,
+            }
+        );
+
+        renderizarAgendaVisualDia(dados);
+
+    } catch (erro) {
+        tratarErro(erro);
+    }
+}
+
+
+window.carregarAgendaVisualDia = carregarAgendaVisualDia;
+
 async function carregarTudo() {
     await Promise.all([
         carregarConfiguracaoAtual(),
@@ -1793,6 +2154,7 @@ async function carregarTudo() {
         carregarClientesCRM(),
         carregarProfissionaisBloqueio(),
         carregarBloqueiosAgenda(),
+        carregarAgendaVisualDia(),
     ]);
 }
 

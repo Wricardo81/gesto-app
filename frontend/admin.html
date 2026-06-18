@@ -597,6 +597,183 @@
             border-bottom: 1px solid var(--borda-suave);
         }
 
+        .agenda-dia-box {
+            margin-bottom: 24px;
+            padding: 18px;
+            border: 1px solid var(--borda-suave);
+            border-radius: 16px;
+            background: rgba(255,255,255,0.025);
+        }
+
+        .agenda-dia-cabecalho {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .agenda-dia-cabecalho h4 {
+            margin: 0 0 6px;
+            font-size: 18px;
+        }
+
+        .agenda-dia-cabecalho p {
+            margin: 0;
+            color: var(--texto-secundario);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .agenda-resumo-grid {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 10px;
+            margin: 18px 0;
+        }
+
+        .agenda-resumo-card {
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--borda-suave);
+            background: rgba(15, 23, 42, 0.55);
+        }
+
+        .agenda-resumo-card span {
+            display: block;
+            color: var(--texto-secundario);
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .agenda-resumo-card strong {
+            font-size: 17px;
+        }
+
+        .agenda-visual-lista {
+            display: grid;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .agenda-linha-horario {
+            display: grid;
+            grid-template-columns: 82px 1fr;
+            gap: 12px;
+            align-items: stretch;
+        }
+
+        .agenda-horario-label {
+            padding-top: 14px;
+            color: var(--destaque);
+            font-weight: 900;
+            font-size: 13px;
+            text-align: right;
+        }
+
+        .agenda-eventos-slot {
+            display: grid;
+            gap: 8px;
+            padding: 10px;
+            min-height: 52px;
+            border-left: 1px solid var(--borda-suave);
+            background: rgba(255,255,255,0.018);
+            border-radius: 12px;
+        }
+
+        .agenda-slot-vazio {
+            color: var(--texto-secundario);
+            font-size: 12px;
+            padding: 8px;
+            opacity: 0.7;
+        }
+
+        .agenda-evento-card {
+            padding: 13px;
+            border-radius: 14px;
+            border: 1px solid var(--borda-suave);
+            background: rgba(30, 41, 59, 0.82);
+        }
+
+        .agenda-evento-card.agendamento {
+            border-left: 4px solid var(--cor-info);
+        }
+
+        .agenda-evento-card.bloqueio {
+            border-left: 4px solid var(--cor-perigo);
+            background: rgba(239, 68, 68, 0.08);
+        }
+
+        .agenda-evento-topo {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .agenda-evento-topo strong {
+            font-size: 14px;
+        }
+
+        .agenda-evento-topo small {
+            color: var(--texto-secundario);
+            font-size: 12px;
+        }
+
+        .agenda-evento-info {
+            display: grid;
+            gap: 4px;
+            color: var(--texto-secundario);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .agenda-evento-acoes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .agenda-evento-acoes button {
+            background: rgba(255,255,255,0.04);
+            color: var(--texto-principal);
+            border: 1px solid var(--borda-suave);
+            border-radius: 8px;
+            padding: 7px 9px;
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .agenda-evento-acoes button:hover {
+            border-color: var(--destaque);
+        }
+
+        @media (max-width: 900px) {
+            .agenda-resumo-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .agenda-dia-cabecalho {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .agenda-linha-horario {
+                grid-template-columns: 1fr;
+            }
+
+            .agenda-horario-label {
+                text-align: left;
+                padding-top: 0;
+            }
+        }
+
         @media (max-width: 980px) {
             .dashboard-grid,
             .layout-grid {
@@ -1157,6 +1334,93 @@
                 <p class="descricao-bloco">
                     Consulte os agendamentos recebidos e o faturamento previsto.
                 </p>
+
+                <div class="agenda-dia-box">
+                    <div class="agenda-dia-cabecalho">
+                        <div>
+                            <h4>Agenda visual do dia</h4>
+                            <p>
+                                Veja agendamentos e bloqueios em uma linha do tempo operacional.
+                            </p>
+                        </div>
+                
+                        <button
+                            type="button"
+                            class="btn-add"
+                            onclick="carregarAgendaVisualDia()"
+                        >
+                            Atualizar agenda do dia
+                        </button>
+                    </div>
+                
+                    <div class="form-grid tres">
+                        <div class="campo">
+                            <label>Data da agenda</label>
+                            <input type="date" id="agenda-visual-data">
+                        </div>
+                
+                        <div class="campo">
+                            <label>Profissional</label>
+                            <select id="agenda-visual-profissional">
+                                <option value="">Todos os profissionais</option>
+                            </select>
+                        </div>
+                
+                        <div class="campo">
+                            <label>&nbsp;</label>
+                            <button
+                                type="button"
+                                class="btn-add"
+                                onclick="carregarAgendaVisualDia()"
+                            >
+                                Ver agenda
+                            </button>
+                        </div>
+                    </div>
+                
+                    <div class="agenda-resumo-grid">
+                        <div class="agenda-resumo-card">
+                            <span>Total</span>
+                            <strong id="agenda-dia-total">0</strong>
+                        </div>
+                
+                        <div class="agenda-resumo-card">
+                            <span>Confirmados</span>
+                            <strong id="agenda-dia-confirmados">0</strong>
+                        </div>
+                
+                        <div class="agenda-resumo-card">
+                            <span>Concluídos</span>
+                            <strong id="agenda-dia-concluidos">0</strong>
+                        </div>
+                
+                        <div class="agenda-resumo-card">
+                            <span>Cancelados</span>
+                            <strong id="agenda-dia-cancelados">0</strong>
+                        </div>
+                
+                        <div class="agenda-resumo-card">
+                            <span>Faltas</span>
+                            <strong id="agenda-dia-faltas">0</strong>
+                        </div>
+                
+                        <div class="agenda-resumo-card">
+                            <span>Previsto</span>
+                            <strong id="agenda-dia-previsto">R$ 0,00</strong>
+                        </div>
+                
+                        <div class="agenda-resumo-card">
+                            <span>Concluído</span>
+                            <strong id="agenda-dia-faturado">R$ 0,00</strong>
+                        </div>
+                    </div>
+                
+                    <div id="agenda-visual-lista" class="agenda-visual-lista">
+                        <div class="mensagem-vazia">
+                            Selecione uma data para visualizar a agenda do dia.
+                        </div>
+                    </div>
+                </div>
             
                 <div class="form-grid tres">
                     <div class="campo">
@@ -1416,8 +1680,8 @@
     </main>
     
 
-    <script src="./js/api.js?v=28"></script>
-    <script src="./js/auth.js?v=28"></script>
-    <script src="./js/admin.js?v=28"></script>
+    <script src="./js/api.js?v=29"></script>
+    <script src="./js/auth.js?v=29"></script>
+    <script src="./js/admin.js?v=29"></script>
 </body>
 </html>

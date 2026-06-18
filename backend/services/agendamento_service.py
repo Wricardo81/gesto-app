@@ -267,6 +267,24 @@ def obter_horarios_disponiveis(
         .all()
     )
 
+    bloqueios = (
+        db.query(models.BloqueioAgenda)
+        .filter(
+            models.BloqueioAgenda.barbearia_slug == tenant_slug,
+            models.BloqueioAgenda.data == data_alvo,
+        )
+        .all()
+    )
+
+    bloqueios_relevantes = [
+        bloqueio
+        for bloqueio in bloqueios
+        if (
+            not bloqueio.profissional
+            or bloqueio.profissional == profissional_nome
+        )
+    ]
+
     intervalos_ocupados = []
 
     for agendamento in agendamentos:

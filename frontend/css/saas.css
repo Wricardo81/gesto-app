@@ -371,3 +371,93 @@ small {
 .rodape-creditos a:hover {
     text-decoration: underline;
 }
+
+.status-teste {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+}
+
+.status-pendente {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.status-vencido {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--cor-perigo);
+}
+
+.status-em-dia {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--cor-sucesso);
+}
+
+.financeiro-info {
+    display: grid;
+    gap: 4px;
+}
+
+.financeiro-info strong {
+    font-size: 13px;
+}
+
+.financeiro-info small {
+    display: block;
+}
+
+.acoes-financeiras {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.acoes-financeiras button {
+    padding: 7px 10px;
+    background: transparent;
+    border: 1px solid var(--borda);
+    border-radius: 8px;
+    color: var(--texto-principal);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.acoes-financeiras button:hover {
+    border-color: var(--cor-foco);
+}
+
+.btn-pagamento {
+    border-color: rgba(16, 185, 129, 0.5) !important;
+    color: var(--cor-sucesso) !important;
+}
+
+.btn-financeiro {
+    border-color: rgba(59, 130, 246, 0.5) !important;
+    color: #60a5fa !important;
+}
+
+@media (max-width: 900px) {
+    .tabela-clientes {
+        min-width: 1100px;
+    }
+}
+
+.mensagem-saas {
+    display: none;
+    margin-bottom: 18px;
+    padding: 13px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--borda);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.mensagem-saas.sucesso {
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--cor-sucesso);
+}
+
+.mensagem-saas.erro {
+    background: rgba(239, 68, 68, 0.12);
+    color: var(--cor-perigo);
+}

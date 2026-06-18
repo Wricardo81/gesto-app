@@ -1,4 +1,5 @@
 import secrets
+from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr, Field
@@ -59,6 +60,152 @@ class NovaBarbearia(BaseModel):
         min_length=8,
         max_length=72,
     )
+
+class AtualizacaoFinanceiraBarbearia(BaseModel):
+    plano_nome: str | None = None
+    valor_mensal: float | None = None
+    status_pagamento: str | None = None
+    vencimento_plano: str | None = None
+    dias_tolerancia: int | None = None
+    marcar_como_pago: bool = False
+
+
+STATUS_PAGAMENTO_VALIDOS = {
+    "em_dia",
+    "pendente",
+    "vencido",
+    "cancelado",
+    "teste",
+}
+
+
+def converter_data_opcional(data_texto: str | None) -> date | None:
+    if not data_texto:
+        return None
+
+    try:
+        return datetime.strptime(
+            data_texto,
+            "%Y-%m-%d",
+        ).date()
+
+    except ValueError:
+        raise HTTPException(
+            status_code=422,
+            detail="Data inválida. Use o formato YYYY-MM-DD.",
+        )
+
+
+def calcular_acesso_financeiro(barbearia: models.Barbearia) -> dict:
+    status_pagamento = getattr(
+        barbearia,
+        "status_pagamento",
+        "em_dia",
+    ) or "em_dia"
+
+    vencimento = getattr(
+        barbearia,
+        "vencimento_plano",
+        None,
+    )
+
+    dias_tolerancia = int(
+        getattr(
+            barbearia,
+            "dias_tolerancia",
+            3,
+        ) or 0
+    )
+
+    hoje = date.today()
+
+    dias_em_atraso = 0
+    pagamento_vencido = False
+    acesso_financeiro_ativo = True
+
+    if vencimento and hoje > vencimento:
+        dias_em_atraso = (hoje - vencimento).days
+        pagamento_vencido = True
+
+    if status_pagamento in {"cancelado", "vencido"}:
+        acesso_financeiro_ativo = False
+
+    if (
+        pagamento_vencido
+        and dias_em_atraso > dias_tolerancia
+        and status_pagamento not in {"teste"}
+    ):
+        acesso_financeiro_ativo = False
+
+    return {
+        "pagamento_vencido": pagamento_vencido,
+        "dias_em_atraso": dias_em_atraso,
+        "acesso_financeiro_ativo": acesso_financeiro_ativo,
+    }
+
+
+def serializar_barbearia_saas(barbearia: models.Barbearia) -> dict:
+    financeiro = calcular_acesso_financeiro(barbearia)
+
+    plano_ativo_manual = bool(
+        getattr(
+            barbearia,
+            "plano_ativo",
+            True,
+        )
+    )
+
+    acesso_ativo = (
+        plano_ativo_manual
+        and financeiro["acesso_financeiro_ativo"]
+    )
+
+    return {
+        "id": barbearia.id,
+        "nome": barbearia.nome,
+        "slug": barbearia.slug,
+        "email": barbearia.email,
+        "plano_ativo": plano_ativo_manual,
+        "acesso_ativo": acesso_ativo,
+
+        "plano_nome": getattr(
+            barbearia,
+            "plano_nome",
+            "Profissional",
+        ),
+        "valor_mensal": float(
+            getattr(
+                barbearia,
+                "valor_mensal",
+                99.0,
+            ) or 0
+        ),
+        "status_pagamento": getattr(
+            barbearia,
+            "status_pagamento",
+            "em_dia",
+        ),
+        "vencimento_plano": (
+            barbearia.vencimento_plano.isoformat()
+            if getattr(barbearia, "vencimento_plano", None)
+            else None
+        ),
+        "dias_tolerancia": int(
+            getattr(
+                barbearia,
+                "dias_tolerancia",
+                3,
+            ) or 0
+        ),
+        "ultimo_pagamento_em": (
+            barbearia.ultimo_pagamento_em.isoformat()
+            if getattr(barbearia, "ultimo_pagamento_em", None)
+            else None
+        ),
+
+        "pagamento_vencido": financeiro["pagamento_vencido"],
+        "dias_em_atraso": financeiro["dias_em_atraso"],
+    }
 
 
 def serializar_barbearia(
@@ -143,7 +290,7 @@ def listar_clientes_do_software(
     )
 
     return [
-        serializar_barbearia(cliente)
+        serializar_barbearia_saas(cliente)
         for cliente in clientes
     ]
 
@@ -188,7 +335,12 @@ def registrar_nova_barbearia(
             dados.senha
         ),
         plano_ativo=True,
-    )
+        plano_nome="Profissional",
+        valor_mensal=99.0,
+        status_pagamento="teste",
+        vencimento_plano=date.today() + timedelta(days=7),
+        dias_tolerancia=3,
+        )
 
     try:
         db.add(nova_barbearia)
@@ -203,7 +355,7 @@ def registrar_nova_barbearia(
             detail="Esse link ou e-mail já estão em uso.",
         )
 
-    return serializar_barbearia(
+    return serializar_barbearia_saas(
         nova_barbearia
     )
 
@@ -243,3 +395,90 @@ def alterar_status_assinatura(
     return serializar_barbearia(
         cliente
     )
+
+@router.put("/barbearias/{barbearia_id}/financeiro")
+def atualizar_financeiro_barbearia(
+    barbearia_id: int,
+    dados: AtualizacaoFinanceiraBarbearia,
+    db: Session = Depends(get_db),
+    _usuario_admin: str = Depends(
+        obter_saas_admin_logado
+    ),
+):
+    barbearia = (
+        db.query(models.Barbearia)
+        .filter(models.Barbearia.id == barbearia_id)
+        .first()
+    )
+
+    if not barbearia:
+        raise HTTPException(
+            status_code=404,
+            detail="Empresa não encontrada.",
+        )
+
+    if dados.plano_nome is not None:
+        plano_nome = dados.plano_nome.strip()
+
+        if not plano_nome:
+            raise HTTPException(
+                status_code=422,
+                detail="O nome do plano não pode ser vazio.",
+            )
+
+        barbearia.plano_nome = plano_nome
+
+    if dados.valor_mensal is not None:
+        if dados.valor_mensal < 0:
+            raise HTTPException(
+                status_code=422,
+                detail="O valor mensal não pode ser negativo.",
+            )
+
+        barbearia.valor_mensal = dados.valor_mensal
+
+    if dados.status_pagamento is not None:
+        status = dados.status_pagamento.strip().lower()
+
+        if status not in STATUS_PAGAMENTO_VALIDOS:
+            raise HTTPException(
+                status_code=422,
+                detail="Status de pagamento inválido.",
+            )
+
+        barbearia.status_pagamento = status
+
+    if dados.vencimento_plano is not None:
+        barbearia.vencimento_plano = converter_data_opcional(
+            dados.vencimento_plano
+        )
+
+    if dados.dias_tolerancia is not None:
+        if dados.dias_tolerancia < 0:
+            raise HTTPException(
+                status_code=422,
+                detail="Dias de tolerância não pode ser negativo.",
+            )
+
+        barbearia.dias_tolerancia = dados.dias_tolerancia
+
+    if dados.marcar_como_pago:
+        barbearia.status_pagamento = "em_dia"
+        barbearia.ultimo_pagamento_em = datetime.utcnow()
+
+        vencimento_atual = barbearia.vencimento_plano or date.today()
+
+        if vencimento_atual < date.today():
+            vencimento_atual = date.today()
+
+        barbearia.vencimento_plano = vencimento_atual + timedelta(
+            days=30
+        )
+
+    db.commit()
+    db.refresh(barbearia)
+
+    return {
+        "mensagem": "Dados financeiros atualizados com sucesso.",
+        "barbearia": serializar_barbearia_saas(barbearia),
+    }

@@ -17,6 +17,15 @@ class Barbearia(Base):
     email = Column(String, unique=True, index=True, nullable=True)
     senha_hash = Column(String, nullable=True)
 
+    plano_nome = Column(String, default="Profissional", nullable=False)
+    valor_mensal = Column(Float, default=99.0, nullable=False)
+
+    status_pagamento = Column(String, default="em_dia", nullable=False)
+    vencimento_plano = Column(Date, nullable=True)
+    dias_tolerancia = Column(Integer, default=3, nullable=False)
+
+    ultimo_pagamento_em = Column(DateTime, nullable=True)
+
 
 # ==========================================
 # 1. TABELA DE AGENDAMENTOS

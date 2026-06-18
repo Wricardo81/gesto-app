@@ -4,6 +4,8 @@ let listenersDePreviewRegistrados = false;
 let listenersCRMRegistrados = false;
 let listenersBloqueiosRegistrados = false;
 let listenersAgendaVisualRegistrados = false;
+const secoesAdminCarregadas = new Set();
+const secoesAdminCarregando = new Set();
 
 /* =========================================================
    UTILITÁRIOS
@@ -254,6 +256,10 @@ function atualizarLinkPublico() {
     link.href = `./agendamento.html?tenant=${tenantSlugLogado}`;
 }
 
+function adminProntoParaRequisicao() {
+    return Boolean(tenantSlugLogado && tenantSlugLogado.trim());
+}
+
 
 /* =========================================================
    TRATAMENTO CENTRALIZADO DE ERROS
@@ -363,6 +369,9 @@ function mostrarSecaoAdmin(secaoId) {
         top: 0,
         behavior: "smooth",
     });
+
+    carregarDadosDaSecaoAdmin(secaoId);
+    
 }
 
 
@@ -405,6 +414,14 @@ function iniciarPainel() {
 
     tenantSlugLogado = obterTenantLogado();
 
+    if (!tenantSlugLogado) {
+        alert("Sessão inválida. Faça login novamente.");
+
+        fazerLogout();
+
+        return;
+    }
+
     document
         .getElementById("tela-login")
         .style
@@ -419,13 +436,14 @@ function iniciarPainel() {
         .getElementById("tag-tenant")
         .innerText = `@${tenantSlugLogado}`;
 
-        atualizarLinkPublico();
-        registrarListenersDePreview();
-        registrarListenersCRM();
-        inicializarNavegacaoAdmin();
-        registrarListenersBloqueiosAgenda();
-        registrarListenersAgendaVisual();        
-        carregarTudo();
+    atualizarLinkPublico();
+    registrarListenersDePreview();
+    registrarListenersCRM();
+    registrarListenersBloqueiosAgenda();
+    registrarListenersAgendaVisual();
+    inicializarNavegacaoAdmin();
+
+}
 
     async function atualizarStatusAgendamento(id, status) {
         const confirmarAlteracao = confirm(
@@ -454,6 +472,12 @@ function iniciarPainel() {
     
             await carregarAgendamentos();
             await carregarAgendaVisualDia();
+
+            invalidarSecoesAdmin([
+                "secao-dashboard",
+                "secao-agenda",
+                "secao-clientes-crm",
+            ]);
     
         } catch (erro) {
             tratarErro(erro);
@@ -463,7 +487,7 @@ function iniciarPainel() {
 
     window.atualizarStatusAgendamento = atualizarStatusAgendamento;
     carregarTudo();
-}
+
 
 
 function registrarListenersDePreview() {
@@ -524,6 +548,9 @@ function registrarListenersDePreview() {
 ========================================================= */
 
 async function carregarConfiguracaoAtual() {
+    if (!adminProntoParaRequisicao()) {
+        return;
+    }
     try {
         const config = await apiRequest(
             `/api/${tenantSlugLogado}/configuracoes`
@@ -711,6 +738,10 @@ async function salvarConfiguracao(opcoes = {}) {
 ========================================================= */
 
 async function carregarEquipe() {
+    if (!adminProntoParaRequisicao()) {
+        return;
+    }
+
     const area = document.getElementById("lista-equipe");
 
     try {
@@ -778,6 +809,13 @@ async function salvarProfissional() {
 
         await carregarEquipe();
 
+        invalidarSecoesAdmin([
+            "secao-dashboard",
+            "secao-configuracoes",
+            "secao-agenda",
+            "secao-bloqueios-agenda",
+        ]);
+
         exibirMensagemPainel(
             "Profissional adicionado com sucesso."
         );
@@ -819,6 +857,10 @@ async function deletarProfissional(id) {
 ========================================================= */
 
 async function carregarServicos() {
+    if (!adminProntoParaRequisicao()) {
+        return;
+    }
+
     const area = document.getElementById("lista-cardapio");
 
     try {
@@ -928,6 +970,13 @@ async function salvarServico() {
 
         await carregarServicos();
 
+        invalidarSecoesAdmin([
+            "secao-dashboard",
+            "secao-configuracoes",
+            "secao-agenda",
+            "secao-bloqueios-agenda",
+        ]);
+
         exibirMensagemPainel(
             "Serviço adicionado com sucesso."
         );
@@ -969,6 +1018,10 @@ async function deletarServico(id) {
 ========================================================= */
 
 async function carregarAgendamentos() {
+    if (!adminProntoParaRequisicao()) {
+        return;
+    }
+
     const tbody = document.getElementById("lista-agendamentos");
 
     const dataInicio = valorCampo("filtro-data-inicio", "");
@@ -1139,6 +1192,48 @@ async function carregarAgendamentos() {
     }
 }
 
+async function atualizarStatusAgendamento(id, status) {
+    const confirmarAlteracao = confirm(
+        `Deseja marcar este agendamento como "${traduzirStatusAgendamento(status)}"?`
+    );
+
+    if (!confirmarAlteracao) {
+        return;
+    }
+
+    try {
+        await apiRequest(
+            `/api/${tenantSlugLogado}/admin/agendamentos/${id}/status`,
+            {
+                method: "PUT",
+                auth: true,
+                body: {
+                    status,
+                },
+            }
+        );
+
+        exibirMensagemPainel(
+            "Status do agendamento atualizado com sucesso."
+        );
+
+        invalidarSecoesAdmin([
+            "secao-dashboard",
+            "secao-agenda",
+            "secao-clientes-crm",
+        ]);
+
+        await carregarAgendamentos();
+        await carregarAgendaVisualDia();
+
+    } catch (erro) {
+        tratarErro(erro);
+    }
+}
+
+
+window.atualizarStatusAgendamento = atualizarStatusAgendamento;
+
 
 /* =========================================================
    CARREGAMENTO INICIAL
@@ -1178,6 +1273,12 @@ async function cancelarAgendamentoComMotivo(id) {
 
         await carregarAgendamentos();
         await carregarAgendaVisualDia();
+
+        invalidarSecoesAdmin([
+            "secao-dashboard",
+            "secao-agenda",
+            "secao-clientes-crm",
+        ]);
 
     } catch (erro) {
         tratarErro(erro);
@@ -1422,6 +1523,10 @@ function registrarListenersCRM() {
 
 
 async function carregarClientesCRM(busca = "") {
+    if (!adminProntoParaRequisicao()) {
+        return;
+    }
+
     const tbody = document.getElementById("lista-clientes-crm");
 
     if (!tbody) {
@@ -1575,6 +1680,9 @@ function registrarListenersBloqueiosAgenda() {
 
 
 async function carregarProfissionaisBloqueio() {
+    if (!adminProntoParaRequisicao()) {
+        return;
+    }
     const select = document.getElementById("bloqueio-profissional");
 
     if (!select) {
@@ -1606,6 +1714,10 @@ async function carregarProfissionaisBloqueio() {
 
 
 async function carregarBloqueiosAgenda() {
+    if (!adminProntoParaRequisicao()) {
+        return;
+    }
+
     const tbody = document.getElementById("lista-bloqueios-agenda");
 
     if (!tbody) {
@@ -1735,6 +1847,11 @@ async function criarBloqueioAgenda(event) {
         await carregarAgendaVisualDia();
         await carregarAgendamentos();
 
+        invalidarSecoesAdmin([
+            "secao-agenda",
+            "secao-bloqueios-agenda",
+        ]);
+
         alert("Bloqueio criado com sucesso.");
 
     } catch (erro) {
@@ -1763,6 +1880,11 @@ async function removerBloqueioAgenda(bloqueioId) {
 
         await carregarBloqueiosAgenda();
         await carregarAgendaVisualDia();
+
+        invalidarSecoesAdmin([
+            "secao-agenda",
+            "secao-bloqueios-agenda",
+        ]);
 
         alert("Bloqueio removido com sucesso.");
 
@@ -2097,6 +2219,10 @@ function renderizarAgendaVisualDia(dados) {
 
 
 async function carregarAgendaVisualDia() {
+    if (!adminProntoParaRequisicao()) {
+        return;
+    }
+    
     const container = document.getElementById("agenda-visual-lista");
 
     if (!container) {
@@ -2145,17 +2271,110 @@ async function carregarAgendaVisualDia() {
 
 window.carregarAgendaVisualDia = carregarAgendaVisualDia;
 
+async function carregarDadosDaSecaoAdmin(secaoId, opcoes = {}) {
+    const forcar = Boolean(opcoes.forcar);
+
+    if (!secaoId) {
+        return;
+    }
+
+    if (!tenantSlugLogado) {
+        return;
+    }
+
+    if (
+        secoesAdminCarregando.has(secaoId)
+    ) {
+        return;
+    }
+
+    if (
+        secoesAdminCarregadas.has(secaoId)
+        && !forcar
+    ) {
+        return;
+    }
+
+    secoesAdminCarregando.add(secaoId);
+
+    try {
+        if (secaoId === "secao-dashboard") {
+            await Promise.all([
+                carregarConfiguracaoAtual(),
+                carregarEquipe(),
+                carregarServicos(),
+                carregarAgendamentos(),
+            ]);
+        }
+
+        if (secaoId === "secao-configuracoes") {
+            await Promise.all([
+                carregarConfiguracaoAtual(),
+                carregarEquipe(),
+                carregarServicos(),
+            ]);
+        }
+
+        if (secaoId === "secao-agenda") {
+            await Promise.all([
+                carregarAgendamentos(),
+                carregarAgendaVisualDia(),
+            ]);
+        }
+
+        if (secaoId === "secao-bloqueios-agenda") {
+            await Promise.all([
+                carregarProfissionaisBloqueio(),
+                carregarBloqueiosAgenda(),
+            ]);
+        }
+
+        if (secaoId === "secao-clientes-crm") {
+            await carregarClientesCRM();
+        }
+
+        secoesAdminCarregadas.add(secaoId);
+
+    } catch (erro) {
+        console.error(
+            "Erro ao carregar seção do admin:",
+            secaoId,
+            erro
+        );
+
+        tratarErro(erro);
+
+    } finally {
+        secoesAdminCarregando.delete(secaoId);
+    }
+}
+
+
+function invalidarSecaoAdmin(secaoId) {
+    secoesAdminCarregadas.delete(secaoId);
+}
+
+
+function invalidarSecoesAdmin(secaoIds = []) {
+    secaoIds.forEach((secaoId) => {
+        invalidarSecaoAdmin(secaoId);
+    });
+}
+
+
 async function carregarTudo() {
-    await Promise.all([
-        carregarConfiguracaoAtual(),
-        carregarEquipe(),
-        carregarServicos(),
-        carregarAgendamentos(),
-        carregarClientesCRM(),
-        carregarProfissionaisBloqueio(),
-        carregarBloqueiosAgenda(),
-        carregarAgendaVisualDia(),
-    ]);
+    const secaoSalva = localStorage.getItem(
+        "gesto_admin_secao_ativa"
+    );
+
+    const secaoInicial = secaoSalva || "secao-dashboard";
+
+    await carregarDadosDaSecaoAdmin(
+        secaoInicial,
+        {
+            forcar: true,
+        }
+    );
 }
 
 

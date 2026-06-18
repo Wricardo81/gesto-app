@@ -1,0 +1,466 @@
+:root {
+    --bg-principal: #0f172a;
+    --bg-card: #1e293b;
+    --texto-principal: #f8fafc;
+    --texto-secundario: #94a3b8;
+    --borda-suave: rgba(255, 255, 255, 0.08);
+    --destaque: #f59e0b;
+    --sucesso: #10b981;
+    --erro: #ef4444;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Inter", sans-serif;
+    background:
+        radial-gradient(circle at top left, rgba(245, 158, 11, 0.16), transparent 30%),
+        var(--bg-principal);
+    color: var(--texto-principal);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.container {
+    width: 100%;
+    max-width: 560px;
+}
+
+.hero-marca {
+    background: rgba(30, 41, 59, 0.82);
+    border: 1px solid var(--borda-suave);
+    border-radius: 24px;
+    overflow: hidden;
+    margin-bottom: 22px;
+    box-shadow: 0 14px 40px rgba(0,0,0,0.22);
+}
+
+.banner-loja {
+    min-height: 130px;
+    background:
+        linear-gradient(135deg, rgba(245,158,11,0.22), rgba(15,23,42,0.72)),
+        rgba(255,255,255,0.04);
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+.conteudo-marca {
+    padding: 0 20px 22px;
+    text-align: center;
+}
+
+.logo-loja {
+    width: 92px;
+    height: 92px;
+    border-radius: 24px;
+    margin: -46px auto 14px;
+    background: #0f172a;
+    border: 4px solid var(--bg-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    color: var(--texto-secundario);
+    font-weight: 800;
+    position: relative;
+    z-index: 2;
+}
+
+.logo-loja img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.header-loja h1 {
+    color: var(--destaque);
+    margin: 0 0 6px;
+    font-size: 27px;
+    letter-spacing: -0.8px;
+}
+
+.header-loja p {
+    color: var(--texto-secundario);
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.mensagem-publica {
+    margin-top: 14px;
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--borda-suave);
+    color: var(--texto-principal);
+    font-size: 14px;
+    line-height: 1.5;
+    display: none;
+}
+
+.links-marca {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.links-marca a {
+color: var(--texto-principal);
+text-decoration: none;
+font-size: 12px;
+font-weight: 700;
+border: 1px solid var(--borda-suave);
+border-radius: 999px;
+padding: 8px 11px;
+background: rgba(255,255,255,0.035);
+display: inline-flex;
+align-items: center;
+gap: 6px;
+transition: 0.2s;
+}
+
+.links-marca a:hover {
+border-color: var(--destaque);
+transform: translateY(-1px);
+}
+
+.link-icone {
+font-size: 15px;
+line-height: 1;
+}
+
+.secao {
+    background: rgba(30, 41, 59, 0.86);
+    border: 1px solid var(--borda-suave);
+    border-radius: 18px;
+    padding: 20px;
+    margin-bottom: 18px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.15);
+}
+
+.secao h3 {
+    margin: 0 0 15px;
+    font-size: 16px;
+    border-bottom: 1px solid var(--borda-suave);
+    padding-bottom: 10px;
+}
+
+.grid-opcoes {
+    display: grid;
+    gap: 10px;
+}
+
+.btn-opcao {
+    background: transparent;
+    border: 1px solid var(--borda-suave);
+    color: var(--texto-principal);
+    padding: 15px;
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: left;
+    font-size: 14px;
+    transition: 0.2s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-opcao:hover {
+    border-color: var(--destaque);
+}
+
+.btn-opcao.selecionado {
+    background: var(--destaque);
+    color: #000;
+    border-color: var(--destaque);
+    font-weight: 800;
+}
+
+.grid-horarios {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.btn-horario {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--borda-suave);
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: center;
+    transition: 0.2s;
+}
+
+.btn-horario:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.btn-horario.selecionado {
+    background: var(--destaque);
+    color: #000;
+    font-weight: 800;
+    border-color: var(--destaque);
+}
+
+.input-form {
+    width: 100%;
+    padding: 13px;
+    margin-bottom: 13px;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid var(--borda-suave);
+    border-radius: 10px;
+    color: white;
+    font-family: inherit;
+}
+
+.input-form:focus {
+    outline: none;
+    border-color: var(--destaque);
+}
+
+.checkbox-consentimento {
+    display: none;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.035);
+    border: 1px solid var(--borda-suave);
+    color: var(--texto-secundario);
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.checkbox-consentimento input {
+    margin-top: 2px;
+}
+
+.btn-finalizar {
+    width: 100%;
+    background: var(--destaque);
+    color: #000;
+    padding: 16px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-finalizar:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.carregando {
+    text-align: center;
+    color: var(--destaque);
+    padding: 20px;
+    display: none;
+}
+
+.mensagem-status {
+    min-height: 22px;
+    margin: 15px 0 0;
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.mensagem-status.sucesso {
+    color: var(--sucesso);
+}
+
+.mensagem-status.erro {
+    color: var(--erro);
+}
+
+.mensagem-status.informacao {
+    color: var(--texto-secundario);
+}
+
+.horarios-vazios {
+    grid-column: 1 / -1;
+    color: var(--texto-secundario);
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.link-meus-agendamentos {
+    display: inline-flex;
+    margin-top: 12px;
+    color: var(--cor-destaque, #f59e0b);
+    font-weight: 800;
+    text-decoration: none;
+    border: 1px solid rgba(245, 158, 11, 0.28);
+    border-radius: 999px;
+    padding: 10px 14px;
+}
+
+.rodape-creditos {
+    width: 100%;
+    max-width: 560px;
+    margin-top: 36px;
+    padding: 20px 16px;
+    text-align: center;
+    border-top: 1px solid var(--borda-suave, rgba(255,255,255,0.12));
+    color: var(--texto-secundario, #94a3b8);
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.rodape-creditos strong {
+    display: block;
+    color: var(--texto-principal, #f8fafc);
+    font-size: 14px;
+    margin-bottom: 6px;
+}
+
+.rodape-creditos span {
+    display: block;
+}
+
+.rodape-creditos a {
+    color: var(--destaque, var(--cor-destaque, #f59e0b));
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.rodape-creditos a:hover {
+    text-decoration: underline;
+}
+
+.btn-menu-publico {
+    display: none;
+    width: 100%;
+    margin-bottom: 12px;
+    background: var(--destaque);
+    color: #0f172a;
+    border: none;
+    padding: 13px 16px;
+    border-radius: 12px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.etapas-agendamento {
+    position: sticky;
+    top: 12px;
+    z-index: 20;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 10px;
+    margin-bottom: 18px;
+    background: rgba(15, 23, 42, 0.88);
+    border: 1px solid var(--borda-suave);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+}
+
+.etapa-agendamento {
+    flex: 1;
+    min-width: 96px;
+    background: rgba(255,255,255,0.04);
+    color: var(--texto-principal);
+    border: 1px solid var(--borda-suave);
+    border-radius: 999px;
+    padding: 10px 12px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.etapa-agendamento:hover {
+    border-color: var(--destaque);
+}
+
+.etapa-agendamento.ativa {
+    background: var(--destaque);
+    color: #0f172a;
+    border-color: var(--destaque);
+}
+
+.secao-agendamento:not(.ativa) {
+    display: none;
+}
+
+.acoes-etapa {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.btn-voltar-etapa,
+.btn-avancar-etapa {
+    width: 100%;
+    border: 1px solid var(--borda-suave);
+    border-radius: 12px;
+    padding: 13px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.btn-voltar-etapa {
+    background: rgba(255,255,255,0.04);
+    color: var(--texto-principal);
+}
+
+.btn-avancar-etapa {
+    background: var(--destaque);
+    color: #0f172a;
+    border-color: var(--destaque);
+}
+
+@media (max-width: 520px) {
+    .btn-menu-publico {
+        display: block;
+    }
+
+    .etapas-agendamento {
+        display: none;
+        position: static;
+    }
+
+    .etapas-agendamento.aberto {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .etapa-agendamento {
+        width: 100%;
+        border-radius: 12px;
+        text-align: left;
+    }
+}
+
+@media (max-width: 520px) {
+    body {
+        padding: 14px;
+    }
+
+    .grid-horarios {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .btn-opcao {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

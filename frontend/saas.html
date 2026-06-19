@@ -16,7 +16,7 @@
     >
     <link
         rel="stylesheet"
-        href="./css/saas.css?v=27"
+        href="./css/saas.css?v=4">
 </head>
 
 <body>
@@ -338,6 +338,145 @@
         </div>
     </div>
 
+    <div id="modal-configuracao-empresa" class="modal-saas" style="display: none;">
+        <div class="modal-saas-overlay" onclick="fecharModalConfiguracaoEmpresa()"></div>
+    
+        <div class="modal-saas-card modal-saas-card-grande">
+            <div class="modal-saas-header">
+                <div>
+                    <h2>Configurar empresa</h2>
+                    <p id="modal-configuracao-empresa-subtitulo">
+                        Edite dados de acesso, tenant e diagnóstico da empresa.
+                    </p>
+                </div>
+    
+                <button
+                    type="button"
+                    class="btn-fechar-modal-saas"
+                    onclick="fecharModalConfiguracaoEmpresa()"
+                >
+                    ×
+                </button>
+            </div>
+    
+            <form
+                id="form-configuracao-empresa"
+                class="form-financeiro-saas"
+                onsubmit="salvarConfiguracaoEmpresa(event)"
+            >
+                <input type="hidden" id="config-empresa-id">
+    
+                <div class="grid-modal-saas">
+                    <div class="form-group">
+                        <label for="config-empresa-nome">Nome da empresa</label>
+                        <input
+                            id="config-empresa-nome"
+                            type="text"
+                            required
+                        >
+                    </div>
+    
+                    <div class="form-group">
+                        <label for="config-empresa-email">E-mail/login</label>
+                        <input
+                            id="config-empresa-email"
+                            type="email"
+                            required
+                        >
+                    </div>
+    
+                    <div class="form-group">
+                        <label for="config-empresa-slug">Slug/Tenant</label>
+                        <input
+                            id="config-empresa-slug"
+                            type="text"
+                            required
+                        >
+                        <small>
+                            Alterar o slug muda o link público da empresa.
+                        </small>
+                    </div>
+    
+                    <div class="form-group">
+                        <label for="config-empresa-plano-ativo">Status manual</label>
+                        <select id="config-empresa-plano-ativo">
+                            <option value="true">Liberado manualmente</option>
+                            <option value="false">Bloqueado manualmente</option>
+                        </select>
+                    </div>
+                </div>
+    
+                <div class="links-configuracao-empresa">
+                    <button
+                        type="button"
+                        onclick="copiarLinkPublicoEmpresa()"
+                    >
+                        Copiar link público
+                    </button>
+    
+                    <button
+                        type="button"
+                        onclick="copiarLinkAdminEmpresa()"
+                    >
+                        Copiar link admin
+                    </button>
+    
+                    <button
+                        type="button"
+                        onclick="carregarDiagnosticoEmpresa()"
+                    >
+                        Ver diagnóstico
+                    </button>
+                </div>
+    
+                <div id="diagnostico-empresa" class="diagnostico-empresa" style="display: none;"></div>
+    
+                <div class="bloco-redefinir-senha">
+                    <h3>Redefinir senha</h3>
+    
+                    <p>
+                        Use esta opção quando o administrador da empresa perder o acesso.
+                    </p>
+    
+                    <div class="form-group">
+                        <label for="config-empresa-nova-senha">Nova senha</label>
+                        <input
+                            id="config-empresa-nova-senha"
+                            type="password"
+                            placeholder="Mínimo 8 caracteres"
+                        >
+                    </div>
+    
+                    <button
+                        type="button"
+                        class="btn-financeiro"
+                        onclick="redefinirSenhaEmpresa()"
+                    >
+                        Redefinir senha
+                    </button>
+                </div>
+    
+                <div class="modal-saas-acoes">
+                    <button
+                        type="button"
+                        class="btn-sair"
+                        onclick="fecharModalConfiguracaoEmpresa()"
+                    >
+                        Cancelar
+                    </button>
+    
+                    <button
+                        type="submit"
+                        class="btn-criar"
+                        id="btn-salvar-config-empresa"
+                    >
+                        Salvar dados
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <footer class="rodape-creditos">
         <strong>Desenvolvido por Engenharia de Bits</strong>
     
@@ -353,7 +492,7 @@
         </span>
     </footer>
 
-    <script src="./js/api.js?v=36"></script>
-    <script src="./js/saas.js?v=36"></script>
+    <script src="./js/api.js?v=38"></script>
+    <script src="./js/saas.js?v=38"></script>
 </body>
 </html>

@@ -563,3 +563,125 @@ small {
         width: 100%;
     }
 }
+
+.modal-saas-card-grande {
+    max-width: 760px;
+}
+
+.grid-modal-saas {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.form-group small {
+    display: block;
+    margin-top: 6px;
+    color: var(--texto-secundario);
+    font-size: 12px;
+}
+
+.links-configuracao-empresa {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.links-configuracao-empresa button {
+    padding: 9px 12px;
+    border: 1px solid var(--borda);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--texto-principal);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.links-configuracao-empresa button:hover {
+    border-color: var(--cor-foco);
+}
+
+.diagnostico-empresa {
+    margin-top: 14px;
+    padding: 14px;
+    border: 1px solid var(--borda);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.diagnostico-empresa h3 {
+    margin: 0 0 10px;
+    color: var(--cor-foco);
+    font-size: 15px;
+}
+
+.diagnostico-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.diagnostico-item {
+    padding: 10px;
+    border: 1px solid var(--borda);
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.18);
+}
+
+.diagnostico-item span {
+    display: block;
+    color: var(--texto-secundario);
+    font-size: 12px;
+}
+
+.diagnostico-item strong {
+    display: block;
+    margin-top: 4px;
+    color: var(--texto-principal);
+    font-size: 16px;
+}
+
+.lista-problemas-diagnostico {
+    margin: 0;
+    padding-left: 18px;
+    color: var(--cor-perigo);
+}
+
+.diagnostico-ok {
+    color: var(--cor-sucesso);
+    font-weight: 800;
+}
+
+.bloco-redefinir-senha {
+    margin-top: 18px;
+    padding: 14px;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    border-radius: 14px;
+    background: rgba(245, 158, 11, 0.08);
+}
+
+.bloco-redefinir-senha h3 {
+    margin: 0 0 6px;
+    color: #f59e0b;
+    font-size: 15px;
+}
+
+.bloco-redefinir-senha p {
+    margin: 0 0 12px;
+    color: var(--texto-secundario);
+    font-size: 13px;
+}
+
+@media (max-width: 720px) {
+    .grid-modal-saas,
+    .diagnostico-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.btn-configurar {
+    border-color: rgba(100, 255, 218, 0.45) !important;
+    color: var(--cor-foco) !important;
+}

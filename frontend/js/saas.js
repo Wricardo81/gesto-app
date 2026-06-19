@@ -1,6 +1,7 @@
 const SAAS_TOKEN_STORAGE_KEY =
     "gesto_saas_token";
-    let clientesSaasCache = [];
+let clientesSaasCache = [];
+let empresaConfiguracaoAtual = null;
 
 function obterTokenSaas() {
     return localStorage.getItem(
@@ -445,7 +446,7 @@ async function carregarClientes() {
                     >
                         Marcar pago
                     </button>
-        
+
                     <button
                         type="button"
                         class="btn-financeiro"
@@ -453,7 +454,15 @@ async function carregarClientes() {
                     >
                         Financeiro
                     </button>
-        
+
+                    <button
+                        type="button"
+                        class="btn-configurar"
+                        onclick="abrirModalConfiguracaoEmpresa(${cliente.id})"
+                    >
+                        Configurar
+                    </button>
+
                     <button
                         type="button"
                         onclick="alterarStatus(${cliente.id})"
@@ -790,6 +799,361 @@ async function salvarFinanceiroEmpresa(event) {
 window.abrirModalFinanceiroSaas = abrirModalFinanceiroSaas;
 window.fecharModalFinanceiroSaas = fecharModalFinanceiroSaas;
 
+
+function obterClienteSaasPorId(id) {
+    return clientesSaasCache.find((cliente) => {
+        return Number(cliente.id) === Number(id);
+    });
+}
+
+
+function abrirModalConfiguracaoEmpresa(id) {
+    const cliente = obterClienteSaasPorId(id);
+
+    if (!cliente) {
+        exibirMensagemSaas(
+            "Empresa não encontrada na lista atual.",
+            "erro"
+        );
+
+        return;
+    }
+
+    empresaConfiguracaoAtual = cliente;
+
+    document.getElementById("config-empresa-id").value =
+        cliente.id;
+
+    document.getElementById("config-empresa-nome").value =
+        cliente.nome || "";
+
+    document.getElementById("config-empresa-email").value =
+        cliente.email || "";
+
+    document.getElementById("config-empresa-slug").value =
+        cliente.slug || "";
+
+    document.getElementById("config-empresa-plano-ativo").value =
+        String(Boolean(cliente.plano_ativo));
+
+    document.getElementById("config-empresa-nova-senha").value =
+        "";
+
+    document.getElementById("modal-configuracao-empresa-subtitulo").textContent =
+        `${cliente.nome} • ${cliente.email || "sem e-mail"}`;
+
+    const diagnostico = document.getElementById("diagnostico-empresa");
+
+    if (diagnostico) {
+        diagnostico.style.display = "none";
+        diagnostico.innerHTML = "";
+    }
+
+    document.getElementById("modal-configuracao-empresa").style.display =
+        "flex";
+}
+
+
+function fecharModalConfiguracaoEmpresa() {
+    const modal = document.getElementById("modal-configuracao-empresa");
+
+    if (modal) {
+        modal.style.display = "none";
+    }
+}
+
+
+async function copiarTextoSaas(texto, mensagemSucesso) {
+    try {
+        await navigator.clipboard.writeText(texto);
+
+        exibirMensagemSaas(mensagemSucesso);
+
+    } catch (erro) {
+        console.error(erro);
+
+        window.prompt(
+            "Copie o texto abaixo:",
+            texto
+        );
+    }
+}
+
+
+function montarLinkPublicoEmpresa(cliente) {
+    const origem = window.location.origin;
+    const caminho = window.location.pathname.replace(
+        "saas.html",
+        "agendamento.html"
+    );
+
+    return `${origem}${caminho}?tenant=${cliente.slug}`;
+}
+
+
+function montarLinkAdminEmpresa(cliente) {
+    const origem = window.location.origin;
+    const caminho = window.location.pathname.replace(
+        "saas.html",
+        "admin.html"
+    );
+
+    return `${origem}${caminho}?tenant=${cliente.slug}`;
+}
+
+
+function copiarLinkPublicoEmpresa() {
+    if (!empresaConfiguracaoAtual) {
+        return;
+    }
+
+    copiarTextoSaas(
+        montarLinkPublicoEmpresa(empresaConfiguracaoAtual),
+        "Link público copiado."
+    );
+}
+
+
+function copiarLinkAdminEmpresa() {
+    if (!empresaConfiguracaoAtual) {
+        return;
+    }
+
+    copiarTextoSaas(
+        montarLinkAdminEmpresa(empresaConfiguracaoAtual),
+        "Link admin copiado."
+    );
+}
+
+
+async function salvarConfiguracaoEmpresa(event) {
+    if (event) {
+        event.preventDefault();
+    }
+
+    const id = document.getElementById("config-empresa-id").value;
+
+    const nome = document
+        .getElementById("config-empresa-nome")
+        .value
+        .trim();
+
+    const email = document
+        .getElementById("config-empresa-email")
+        .value
+        .trim()
+        .toLowerCase();
+
+    const slug = document
+        .getElementById("config-empresa-slug")
+        .value
+        .trim()
+        .toLowerCase();
+
+    const planoAtivo =
+        document.getElementById("config-empresa-plano-ativo").value === "true";
+
+    if (
+        !id
+        || nome.length < 2
+        || !email
+        || !slug
+    ) {
+        exibirMensagemSaas(
+            "Preencha nome, e-mail e slug corretamente.",
+            "erro"
+        );
+
+        return;
+    }
+
+    const clienteAtual = empresaConfiguracaoAtual;
+
+    if (
+        clienteAtual
+        && clienteAtual.slug
+        && clienteAtual.slug !== slug
+    ) {
+        const confirmou = window.confirm(
+            "Você está alterando o slug/tenant da empresa. Links antigos podem parar de funcionar. Deseja continuar?"
+        );
+
+        if (!confirmou) {
+            return;
+        }
+    }
+
+    const botao = document.getElementById("btn-salvar-config-empresa");
+
+    botao.disabled = true;
+    botao.textContent = "Salvando...";
+
+    try {
+        const resposta = await saasRequest(
+            `/api/saas/barbearias/${id}/dados`,
+            {
+                method: "PUT",
+                body: {
+                    nome,
+                    email,
+                    slug,
+                    plano_ativo: planoAtivo,
+                },
+            }
+        );
+
+        empresaConfiguracaoAtual = resposta.barbearia;
+
+        await carregarClientes();
+
+        fecharModalConfiguracaoEmpresa();
+
+        exibirMensagemSaas(
+            resposta.mensagem || "Dados da empresa atualizados com sucesso."
+        );
+
+    } catch (erro) {
+        tratarErroSaas(erro);
+
+    } finally {
+        botao.disabled = false;
+        botao.textContent = "Salvar dados";
+    }
+}
+
+
+async function redefinirSenhaEmpresa() {
+    const id = document.getElementById("config-empresa-id").value;
+
+    const novaSenha = document
+        .getElementById("config-empresa-nova-senha")
+        .value;
+
+    if (
+        !id
+        || !novaSenha
+        || novaSenha.length < 8
+    ) {
+        exibirMensagemSaas(
+            "Informe uma nova senha com pelo menos 8 caracteres.",
+            "erro"
+        );
+
+        return;
+    }
+
+    const confirmou = window.confirm(
+        "Deseja realmente redefinir a senha desta empresa?"
+    );
+
+    if (!confirmou) {
+        return;
+    }
+
+    try {
+        await saasRequest(
+            `/api/saas/barbearias/${id}/senha`,
+            {
+                method: "PUT",
+                body: {
+                    nova_senha: novaSenha,
+                },
+            }
+        );
+
+        document.getElementById("config-empresa-nova-senha").value =
+            "";
+
+        exibirMensagemSaas(
+            "Senha redefinida com sucesso."
+        );
+
+    } catch (erro) {
+        tratarErroSaas(erro);
+    }
+}
+
+
+function renderizarDiagnosticoEmpresa(dados) {
+    const container = document.getElementById("diagnostico-empresa");
+
+    if (!container) {
+        return;
+    }
+
+    const diagnostico = dados.diagnostico;
+
+    container.style.display = "block";
+
+    const problemasHtml = diagnostico.problemas.length
+        ? `
+            <ul class="lista-problemas-diagnostico">
+                ${
+                    diagnostico.problemas
+                        .map((problema) => `<li>${problema}</li>`)
+                        .join("")
+                }
+            </ul>
+        `
+        : `<p class="diagnostico-ok">Nenhum problema básico encontrado.</p>`;
+
+    container.innerHTML = `
+        <h3>Diagnóstico operacional</h3>
+
+        <div class="diagnostico-grid">
+            <div class="diagnostico-item">
+                <span>Configuração</span>
+                <strong>${diagnostico.configuracao_existe ? "OK" : "Ausente"}</strong>
+            </div>
+
+            <div class="diagnostico-item">
+                <span>Serviços</span>
+                <strong>${diagnostico.total_servicos}</strong>
+            </div>
+
+            <div class="diagnostico-item">
+                <span>Profissionais</span>
+                <strong>${diagnostico.total_profissionais}</strong>
+            </div>
+
+            <div class="diagnostico-item">
+                <span>Agendamentos</span>
+                <strong>${diagnostico.total_agendamentos}</strong>
+            </div>
+        </div>
+
+        ${problemasHtml}
+    `;
+}
+
+
+async function carregarDiagnosticoEmpresa() {
+    const id = document.getElementById("config-empresa-id").value;
+
+    if (!id) {
+        return;
+    }
+
+    const container = document.getElementById("diagnostico-empresa");
+
+    if (container) {
+        container.style.display = "block";
+        container.innerHTML = "Carregando diagnóstico...";
+    }
+
+    try {
+        const dados = await saasRequest(
+            `/api/saas/barbearias/${id}/diagnostico`
+        );
+
+        renderizarDiagnosticoEmpresa(dados);
+
+    } catch (erro) {
+        tratarErroSaas(erro);
+    }
+}
+
+
 async function iniciarPainelSaas() {
     document
         .getElementById("form-login-saas")
@@ -848,3 +1212,11 @@ window.addEventListener(
     "DOMContentLoaded",
     iniciarPainelSaas
 );
+
+window.abrirModalConfiguracaoEmpresa = abrirModalConfiguracaoEmpresa;
+window.fecharModalConfiguracaoEmpresa = fecharModalConfiguracaoEmpresa;
+window.copiarLinkPublicoEmpresa = copiarLinkPublicoEmpresa;
+window.copiarLinkAdminEmpresa = copiarLinkAdminEmpresa;
+window.redefinirSenhaEmpresa = redefinirSenhaEmpresa;
+window.carregarDiagnosticoEmpresa = carregarDiagnosticoEmpresa;
+window.salvarConfiguracaoEmpresa = salvarConfiguracaoEmpresa;

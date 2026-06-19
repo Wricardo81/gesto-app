@@ -23,6 +23,7 @@ from routers import upload_router
 from routers import cliente_router
 from routers import bloqueio_router
 from routers import agenda_router
+from routers import suporte_router
 
 app = FastAPI()
 
@@ -63,6 +64,7 @@ app.include_router(cliente_router.router)
 app.include_router(bloqueio_router.router)
 app.include_router(agenda_router.router)
 app.include_router(aviso_router.router)
+app.include_router(suporte_router.router)
 
 # ==========================================
 # MÓDULO MESTRE: PAINEL SAAS & STRIPE

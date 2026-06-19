@@ -252,3 +252,77 @@ class AvisoDispensadoTenant(Base):
             name="uq_aviso_dispensado_tenant",
         ),
     )
+
+class ChamadoSuporte(Base):
+    __tablename__ = "chamados_suporte"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True,
+    )
+
+    tenant_slug = Column(
+        String,
+        index=True,
+        nullable=False,
+    )
+
+    tipo = Column(
+        String(40),
+        default="erro",
+        nullable=False,
+    )
+
+    titulo = Column(
+        String(160),
+        nullable=False,
+    )
+
+    descricao = Column(
+        Text,
+        nullable=False,
+    )
+
+    status = Column(
+        String(40),
+        default="aberto",
+        nullable=False,
+    )
+
+    pagina_origem = Column(
+        String,
+        nullable=True,
+    )
+
+    contato_nome = Column(
+        String(120),
+        nullable=True,
+    )
+
+    contato_email = Column(
+        String(160),
+        nullable=True,
+    )
+
+    resposta_suporte = Column(
+        Text,
+        nullable=True,
+    )
+
+    criado_em = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )
+
+    atualizado_em = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )
+
+    resolvido_em = Column(
+        DateTime,
+        nullable=True,
+    )

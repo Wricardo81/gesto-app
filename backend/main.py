@@ -8,6 +8,7 @@ from settings import settings
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+from routers import aviso_router
 
 
 
@@ -61,6 +62,7 @@ app.include_router(upload_router.router)
 app.include_router(cliente_router.router)
 app.include_router(bloqueio_router.router)
 app.include_router(agenda_router.router)
+app.include_router(aviso_router.router)
 
 # ==========================================
 # MÓDULO MESTRE: PAINEL SAAS & STRIPE

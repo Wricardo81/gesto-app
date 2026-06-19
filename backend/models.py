@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Date, DateTime, Float, Integer, String, UniqueConstraint
+from sqlalchemy import Boolean, Column, Date, DateTime, Float, Integer, String, Text, UniqueConstraint
 
 from database import Base
 from datetime import datetime
@@ -143,3 +143,75 @@ class BloqueioAgenda(Base):
     motivo = Column(String, nullable=True)
 
     criado_em = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class AvisoPlataforma(Base):
+    __tablename__ = "avisos_plataforma"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True,
+    )
+
+    titulo = Column(
+        String(160),
+        nullable=False,
+    )
+
+    mensagem = Column(
+        Text,
+        nullable=False,
+    )
+
+    tipo = Column(
+        String(40),
+        default="info",
+        nullable=False,
+    )
+
+    tenant_slug = Column(
+        String,
+        index=True,
+        nullable=True,
+    )
+
+    ativo = Column(
+        Boolean,
+        default=True,
+        nullable=False,
+    )
+
+    global_para_todos = Column(
+        Boolean,
+        default=True,
+        nullable=False,
+    )
+
+    fixado = Column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+
+    dispensavel = Column(
+        Boolean,
+        default=True,
+        nullable=False,
+    )
+
+    data_inicio = Column(
+        Date,
+        nullable=True,
+    )
+
+    data_fim = Column(
+        Date,
+        nullable=True,
+    )
+
+    criado_em = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )

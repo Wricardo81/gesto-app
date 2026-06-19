@@ -1,5 +1,5 @@
 from datetime import date, datetime, timedelta
-
+from services.acesso_tenant_service import validar_acesso_operacional_tenant
 from fastapi import HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -85,6 +85,11 @@ def criar_novo_agendamento(
         raise HTTPException(
             status_code=404,
             detail="Serviço não encontrado neste estabelecimento.",
+        )
+    
+        validar_acesso_operacional_tenant(
+            db,
+            tenant_slug,
         )
 
     profissional = (
@@ -234,6 +239,10 @@ def obter_horarios_disponiveis(
             data_agendamento,
             "%Y-%m-%d",
         ).date()
+        validar_acesso_operacional_tenant(
+            db,
+            tenant_slug,
+        )
     except ValueError:
         raise HTTPException(
             status_code=422,
@@ -366,24 +375,6 @@ def obter_horarios_disponiveis(
                 horarios_livres.append(
                     horario_formatado
                 )
-
-            bloqueios = (
-            db.query(models.BloqueioAgenda)
-            .filter(
-                models.BloqueioAgenda.barbearia_slug == tenant_slug,
-                models.BloqueioAgenda.data == data_alvo,
-            )
-            .all()
-        )
-
-        bloqueios_relevantes = [
-            bloqueio
-            for bloqueio in bloqueios
-            if (
-                not bloqueio.profissional
-                or bloqueio.profissional == profissional_nome
-            )
-        ]
 
         hora_atual += passo_grade
 

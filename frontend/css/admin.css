@@ -1264,3 +1264,32 @@
         right: -76px;
     }
 }
+
+.aviso-admin-card-topo {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.aviso-admin-card-topo > div {
+    flex: 1;
+}
+
+.btn-dispensar-aviso {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--borda);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--texto-secundario);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.btn-dispensar-aviso:hover {
+    border-color: var(--cor-perigo);
+    color: var(--cor-perigo);
+    background: rgba(239, 68, 68, 0.08);
+}

@@ -474,8 +474,27 @@ window.abrirSuporteWhatsAppAdmin = abrirSuporteWhatsAppAdmin;
 function renderizarCardAvisoAdmin(aviso) {
     return `
         <article class="aviso-admin-card tipo-${aviso.tipo}">
-            <strong>${aviso.titulo}</strong>
-            <p>${aviso.mensagem}</p>
+            <div class="aviso-admin-card-topo">
+                <div>
+                    <strong>${aviso.titulo}</strong>
+                    <p>${aviso.mensagem}</p>
+                </div>
+
+                ${
+                    aviso.dispensavel
+                        ? `
+                            <button
+                                type="button"
+                                class="btn-dispensar-aviso"
+                                onclick="dispensarAvisoAdmin(${aviso.id})"
+                                title="Fechar aviso"
+                            >
+                                ×
+                            </button>
+                        `
+                        : ""
+                }
+            </div>
         </article>
     `;
 }
@@ -572,6 +591,33 @@ async function carregarAvisosAdmin() {
 
 window.alternarCaixaAvisosAdmin = alternarCaixaAvisosAdmin;
 
+
+async function dispensarAvisoAdmin(avisoId) {
+    if (!adminProntoParaRequisicao()) {
+        return;
+    }
+
+    try {
+        await apiRequest(
+            `/api/${tenantSlugLogado}/admin/avisos/${avisoId}/dispensar`,
+            {
+                method: "POST",
+                auth: true,
+            }
+        );
+
+        await carregarAvisosAdmin();
+
+    } catch (erro) {
+        console.error(
+            "Erro ao dispensar aviso:",
+            erro
+        );
+    }
+}
+
+
+window.dispensarAvisoAdmin = dispensarAvisoAdmin;
 
 function iniciarPainel() {
     if (!existeSessaoLocal()) {
@@ -2703,3 +2749,4 @@ async function carregarTudo() {
 
 
 window.onload = iniciarPainel;
+window.dispensarAvisoAdmin = dispensarAvisoAdmin;

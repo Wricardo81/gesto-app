@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Date, DateTime, Float, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Column, Date, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 
 from database import Base
 from datetime import datetime
@@ -214,4 +214,41 @@ class AvisoPlataforma(Base):
         DateTime,
         default=datetime.utcnow,
         nullable=False,
+    )
+
+
+class AvisoDispensadoTenant(Base):
+    __tablename__ = "avisos_dispensados_tenant"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True,
+    )
+
+    aviso_id = Column(
+        Integer,
+        ForeignKey("avisos_plataforma.id"),
+        index=True,
+        nullable=False,
+    )
+
+    tenant_slug = Column(
+        String,
+        index=True,
+        nullable=False,
+    )
+
+    dispensado_em = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "aviso_id",
+            "tenant_slug",
+            name="uq_aviso_dispensado_tenant",
+        ),
     )

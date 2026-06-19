@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 import models
 from database import SessaoLocal
@@ -279,6 +280,19 @@ def listar_avisos_admin(
 ):
     hoje = date.today()
 
+    avisos_dispensados = (
+        db.query(models.AvisoDispensadoTenant.aviso_id)
+        .filter(
+            models.AvisoDispensadoTenant.tenant_slug == tenant_slug
+        )
+        .all()
+    )
+
+    ids_dispensados = {
+        item[0]
+        for item in avisos_dispensados
+    }
+
     avisos = (
         db.query(models.AvisoPlataforma)
         .filter(
@@ -306,4 +320,68 @@ def listar_avisos_admin(
     return [
         serializar_aviso(aviso)
         for aviso in avisos
+        if not (
+            aviso.dispensavel
+            and aviso.id in ids_dispensados
+        )
     ]
+
+
+@router.post("/api/{tenant_slug}/admin/avisos/{aviso_id}/dispensar")
+def dispensar_aviso_admin(
+    tenant_slug: str,
+    aviso_id: int,
+    db: Session = Depends(get_db),
+    _usuario_admin: str = Depends(
+        validar_tenant_logado
+    ),
+):
+    aviso = (
+        db.query(models.AvisoPlataforma)
+        .filter(
+            models.AvisoPlataforma.id == aviso_id,
+            models.AvisoPlataforma.ativo == True,
+        )
+        .first()
+    )
+
+    if not aviso:
+        raise HTTPException(
+            status_code=404,
+            detail="Aviso não encontrado.",
+        )
+
+    pertence_ao_tenant = (
+        aviso.global_para_todos
+        or aviso.tenant_slug == tenant_slug
+    )
+
+    if not pertence_ao_tenant:
+        raise HTTPException(
+            status_code=403,
+            detail="Este aviso não pertence a este estabelecimento.",
+        )
+
+    if not aviso.dispensavel:
+        raise HTTPException(
+            status_code=403,
+            detail="Este aviso não pode ser dispensado.",
+        )
+
+    registro = models.AvisoDispensadoTenant(
+        aviso_id=aviso.id,
+        tenant_slug=tenant_slug,
+    )
+
+    try:
+        db.add(registro)
+        db.commit()
+
+    except IntegrityError:
+        db.rollback()
+
+    return {
+        "mensagem": "Aviso dispensado com sucesso.",
+        "aviso_id": aviso.id,
+        "tenant_slug": tenant_slug,
+    }

@@ -10,6 +10,7 @@ let timeoutAtualizacaoAgendaVisual = null;
 let agendaVisualEmCarregamento = false;
 let agendaVisualRecarregarDepois = false;
 const WHATSAPP_SUPORTE_ADMIN = "5581988996085";
+let avisosAdminCache = [];
 
 /* =========================================================
    UTILITÁRIOS
@@ -470,6 +471,108 @@ window.alternarCaixaSuporteAdmin = alternarCaixaSuporteAdmin;
 window.abrirSuporteWhatsAppAdmin = abrirSuporteWhatsAppAdmin;
 
 
+function renderizarCardAvisoAdmin(aviso) {
+    return `
+        <article class="aviso-admin-card tipo-${aviso.tipo}">
+            <strong>${aviso.titulo}</strong>
+            <p>${aviso.mensagem}</p>
+        </article>
+    `;
+}
+
+
+function alternarCaixaAvisosAdmin() {
+    const caixa = document.getElementById("avisos-admin-caixa");
+
+    if (!caixa) {
+        return;
+    }
+
+    caixa.style.display =
+        caixa.style.display === "none" || !caixa.style.display
+            ? "block"
+            : "none";
+}
+
+
+function renderizarAvisosAdmin(avisos) {
+    avisosAdminCache = avisos;
+
+    const flutuante = document.getElementById("avisos-admin-flutuante");
+    const contador = document.getElementById("avisos-admin-contador");
+    const lista = document.getElementById("avisos-admin-lista");
+    const banner = document.getElementById("avisos-admin-banner");
+
+    if (
+        !flutuante
+        || !contador
+        || !lista
+        || !banner
+    ) {
+        return;
+    }
+
+    if (!avisos.length) {
+        flutuante.style.display = "none";
+        banner.style.display = "none";
+        return;
+    }
+
+    const avisosFixados = avisos.filter(
+        (aviso) => Boolean(aviso.fixado)
+    );
+
+    const avisosComuns = avisos.filter(
+        (aviso) => !aviso.fixado
+    );
+
+    contador.textContent = String(avisos.length);
+
+    flutuante.style.display = "block";
+
+    lista.innerHTML = avisos
+        .map(renderizarCardAvisoAdmin)
+        .join("");
+
+    if (avisosFixados.length) {
+        banner.style.display = "grid";
+        banner.innerHTML = avisosFixados
+            .map(renderizarCardAvisoAdmin)
+            .join("");
+    } else {
+        banner.style.display = "none";
+        banner.innerHTML = "";
+    }
+}
+
+
+async function carregarAvisosAdmin() {
+    if (!adminProntoParaRequisicao()) {
+        return;
+    }
+
+    try {
+        const avisos = await apiRequest(
+            `/api/${tenantSlugLogado}/admin/avisos`,
+            {
+                auth: true,
+            }
+        );
+
+        renderizarAvisosAdmin(avisos);
+
+    } catch (erro) {
+        console.error(
+            "Erro ao carregar avisos da plataforma:",
+            erro
+        );
+    }
+}
+
+
+window.alternarCaixaAvisosAdmin = alternarCaixaAvisosAdmin;
+
+
 function iniciarPainel() {
     if (!existeSessaoLocal()) {
         document
@@ -515,6 +618,8 @@ function iniciarPainel() {
     registrarListenersBloqueiosAgenda();
     registrarListenersAgendaVisual();
     inicializarNavegacaoAdmin();
+    carregarAvisosAdmin();
+    carregarStatusAssinaturaAdmin();
 
 }
 

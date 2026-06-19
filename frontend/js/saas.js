@@ -2,6 +2,7 @@ const SAAS_TOKEN_STORAGE_KEY =
     "gesto_saas_token";
 let clientesSaasCache = [];
 let empresaConfiguracaoAtual = null;
+let avisosSaasCache = [];
 
 function obterTokenSaas() {
     return localStorage.getItem(
@@ -1154,6 +1155,258 @@ async function carregarDiagnosticoEmpresa() {
 }
 
 
+function traduzirTipoAvisoSaas(tipo) {
+    const mapa = {
+        info: "Info",
+        atualizacao: "Atualização",
+        promocao: "Promoção",
+        manutencao: "Manutenção",
+        instabilidade: "Instabilidade",
+        financeiro: "Financeiro",
+        urgente: "Urgente",
+    };
+
+    return mapa[tipo] || "Info";
+}
+
+
+function formatarPeriodoAvisoSaas(aviso) {
+    const inicio = formatarDataSaas(aviso.data_inicio);
+    const fim = formatarDataSaas(aviso.data_fim);
+
+    if (aviso.data_inicio && aviso.data_fim) {
+        return `${inicio} até ${fim}`;
+    }
+
+    if (aviso.data_inicio) {
+        return `A partir de ${inicio}`;
+    }
+
+    if (aviso.data_fim) {
+        return `Até ${fim}`;
+    }
+
+    return "Sem período definido";
+}
+
+
+function renderizarAvisosSaas(avisos) {
+    const container = document.getElementById("lista-avisos-saas");
+
+    if (!container) {
+        return;
+    }
+
+    if (!avisos.length) {
+        container.innerHTML = `
+            <p class="texto-vazio-saas">
+                Nenhum aviso cadastrado ainda.
+            </p>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = avisos
+        .map((aviso) => {
+            return `
+                <article class="aviso-saas-card ${aviso.ativo ? "" : "inativo"}">
+                    <div class="aviso-saas-card-topo">
+                        <div>
+                            <h4>${aviso.titulo}</h4>
+                            <span class="badge-aviso tipo-${aviso.tipo}">
+                                ${traduzirTipoAvisoSaas(aviso.tipo)}
+                            </span>
+                        </div>
+
+                        <span class="badge-aviso">
+                            ${aviso.ativo ? "Ativo" : "Inativo"}
+                        </span>
+                    </div>
+
+                    <p>${aviso.mensagem}</p>
+
+                    <div class="aviso-saas-meta">
+                        <span>
+                            ${aviso.global_para_todos ? "Global" : `Tenant: ${aviso.tenant_slug}`}
+                        </span>
+
+                        <span>
+                            ${aviso.fixado ? "Fixado" : "Comum"}
+                        </span>
+
+                        <span>
+                            ${aviso.dispensavel ? "Dispensável" : "Obrigatório"}
+                        </span>
+
+                        <span>
+                            ${formatarPeriodoAvisoSaas(aviso)}
+                        </span>
+                    </div>
+
+                    <div class="aviso-saas-acoes">
+                        <button
+                            type="button"
+                            onclick="alternarStatusAvisoSaas(${aviso.id}, ${!aviso.ativo})"
+                        >
+                            ${aviso.ativo ? "Desativar" : "Ativar"}
+                        </button>
+                    </div>
+                </article>
+            `;
+        })
+        .join("");
+}
+
+
+async function carregarAvisosSaas() {
+    const container = document.getElementById("lista-avisos-saas");
+
+    if (container) {
+        container.innerHTML = "Carregando avisos...";
+    }
+
+    try {
+        const avisos = await saasRequest(
+            "/api/saas/avisos"
+        );
+
+        avisosSaasCache = avisos;
+
+        renderizarAvisosSaas(avisos);
+
+    } catch (erro) {
+        tratarErroSaas(erro);
+    }
+}
+
+
+async function criarAvisoSaas(event) {
+    event.preventDefault();
+
+    const titulo = document
+        .getElementById("aviso-titulo")
+        .value
+        .trim();
+
+    const mensagem = document
+        .getElementById("aviso-mensagem")
+        .value
+        .trim();
+
+    const tipo = document.getElementById("aviso-tipo").value;
+
+    const escopo = document.getElementById("aviso-escopo").value;
+
+    const tenantSlug = document
+        .getElementById("aviso-tenant-slug")
+        .value
+        .trim()
+        .toLowerCase();
+
+    const fixado =
+        document.getElementById("aviso-fixado").value === "true";
+
+    const dataInicio = document.getElementById("aviso-data-inicio").value;
+    const dataFim = document.getElementById("aviso-data-fim").value;
+
+    const dispensavel = document.getElementById("aviso-dispensavel").checked;
+
+    const globalParaTodos = escopo === "global";
+
+    if (
+        !titulo
+        || !mensagem
+    ) {
+        exibirMensagemSaas(
+            "Informe título e mensagem do aviso.",
+            "erro"
+        );
+
+        return;
+    }
+
+    if (
+        !globalParaTodos
+        && !tenantSlug
+    ) {
+        exibirMensagemSaas(
+            "Informe o tenant para aviso específico.",
+            "erro"
+        );
+
+        return;
+    }
+
+    const botao = document.getElementById("btn-criar-aviso-saas");
+
+    botao.disabled = true;
+    botao.textContent = "Criando...";
+
+    try {
+        await saasRequest(
+            "/api/saas/avisos",
+            {
+                method: "POST",
+                body: {
+                    titulo,
+                    mensagem,
+                    tipo,
+                    tenant_slug: globalParaTodos ? null : tenantSlug,
+                    global_para_todos: globalParaTodos,
+                    fixado,
+                    dispensavel,
+                    ativo: true,
+                    data_inicio: dataInicio || null,
+                    data_fim: dataFim || null,
+                },
+            }
+        );
+
+        document.getElementById("form-aviso-saas").reset();
+
+        await carregarAvisosSaas();
+
+        exibirMensagemSaas(
+            "Aviso criado com sucesso."
+        );
+
+    } catch (erro) {
+        tratarErroSaas(erro);
+
+    } finally {
+        botao.disabled = false;
+        botao.textContent = "Criar aviso";
+    }
+}
+
+
+async function alternarStatusAvisoSaas(id, ativo) {
+    try {
+        await saasRequest(
+            `/api/saas/avisos/${id}/status`,
+            {
+                method: "PUT",
+                body: {
+                    ativo,
+                },
+            }
+        );
+
+        await carregarAvisosSaas();
+
+        exibirMensagemSaas(
+            ativo
+                ? "Aviso ativado com sucesso."
+                : "Aviso desativado com sucesso."
+        );
+
+    } catch (erro) {
+        tratarErroSaas(erro);
+    }
+}
+
+
 async function iniciarPainelSaas() {
     document
         .getElementById("form-login-saas")
@@ -1170,6 +1423,15 @@ async function iniciarPainelSaas() {
             "submit",
             criarNovoCliente
     );
+
+    const formAvisoSaas = document.getElementById("form-aviso-saas");
+
+        if (formAvisoSaas) {
+            formAvisoSaas.addEventListener(
+                "submit",
+                criarAvisoSaas
+            );
+        }
     
     const formFinanceiro = document.getElementById(
         "form-financeiro-saas"
@@ -1220,3 +1482,5 @@ window.copiarLinkAdminEmpresa = copiarLinkAdminEmpresa;
 window.redefinirSenhaEmpresa = redefinirSenhaEmpresa;
 window.carregarDiagnosticoEmpresa = carregarDiagnosticoEmpresa;
 window.salvarConfiguracaoEmpresa = salvarConfiguracaoEmpresa;
+window.carregarAvisosSaas = carregarAvisosSaas;
+window.alternarStatusAvisoSaas = alternarStatusAvisoSaas;

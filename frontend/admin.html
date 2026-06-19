@@ -7,7 +7,7 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="./css/admin.css?v=29">
+    <link rel="stylesheet" href="./css/admin.css?v=41">
 </head>
 
 <body>
@@ -749,6 +749,39 @@
                     </div>
                 </div>
             </div>
+
+            <div id="avisos-admin-banner" class="avisos-admin-banner" style="display: none;"></div>
+
+<div id="avisos-admin-flutuante" class="avisos-admin-flutuante" style="display: none;">
+    <button
+        type="button"
+        class="avisos-admin-botao"
+        onclick="alternarCaixaAvisosAdmin()"
+        aria-label="Abrir avisos"
+    >
+        🔔
+        <span id="avisos-admin-contador">0</span>
+    </button>
+
+    <div id="avisos-admin-caixa" class="avisos-admin-caixa" style="display: none;">
+        <div class="avisos-admin-topo">
+            <div>
+                <strong>Comunicados</strong>
+                <p>Mensagens da Engenharia de Bits.</p>
+            </div>
+
+            <button
+                type="button"
+                onclick="alternarCaixaAvisosAdmin()"
+                aria-label="Fechar avisos"
+            >
+                ×
+            </button>
+        </div>
+
+        <div id="avisos-admin-lista" class="avisos-admin-lista"></div>
+    </div>
+</div>
             
             
             <footer class="rodape-creditos">
@@ -768,8 +801,8 @@
         </main>
     
 
-    <script src="./js/api.js?v=40"></script>
-    <script src="./js/auth.js?v=40"></script>
-    <script src="./js/admin.js?v=40"></script>
+    <script src="./js/api.js?v=41"></script>
+    <script src="./js/auth.js?v=41"></script>
+    <script src="./js/admin.js?v=41"></script>
 </body>
 </html>

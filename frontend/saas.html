@@ -116,6 +116,15 @@
             >
                 Avisos
             </button>
+
+            <button
+                type="button"
+                class="saas-tab"
+                data-secao="secao-saas-suporte"
+            >
+                Suporte
+            </button>
+
         </nav>
 
         <section
@@ -243,6 +252,29 @@
 
                 <tbody id="lista-clientes"></tbody>
             </table>
+        </div>
+    </section>
+
+    <section id="secao-saas-suporte" class="secao-saas">
+        <div class="secao-topo">
+            <div>
+                <h2>Chamados de Suporte</h2>
+                <p>
+                    Acompanhe pedidos de erro, bug, sugestão e elogio enviados pelas empresas.
+                </p>
+            </div>
+    
+            <button
+                type="button"
+                class="btn-secundario-saas"
+                onclick="carregarChamadosSaas()"
+            >
+                Atualizar
+            </button>
+        </div>
+    
+        <div id="lista-chamados-saas" class="lista-chamados-saas">
+            Carregando chamados...
         </div>
     </section>
 

@@ -850,3 +850,106 @@ small {
         grid-template-columns: 1fr;
     }
 }
+
+.lista-chamados-saas {
+    display: grid;
+    gap: 14px;
+}
+
+.chamado-saas-card {
+    padding: 16px;
+    border: 1px solid var(--borda);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.chamado-saas-topo {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 10px;
+}
+
+.chamado-saas-card h3 {
+    margin: 0 0 6px;
+    color: var(--texto-principal);
+    font-size: 16px;
+}
+
+.chamado-saas-card p {
+    margin: 8px 0;
+    color: var(--texto-secundario);
+    line-height: 1.55;
+    font-size: 13px;
+}
+
+.chamado-saas-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.chamado-saas-meta span,
+.badge-chamado-saas {
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--texto-secundario);
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.badge-chamado-saas.status-aberto {
+    background: rgba(59, 130, 246, 0.16);
+    color: #60a5fa;
+}
+
+.badge-chamado-saas.status-em_analise {
+    background: rgba(245, 158, 11, 0.16);
+    color: #f59e0b;
+}
+
+.badge-chamado-saas.status-resolvido,
+.badge-chamado-saas.status-fechado {
+    background: rgba(16, 185, 129, 0.16);
+    color: var(--cor-sucesso);
+}
+
+.chamado-saas-acoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.chamado-saas-acoes button {
+    padding: 8px 10px;
+    border: 1px solid var(--borda);
+    border-radius: 9px;
+    background: transparent;
+    color: var(--texto-principal);
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.chamado-saas-acoes button:hover {
+    border-color: var(--cor-foco);
+}
+
+.resposta-suporte-saas {
+    margin-top: 10px;
+    padding: 10px;
+    border-left: 3px solid var(--cor-foco);
+    background: rgba(100, 255, 218, 0.07);
+    color: var(--texto-secundario);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+@media (max-width: 720px) {
+    .chamado-saas-topo {
+        flex-direction: column;
+    }
+}

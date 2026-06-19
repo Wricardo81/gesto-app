@@ -7,7 +7,7 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="./css/admin.css?v=41">
+    <link rel="stylesheet" href="./css/admin.css?v=46">
 </head>
 
 <body>
@@ -731,20 +731,36 @@
                     </div>
 
                     <div class="suporte-admin-opcoes">
+                        <button
+                            type="button"
+                            class="btn-suporte-admin-acao"
+                            onclick="abrirModalChamadoAdmin('erro')"
+                        >
+                            Abrir chamado interno
+                        </button>
+                    
+                        <button
+                            type="button"
+                            class="btn-suporte-admin-acao"
+                            onclick="abrirModalHistoricoChamadosAdmin()"
+                        >
+                            Ver meus chamados
+                        </button>
+                    
                         <button type="button" onclick="abrirSuporteWhatsAppAdmin('erro')">
-                            Reportar erro
+                            Reportar erro pelo WhatsApp
                         </button>
-
+                    
                         <button type="button" onclick="abrirSuporteWhatsAppAdmin('bug')">
-                            Reportar bug
+                            Reportar bug pelo WhatsApp
                         </button>
-
+                    
                         <button type="button" onclick="abrirSuporteWhatsAppAdmin('sugestao')">
-                            Enviar sugestão
+                            Enviar sugestão pelo WhatsApp
                         </button>
-
+                    
                         <button type="button" onclick="abrirSuporteWhatsAppAdmin('elogio')">
-                            Enviar elogio
+                            Enviar elogio pelo WhatsApp
                         </button>
                     </div>
                 </div>
@@ -799,10 +815,134 @@
                 </span>
             </footer>
         </main>
+
+        <div id="modal-chamado-admin" class="modal-admin-suporte" style="display: none;">
+            <div class="modal-admin-suporte-overlay" onclick="fecharModalChamadoAdmin()"></div>
+        
+            <div class="modal-admin-suporte-card">
+                <div class="modal-admin-suporte-topo">
+                    <div>
+                        <h2>Abrir chamado</h2>
+                        <p>Envie um erro, bug, sugestão ou elogio para a Engenharia de Bits.</p>
+                    </div>
+        
+                    <button type="button" onclick="fecharModalChamadoAdmin()">
+                        ×
+                    </button>
+                </div>
+        
+                <form id="form-chamado-admin" onsubmit="criarChamadoAdmin(event)">
+                    <div class="form-group">
+                        <label for="chamado-tipo">Tipo</label>
+                        <select id="chamado-tipo" required>
+                            <option value="erro">Erro</option>
+                            <option value="bug">Bug</option>
+                            <option value="sugestao">Sugestão</option>
+                            <option value="elogio">Elogio</option>
+                            <option value="outro">Outro</option>
+                        </select>
+                    </div>
+        
+                    <div class="form-group">
+                        <label for="chamado-titulo">Título</label>
+                        <input
+                            id="chamado-titulo"
+                            type="text"
+                            maxlength="160"
+                            placeholder="Ex: Erro ao carregar agenda"
+                            required
+                        >
+                    </div>
+        
+                    <div class="form-group">
+                        <label for="chamado-descricao">Descrição</label>
+                        <textarea
+                            id="chamado-descricao"
+                            rows="6"
+                            maxlength="5000"
+                            placeholder="Descreva o problema ou sugestão com detalhes."
+                            required
+                        ></textarea>
+                    </div>
+        
+                    <div class="grid-admin-suporte">
+                        <div class="form-group">
+                            <label for="chamado-contato-nome">Nome para contato</label>
+                            <input
+                                id="chamado-contato-nome"
+                                type="text"
+                                placeholder="Opcional"
+                            >
+                        </div>
+        
+                        <div class="form-group">
+                            <label for="chamado-contato-email">E-mail para contato</label>
+                            <input
+                                id="chamado-contato-email"
+                                type="email"
+                                placeholder="Opcional"
+                            >
+                        </div>
+                    </div>
+        
+                    <div class="modal-admin-suporte-acoes">
+                        <button
+                            type="button"
+                            class="btn-sair"
+                            onclick="fecharModalChamadoAdmin()"
+                        >
+                            Cancelar
+                        </button>
+        
+                        <button
+                            type="submit"
+                            class="btn-primario"
+                            id="btn-criar-chamado-admin"
+                        >
+                            Enviar chamado
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div id="modal-historico-chamados-admin" class="modal-admin-suporte" style="display: none;">
+            <div class="modal-admin-suporte-overlay" onclick="fecharModalHistoricoChamadosAdmin()"></div>
+        
+            <div class="modal-admin-suporte-card modal-admin-suporte-card-grande">
+                <div class="modal-admin-suporte-topo">
+                    <div>
+                        <h2>Meus chamados</h2>
+                        <p>Acompanhe o histórico de suporte enviado para a Engenharia de Bits.</p>
+                    </div>
+        
+                    <div class="modal-admin-suporte-topo-acoes">
+                        <button
+                            type="button"
+                            class="btn-atualizar-chamados-admin"
+                            onclick="carregarChamadosAdmin()"
+                        >
+                            Atualizar
+                        </button>
+        
+                        <button
+                            type="button"
+                            onclick="fecharModalHistoricoChamadosAdmin()"
+                        >
+                            ×
+                        </button>
+                    </div>
+                </div>
+        
+                <div id="lista-chamados-admin" class="lista-chamados-admin">
+                    Carregando chamados...
+                </div>
+            </div>
+        </div>
     
 
-    <script src="./js/api.js?v=41"></script>
-    <script src="./js/auth.js?v=41"></script>
-    <script src="./js/admin.js?v=41"></script>
+    <script src="./js/api.js?v=46"></script>
+    <script src="./js/auth.js?v=46"></script>
+    <script src="./js/admin.js?v=46"></script>
 </body>
 </html>

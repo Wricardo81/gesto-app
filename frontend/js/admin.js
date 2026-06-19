@@ -11,6 +11,7 @@ let agendaVisualEmCarregamento = false;
 let agendaVisualRecarregarDepois = false;
 const WHATSAPP_SUPORTE_ADMIN = "5581988996085";
 let avisosAdminCache = [];
+let chamadosAdminCache = [];
 
 /* =========================================================
    UTILITÁRIOS
@@ -619,6 +620,337 @@ async function dispensarAvisoAdmin(avisoId) {
 
 window.dispensarAvisoAdmin = dispensarAvisoAdmin;
 
+function traduzirTipoChamadoAdmin(tipo) {
+    const mapa = {
+        erro: "Erro",
+        bug: "Bug",
+        sugestao: "Sugestão",
+        elogio: "Elogio",
+        outro: "Outro",
+    };
+
+    return mapa[tipo] || "Erro";
+}
+
+
+function traduzirStatusChamadoAdmin(status) {
+    const mapa = {
+        aberto: "Aberto",
+        em_analise: "Em análise",
+        resolvido: "Resolvido",
+        fechado: "Fechado",
+    };
+
+    return mapa[status] || "Aberto";
+}
+
+
+async function abrirModalHistoricoChamadosAdmin() {
+    const modal = document.getElementById("modal-historico-chamados-admin");
+
+    if (!modal) {
+        return;
+    }
+
+    modal.style.display = "flex";
+
+    await carregarChamadosAdmin();
+}
+
+function abrirModalChamadoAdmin(tipo = "erro") {
+    const modal = document.getElementById("modal-chamado-admin");
+
+    if (!modal) {
+        alert("Modal de chamado não encontrado no HTML.");
+        return;
+    }
+
+    const campoTipo = document.getElementById("chamado-tipo");
+    const campoTitulo = document.getElementById("chamado-titulo");
+    const campoDescricao = document.getElementById("chamado-descricao");
+    const campoContatoNome = document.getElementById("chamado-contato-nome");
+    const campoContatoEmail = document.getElementById("chamado-contato-email");
+
+    if (campoTipo) {
+        campoTipo.value = tipo;
+    }
+
+    if (campoTitulo) {
+        campoTitulo.value = "";
+    }
+
+    if (campoDescricao) {
+        campoDescricao.value = "";
+    }
+
+    if (campoContatoNome) {
+        campoContatoNome.value = "";
+    }
+
+    if (campoContatoEmail) {
+        campoContatoEmail.value = "";
+    }
+
+    modal.style.display = "flex";
+}
+
+
+function fecharModalChamadoAdmin() {
+    const modal = document.getElementById("modal-chamado-admin");
+
+    if (modal) {
+        modal.style.display = "none";
+    }
+}
+
+
+async function criarChamadoAdmin(event) {
+    event.preventDefault();
+
+    if (!adminProntoParaRequisicao()) {
+        return;
+    }
+
+    const tipo = document.getElementById("chamado-tipo").value;
+
+    const titulo = document
+        .getElementById("chamado-titulo")
+        .value
+        .trim();
+
+    const descricao = document
+        .getElementById("chamado-descricao")
+        .value
+        .trim();
+
+    const contatoNome = document
+        .getElementById("chamado-contato-nome")
+        .value
+        .trim();
+
+    const contatoEmail = document
+        .getElementById("chamado-contato-email")
+        .value
+        .trim();
+
+    if (
+        !titulo
+        || titulo.length < 3
+        || !descricao
+        || descricao.length < 5
+    ) {
+        alert("Informe título e descrição do chamado.");
+        return;
+    }
+
+    const botao = document.getElementById("btn-criar-chamado-admin");
+
+    botao.disabled = true;
+    botao.textContent = "Enviando...";
+
+    try {
+        await apiRequest(
+            `/api/${tenantSlugLogado}/admin/suporte/chamados`,
+            {
+                method: "POST",
+                auth: true,
+                body: {
+                    tipo,
+                    titulo,
+                    descricao,
+                    pagina_origem: window.location.href,
+                    contato_nome: contatoNome || null,
+                    contato_email: contatoEmail || null,
+                },
+            }
+        );
+
+        fecharModalChamadoAdmin();
+
+        await carregarChamadosAdmin();
+
+        alert("Chamado aberto com sucesso.");
+
+    } catch (erro) {
+        console.error(erro);
+
+        alert(
+            erro.message
+            || "Não foi possível abrir o chamado."
+        );
+
+    } finally {
+        botao.disabled = false;
+        botao.textContent = "Enviar chamado";
+    }
+}
+
+
+function formatarDataHoraChamadoAdmin(valor) {
+    if (!valor) {
+        return "-";
+    }
+
+    const data = new Date(valor);
+
+    if (Number.isNaN(data.getTime())) {
+        return String(valor);
+    }
+
+    return data.toLocaleString("pt-BR");
+}
+
+
+function escaparHtmlAdmin(valor) {
+    return String(valor ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+
+function renderizarChamadosAdmin(chamados) {
+    const container = document.getElementById("lista-chamados-admin");
+
+    if (!container) {
+        return;
+    }
+
+    chamadosAdminCache = Array.isArray(chamados)
+        ? chamados
+        : [];
+
+    if (!chamadosAdminCache.length) {
+        container.innerHTML = `
+            <p class="horarios-vazios">
+                Nenhum chamado aberto ainda.
+            </p>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = chamadosAdminCache
+        .map((chamado) => {
+            const resposta = chamado.resposta_suporte
+                ? `
+                    <div class="resposta-suporte-admin">
+                        <strong>Resposta do suporte:</strong><br>
+                        ${escaparHtmlAdmin(chamado.resposta_suporte)}
+                    </div>
+                `
+                : `
+                    <div class="resposta-suporte-admin">
+                        <strong>Resposta do suporte:</strong><br>
+                        Ainda sem resposta da Engenharia de Bits.
+                    </div>
+                `;
+
+            return `
+                <article class="chamado-admin-card">
+                    <div class="chamado-admin-card-topo">
+                        <div>
+                            <h3>
+                                #${chamado.id} — ${escaparHtmlAdmin(chamado.titulo)}
+                            </h3>
+
+                            <span class="badge-chamado status-${chamado.status}">
+                                ${traduzirStatusChamadoAdmin(chamado.status)}
+                            </span>
+                        </div>
+
+                        <span class="badge-chamado">
+                            ${traduzirTipoChamadoAdmin(chamado.tipo)}
+                        </span>
+                    </div>
+
+                    <p>${escaparHtmlAdmin(chamado.descricao)}</p>
+
+                    ${resposta}
+
+                    <div class="chamado-meta">
+                        <span>Tenant: ${escaparHtmlAdmin(chamado.tenant_slug)}</span>
+                        <span>Status: ${traduzirStatusChamadoAdmin(chamado.status)}</span>
+                        <span>Criado em: ${formatarDataHoraChamadoAdmin(chamado.criado_em)}</span>
+                        <span>Atualizado em: ${formatarDataHoraChamadoAdmin(chamado.atualizado_em)}</span>
+                    </div>
+                </article>
+            `;
+        })
+        .join("");
+}
+
+
+async function carregarChamadosAdmin() {
+    if (!adminProntoParaRequisicao()) {
+        return;
+    }
+
+    const container = document.getElementById("lista-chamados-admin");
+
+    if (container) {
+        container.innerHTML = "Carregando chamados...";
+    }
+
+    try {
+        const chamados = await apiRequest(
+            `/api/${tenantSlugLogado}/admin/suporte/chamados`,
+            {
+                auth: true,
+            }
+        );
+
+        renderizarChamadosAdmin(chamados);
+
+    } catch (erro) {
+        console.error(
+            "Erro ao carregar chamados:",
+            erro
+        );
+
+        if (container) {
+            container.innerHTML = `
+                <p class="horarios-vazios">
+                    Não foi possível carregar os chamados.
+                </p>
+            `;
+        }
+    }
+}
+
+
+async function abrirModalHistoricoChamadosAdmin() {
+    const modal = document.getElementById("modal-historico-chamados-admin");
+
+    if (!modal) {
+        return;
+    }
+
+    modal.style.display = "flex";
+
+    await carregarChamadosAdmin();
+}
+
+
+function fecharModalHistoricoChamadosAdmin() {
+    const modal = document.getElementById("modal-historico-chamados-admin");
+
+    if (modal) {
+        modal.style.display = "none";
+    }
+}
+
+
+window.abrirModalChamadoAdmin = abrirModalChamadoAdmin;
+window.fecharModalChamadoAdmin = fecharModalChamadoAdmin;
+window.criarChamadoAdmin = criarChamadoAdmin;
+window.carregarChamadosAdmin = carregarChamadosAdmin;
+window.abrirModalHistoricoChamadosAdmin = abrirModalHistoricoChamadosAdmin;
+window.fecharModalHistoricoChamadosAdmin = fecharModalHistoricoChamadosAdmin;
+
+
 function iniciarPainel() {
     if (!existeSessaoLocal()) {
         document
@@ -666,6 +998,7 @@ function iniciarPainel() {
     inicializarNavegacaoAdmin();
     carregarAvisosAdmin();
     carregarStatusAssinaturaAdmin();
+    carregarTudo();
 
 }
 
@@ -712,7 +1045,6 @@ function iniciarPainel() {
 
 
     window.atualizarStatusAgendamento = atualizarStatusAgendamento;
-    carregarTudo();
 
 
 
@@ -2750,3 +3082,9 @@ async function carregarTudo() {
 
 window.onload = iniciarPainel;
 window.dispensarAvisoAdmin = dispensarAvisoAdmin;
+window.abrirModalChamadoAdmin = abrirModalChamadoAdmin;
+window.fecharModalChamadoAdmin = fecharModalChamadoAdmin;
+window.criarChamadoAdmin = criarChamadoAdmin;
+window.carregarChamadosAdmin = carregarChamadosAdmin;
+window.abrirModalHistoricoChamadosAdmin = abrirModalHistoricoChamadosAdmin;
+window.fecharModalHistoricoChamadosAdmin = fecharModalHistoricoChamadosAdmin;

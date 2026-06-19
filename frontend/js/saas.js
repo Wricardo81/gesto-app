@@ -3,6 +3,7 @@ const SAAS_TOKEN_STORAGE_KEY =
 let clientesSaasCache = [];
 let empresaConfiguracaoAtual = null;
 let avisosSaasCache = [];
+let chamadosSaasCache = [];
 
 function obterTokenSaas() {
     return localStorage.getItem(
@@ -1407,6 +1408,174 @@ async function alternarStatusAvisoSaas(id, ativo) {
 }
 
 
+function traduzirTipoChamadoSaas(tipo) {
+    const mapa = {
+        erro: "Erro",
+        bug: "Bug",
+        sugestao: "Sugestão",
+        elogio: "Elogio",
+        outro: "Outro",
+    };
+
+    return mapa[tipo] || "Erro";
+}
+
+
+function traduzirStatusChamadoSaas(status) {
+    const mapa = {
+        aberto: "Aberto",
+        em_analise: "Em análise",
+        resolvido: "Resolvido",
+        fechado: "Fechado",
+    };
+
+    return mapa[status] || "Aberto";
+}
+
+
+function renderizarChamadosSaas(chamados) {
+    const container = document.getElementById("lista-chamados-saas");
+
+    if (!container) {
+        return;
+    }
+
+    if (!chamados.length) {
+        container.innerHTML = `
+            <p class="texto-vazio-saas">
+                Nenhum chamado recebido ainda.
+            </p>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = chamados
+        .map((chamado) => {
+            const resposta = chamado.resposta_suporte
+                ? `
+                    <div class="resposta-suporte-saas">
+                        <strong>Resposta enviada:</strong><br>
+                        ${chamado.resposta_suporte}
+                    </div>
+                `
+                : "";
+
+            return `
+                <article class="chamado-saas-card">
+                    <div class="chamado-saas-topo">
+                        <div>
+                            <h3>#${chamado.id} — ${chamado.titulo}</h3>
+
+                            <span class="badge-chamado-saas status-${chamado.status}">
+                                ${traduzirStatusChamadoSaas(chamado.status)}
+                            </span>
+
+                            <span class="badge-chamado-saas">
+                                ${traduzirTipoChamadoSaas(chamado.tipo)}
+                            </span>
+                        </div>
+
+                        <span class="badge-chamado-saas">
+                            Tenant: ${chamado.tenant_slug}
+                        </span>
+                    </div>
+
+                    <p>${chamado.descricao}</p>
+
+                    ${resposta}
+
+                    <div class="chamado-saas-meta">
+                        <span>Origem: ${chamado.pagina_origem || "-"}</span>
+                        <span>Contato: ${chamado.contato_nome || "-"}</span>
+                        <span>E-mail: ${chamado.contato_email || "-"}</span>
+                        <span>Criado em: ${formatarDataSaas(chamado.criado_em?.slice(0, 10))}</span>
+                    </div>
+
+                    <div class="chamado-saas-acoes">
+                        <button type="button" onclick="atualizarStatusChamadoSaas(${chamado.id}, 'em_analise')">
+                            Em análise
+                        </button>
+
+                        <button type="button" onclick="atualizarStatusChamadoSaas(${chamado.id}, 'resolvido')">
+                            Resolver
+                        </button>
+
+                        <button type="button" onclick="atualizarStatusChamadoSaas(${chamado.id}, 'fechado')">
+                            Fechar
+                        </button>
+
+                        <button type="button" onclick="atualizarStatusChamadoSaas(${chamado.id}, 'aberto')">
+                            Reabrir
+                        </button>
+                    </div>
+                </article>
+            `;
+        })
+        .join("");
+}
+
+
+async function carregarChamadosSaas() {
+    const container = document.getElementById("lista-chamados-saas");
+
+    if (container) {
+        container.innerHTML = "Carregando chamados...";
+    }
+
+    try {
+        const chamados = await saasRequest(
+            "/api/saas/suporte/chamados"
+        );
+
+        chamadosSaasCache = chamados;
+
+        renderizarChamadosSaas(chamados);
+
+    } catch (erro) {
+        tratarErroSaas(erro);
+    }
+}
+
+
+async function atualizarStatusChamadoSaas(id, status) {
+    const resposta = prompt(
+        "Resposta do suporte para este chamado:",
+        ""
+    );
+
+    if (resposta === null) {
+        return;
+    }
+
+    try {
+        await saasRequest(
+            `/api/saas/suporte/chamados/${id}/status`,
+            {
+                method: "PUT",
+                body: {
+                    status,
+                    resposta_suporte: resposta.trim() || null,
+                },
+            }
+        );
+
+        await carregarChamadosSaas();
+
+        exibirMensagemSaas(
+            "Chamado atualizado com sucesso."
+        );
+
+    } catch (erro) {
+        tratarErroSaas(erro);
+    }
+}
+
+
+window.carregarChamadosSaas = carregarChamadosSaas;
+window.atualizarStatusChamadoSaas = atualizarStatusChamadoSaas;
+
+
 async function iniciarPainelSaas() {
     document
         .getElementById("form-login-saas")
@@ -1458,12 +1627,10 @@ async function iniciarPainelSaas() {
         return;
     }
 
-    exibirPainelSaas();
-
+    carregarChamadosSaas();
+    exibirPainelSaas(); 
     await carregarClientes();
-
     mostrarSecaoSaas("secao-saas-empresas");
-
     exibirMensagemSaas(
         "Empresa criada com sucesso."
     );

@@ -4,12 +4,15 @@ let listenersDePreviewRegistrados = false;
 let listenersCRMRegistrados = false;
 let listenersBloqueiosRegistrados = false;
 let listenersAgendaVisualRegistrados = false;
+let listenersNavegacaoAdminRegistrados = false;
+
 const secoesAdminCarregadas = new Set();
 const secoesAdminCarregando = new Set();
 let timeoutAtualizacaoAgendaVisual = null;
+const WHATSAPP_SUPORTE_ADMIN = "5581988996085";
+
 let agendaVisualEmCarregamento = false;
 let agendaVisualRecarregarDepois = false;
-const WHATSAPP_SUPORTE_ADMIN = "5581988996085";
 let avisosAdminCache = [];
 let chamadosAdminCache = [];
 
@@ -384,11 +387,15 @@ function mostrarSecaoAdmin(secaoId) {
 function inicializarNavegacaoAdmin() {
     const botoes = document.querySelectorAll(".admin-tab");
 
-    botoes.forEach((botao) => {
-        botao.addEventListener("click", () => {
-            mostrarSecaoAdmin(botao.dataset.secao);
+    if (!listenersNavegacaoAdminRegistrados) {
+        botoes.forEach((botao) => {
+            botao.addEventListener("click", () => {
+                mostrarSecaoAdmin(botao.dataset.secao);
+            });
         });
-    });
+
+        listenersNavegacaoAdminRegistrados = true;
+    }
 
     const secaoSalva = localStorage.getItem(
         "gesto_admin_secao_ativa"
@@ -998,7 +1005,6 @@ function iniciarPainel() {
     inicializarNavegacaoAdmin();
     carregarAvisosAdmin();
     carregarStatusAssinaturaAdmin();
-    carregarTudo();
 
 }
 
@@ -3001,12 +3007,7 @@ async function carregarDadosDaSecaoAdmin(secaoId, opcoes = {}) {
 
     try {
         if (secaoId === "secao-dashboard") {
-            await Promise.all([
-                carregarConfiguracaoAtual(),
-                carregarEquipe(),
-                carregarServicos(),
-                carregarAgendamentos(),
-            ]);
+            await carregarAgendamentos();
         }
 
         if (secaoId === "secao-configuracoes") {
@@ -3064,7 +3065,7 @@ function invalidarSecoesAdmin(secaoIds = []) {
 }
 
 
-async function carregarTudo() {
+async function carregarTudo(opcoes = {}) {
     const secaoSalva = localStorage.getItem(
         "gesto_admin_secao_ativa"
     );
@@ -3074,8 +3075,34 @@ async function carregarTudo() {
     await carregarDadosDaSecaoAdmin(
         secaoInicial,
         {
-            forcar: true,
+            forcar: Boolean(opcoes.forcar),
         }
+    );
+}
+
+async function atualizarPainelAdmin() {
+    if (!adminProntoParaRequisicao()) {
+        return;
+    }
+
+    const secaoAtual =
+        document.querySelector(".secao-admin.ativa")?.id
+        || localStorage.getItem("gesto_admin_secao_ativa")
+        || "secao-dashboard";
+
+    await Promise.all([
+        carregarDadosDaSecaoAdmin(
+            secaoAtual,
+            {
+                forcar: true,
+            }
+        ),
+        carregarAvisosAdmin(),
+        carregarStatusAssinaturaAdmin(),
+    ]);
+
+    exibirMensagemPainel(
+        "Painel atualizado com sucesso."
     );
 }
 
@@ -3088,3 +3115,5 @@ window.criarChamadoAdmin = criarChamadoAdmin;
 window.carregarChamadosAdmin = carregarChamadosAdmin;
 window.abrirModalHistoricoChamadosAdmin = abrirModalHistoricoChamadosAdmin;
 window.fecharModalHistoricoChamadosAdmin = fecharModalHistoricoChamadosAdmin;
+window.carregarTudo = carregarTudo;
+window.atualizarPainelAdmin = atualizarPainelAdmin;

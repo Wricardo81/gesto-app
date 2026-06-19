@@ -6,6 +6,7 @@ from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+import re
 
 import models
 from database import SessaoLocal
@@ -68,6 +69,32 @@ class AtualizacaoFinanceiraBarbearia(BaseModel):
     vencimento_plano: str | None = None
     dias_tolerancia: int | None = None
     marcar_como_pago: bool = False
+
+
+class AtualizacaoDadosBarbearia(BaseModel):
+    nome: str | None = Field(
+        default=None,
+        min_length=2,
+        max_length=120,
+    )
+
+    slug: str | None = Field(
+        default=None,
+        min_length=3,
+        max_length=80,
+        pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",
+    )
+
+    email: EmailStr | None = None
+
+    plano_ativo: bool | None = None
+
+
+class RedefinicaoSenhaBarbearia(BaseModel):
+    nova_senha: str = Field(
+        min_length=8,
+        max_length=72,
+    )
 
 
 STATUS_PAGAMENTO_VALIDOS = {
@@ -144,6 +171,43 @@ def calcular_acesso_financeiro(barbearia: models.Barbearia) -> dict:
     }
 
 
+def validar_slug_email_unicos(
+    db: Session,
+    barbearia_id: int,
+    slug: str | None,
+    email: str | None,
+):
+    filtros = []
+
+    if slug:
+        filtros.append(
+            models.Barbearia.slug == slug
+        )
+
+    if email:
+        filtros.append(
+            models.Barbearia.email == email
+        )
+
+    if not filtros:
+        return
+
+    existente = (
+        db.query(models.Barbearia)
+        .filter(
+            models.Barbearia.id != barbearia_id,
+            or_(*filtros),
+        )
+        .first()
+    )
+
+    if existente:
+        raise HTTPException(
+            status_code=409,
+            detail="Slug ou e-mail já está em uso por outra empresa.",
+        )
+
+
 def serializar_barbearia_saas(barbearia: models.Barbearia) -> dict:
     financeiro = calcular_acesso_financeiro(barbearia)
 
@@ -164,6 +228,12 @@ def serializar_barbearia_saas(barbearia: models.Barbearia) -> dict:
         "id": barbearia.id,
         "nome": barbearia.nome,
         "slug": barbearia.slug,
+                "link_publico": (
+            f"agendamento.html?tenant={barbearia.slug}"
+        ),
+        "link_admin": (
+            f"admin.html?tenant={barbearia.slug}"
+        ),
         "email": barbearia.email,
         "plano_ativo": plano_ativo_manual,
         "acesso_ativo": acesso_ativo,
@@ -481,4 +551,216 @@ def atualizar_financeiro_barbearia(
     return {
         "mensagem": "Dados financeiros atualizados com sucesso.",
         "barbearia": serializar_barbearia_saas(barbearia),
+    }
+
+
+@router.put("/barbearias/{barbearia_id}/dados")
+def atualizar_dados_barbearia(
+    barbearia_id: int,
+    dados: AtualizacaoDadosBarbearia,
+    db: Session = Depends(get_db),
+    _usuario_admin: str = Depends(
+        obter_saas_admin_logado
+    ),
+):
+    barbearia = (
+        db.query(models.Barbearia)
+        .filter(models.Barbearia.id == barbearia_id)
+        .first()
+    )
+
+    if not barbearia:
+        raise HTTPException(
+            status_code=404,
+            detail="Empresa não encontrada.",
+        )
+
+    novo_nome = None
+    novo_slug = None
+    novo_email = None
+
+    if dados.nome is not None:
+        novo_nome = dados.nome.strip()
+
+        if len(novo_nome) < 2:
+            raise HTTPException(
+                status_code=422,
+                detail="O nome da empresa deve ter pelo menos 2 caracteres.",
+            )
+
+    if dados.slug is not None:
+        novo_slug = dados.slug.strip().lower()
+
+        if not re.match(
+            r"^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            novo_slug,
+        ):
+            raise HTTPException(
+                status_code=422,
+                detail="Slug inválido. Use apenas letras minúsculas, números e hífens.",
+            )
+
+    if dados.email is not None:
+        novo_email = str(dados.email).strip().lower()
+
+    validar_slug_email_unicos(
+        db=db,
+        barbearia_id=barbearia.id,
+        slug=novo_slug,
+        email=novo_email,
+    )
+
+    if novo_nome is not None:
+        barbearia.nome = novo_nome
+
+    if novo_slug is not None:
+        barbearia.slug = novo_slug
+
+    if novo_email is not None:
+        barbearia.email = novo_email
+
+    if dados.plano_ativo is not None:
+        barbearia.plano_ativo = dados.plano_ativo
+
+    try:
+        db.commit()
+        db.refresh(barbearia)
+
+    except IntegrityError:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=409,
+            detail="Slug ou e-mail já está em uso.",
+        )
+
+    return {
+        "mensagem": "Dados da empresa atualizados com sucesso.",
+        "barbearia": serializar_barbearia_saas(barbearia),
+        "aviso": (
+            "Se o slug foi alterado, os links antigos de agendamento podem deixar de funcionar."
+        ),
+    }
+
+
+@router.put("/barbearias/{barbearia_id}/senha")
+def redefinir_senha_barbearia(
+    barbearia_id: int,
+    dados: RedefinicaoSenhaBarbearia,
+    db: Session = Depends(get_db),
+    _usuario_admin: str = Depends(
+        obter_saas_admin_logado
+    ),
+):
+    barbearia = (
+        db.query(models.Barbearia)
+        .filter(models.Barbearia.id == barbearia_id)
+        .first()
+    )
+
+    if not barbearia:
+        raise HTTPException(
+            status_code=404,
+            detail="Empresa não encontrada.",
+        )
+
+    barbearia.senha_hash = gerar_hash_senha(
+        dados.nova_senha
+    )
+
+    db.commit()
+
+    return {
+        "mensagem": "Senha redefinida com sucesso.",
+        "barbearia_id": barbearia.id,
+        "slug": barbearia.slug,
+        "email": barbearia.email,
+    }
+
+
+@router.get("/barbearias/{barbearia_id}/diagnostico")
+def diagnosticar_barbearia(
+    barbearia_id: int,
+    db: Session = Depends(get_db),
+    _usuario_admin: str = Depends(
+        obter_saas_admin_logado
+    ),
+):
+    barbearia = (
+        db.query(models.Barbearia)
+        .filter(models.Barbearia.id == barbearia_id)
+        .first()
+    )
+
+    if not barbearia:
+        raise HTTPException(
+            status_code=404,
+            detail="Empresa não encontrada.",
+        )
+
+    total_servicos = (
+        db.query(models.ServicoBarbearia)
+        .filter(
+            models.ServicoBarbearia.barbearia_slug == barbearia.slug
+        )
+        .count()
+    )
+
+    total_profissionais = (
+        db.query(models.Profissional)
+        .filter(
+            models.Profissional.barbearia_slug == barbearia.slug
+        )
+        .count()
+    )
+
+    total_agendamentos = (
+        db.query(models.Agendamento)
+        .filter(
+            models.Agendamento.barbearia_slug == barbearia.slug
+        )
+        .count()
+    )
+
+    configuracao_existe = (
+        db.query(models.ConfiguracaoAgenda)
+        .filter(
+            models.ConfiguracaoAgenda.barbearia_slug == barbearia.slug
+        )
+        .first()
+        is not None
+    )
+
+    problemas = []
+
+    if not barbearia.plano_ativo:
+        problemas.append(
+            "Empresa bloqueada manualmente."
+        )
+
+    if total_servicos == 0:
+        problemas.append(
+            "Nenhum serviço cadastrado."
+        )
+
+    if total_profissionais == 0:
+        problemas.append(
+            "Nenhum profissional cadastrado."
+        )
+
+    if not configuracao_existe:
+        problemas.append(
+            "Configuração de agenda ainda não encontrada."
+        )
+
+    return {
+        "empresa": serializar_barbearia_saas(barbearia),
+        "diagnostico": {
+            "configuracao_existe": configuracao_existe,
+            "total_servicos": total_servicos,
+            "total_profissionais": total_profissionais,
+            "total_agendamentos": total_agendamentos,
+            "possui_problemas": bool(problemas),
+            "problemas": problemas,
+        },
     }

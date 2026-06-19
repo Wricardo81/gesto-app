@@ -1,6 +1,6 @@
 const SAAS_TOKEN_STORAGE_KEY =
     "gesto_saas_token";
-
+    let clientesSaasCache = [];
 
 function obterTokenSaas() {
     return localStorage.getItem(
@@ -320,6 +320,8 @@ async function carregarClientes() {
         const clientes = await saasRequest(
             "/api/saas/barbearias"
         );
+
+        clientesSaasCache = clientes;
         
         atualizarResumoSaas(clientes);
 
@@ -447,7 +449,7 @@ async function carregarClientes() {
                     <button
                         type="button"
                         class="btn-financeiro"
-                        onclick="editarFinanceiroEmpresa(${cliente.id})"
+                        onclick="abrirModalFinanceiroSaas(${cliente.id})"
                     >
                         Financeiro
                     </button>
@@ -651,7 +653,7 @@ async function marcarEmpresaComoPaga(id) {
 
         await carregarClientes();
 
-        alert("Pagamento registrado com sucesso.");
+        exibirMensagemSaas("Pagamento registrado com sucesso.");
 
     } catch (erro) {
         tratarErroSaas(erro);
@@ -659,70 +661,98 @@ async function marcarEmpresaComoPaga(id) {
 }
 
 
-async function editarFinanceiroEmpresa(id) {
-    const planoNome = prompt(
-        "Nome do plano:",
-        "Profissional"
-    );
+function obterEmpresaSaasPorId(id) {
+    return clientesSaasCache.find((cliente) => {
+        return Number(cliente.id) === Number(id);
+    });
+}
 
-    if (planoNome === null) {
+
+function abrirModalFinanceiroSaas(id) {
+    const cliente = obterEmpresaSaasPorId(id);
+
+    if (!cliente) {
+        alert("Empresa não encontrada na lista atual.");
         return;
     }
 
-    const valorTexto = prompt(
-        "Valor mensal:",
-        "99"
-    );
+    document.getElementById("financeiro-empresa-id").value =
+        cliente.id;
 
-    if (valorTexto === null) {
-        return;
+    document.getElementById("financeiro-plano-nome").value =
+        cliente.plano_nome || "Profissional";
+
+    document.getElementById("financeiro-valor-mensal").value =
+        Number(cliente.valor_mensal || 0).toFixed(2);
+
+    document.getElementById("financeiro-vencimento").value =
+        cliente.vencimento_plano || "";
+
+    document.getElementById("financeiro-status").value =
+        cliente.status_pagamento || "em_dia";
+
+    document.getElementById("financeiro-dias-tolerancia").value =
+        cliente.dias_tolerancia ?? 3;
+
+    document.getElementById("modal-financeiro-empresa").textContent =
+        `${cliente.nome} • ${cliente.email || "sem e-mail"}`;
+
+    document.getElementById("modal-financeiro-saas").style.display =
+        "flex";
+}
+
+
+function fecharModalFinanceiroSaas() {
+    const modal = document.getElementById("modal-financeiro-saas");
+
+    if (modal) {
+        modal.style.display = "none";
     }
+}
 
-    const vencimentoPlano = prompt(
-        "Data de vencimento no formato YYYY-MM-DD:",
-        ""
-    );
 
-    if (vencimentoPlano === null) {
-        return;
-    }
+async function salvarFinanceiroEmpresa(event) {
+    event.preventDefault();
 
-    const statusPagamento = prompt(
-        "Status: em_dia, pendente, vencido, cancelado ou teste",
-        "em_dia"
-    );
+    const id = document.getElementById("financeiro-empresa-id").value;
 
-    if (statusPagamento === null) {
-        return;
-    }
-
-    const diasToleranciaTexto = prompt(
-        "Dias de tolerância:",
-        "3"
-    );
-
-    if (diasToleranciaTexto === null) {
-        return;
-    }
+    const planoNome = document
+        .getElementById("financeiro-plano-nome")
+        .value
+        .trim();
 
     const valorMensal = Number(
-        String(valorTexto).replace(",", ".")
+        document.getElementById("financeiro-valor-mensal").value
     );
 
+    const vencimentoPlano = document
+        .getElementById("financeiro-vencimento")
+        .value;
+
+    const statusPagamento = document
+        .getElementById("financeiro-status")
+        .value;
+
     const diasTolerancia = Number(
-        diasToleranciaTexto
+        document.getElementById("financeiro-dias-tolerancia").value
     );
 
     if (
-        !planoNome.trim()
+        !id
+        || !planoNome
         || Number.isNaN(valorMensal)
         || valorMensal < 0
         || Number.isNaN(diasTolerancia)
         || diasTolerancia < 0
     ) {
-        alert("Dados financeiros inválidos.");
+        alert("Preencha os dados financeiros corretamente.");
         return;
     }
+
+    const botao = document.getElementById("btn-salvar-financeiro-saas");
+
+    botao.disabled = true;
+    botao.textContent = "Salvando...";
 
     try {
         await saasRequest(
@@ -730,28 +760,35 @@ async function editarFinanceiroEmpresa(id) {
             {
                 method: "PUT",
                 body: {
-                    plano_nome: planoNome.trim(),
+                    plano_nome: planoNome,
                     valor_mensal: valorMensal,
-                    vencimento_plano: vencimentoPlano.trim() || null,
-                    status_pagamento: statusPagamento.trim().toLowerCase(),
+                    vencimento_plano: vencimentoPlano || null,
+                    status_pagamento: statusPagamento,
                     dias_tolerancia: diasTolerancia,
                     marcar_como_pago: false,
                 },
             }
         );
 
+        fecharModalFinanceiroSaas();
+
         await carregarClientes();
 
-        exibirMensagemSaas("Dados financeiros atualizados com sucesso.");
+        exibirMensagemSaas(
+            "Dados financeiros atualizados com sucesso."
+        );
 
     } catch (erro) {
         tratarErroSaas(erro);
+
+    } finally {
+        botao.disabled = false;
+        botao.textContent = "Salvar financeiro";
     }
 }
 
-
-window.marcarEmpresaComoPaga = marcarEmpresaComoPaga;
-window.editarFinanceiroEmpresa = editarFinanceiroEmpresa;
+window.abrirModalFinanceiroSaas = abrirModalFinanceiroSaas;
+window.fecharModalFinanceiroSaas = fecharModalFinanceiroSaas;
 
 async function iniciarPainelSaas() {
     document
@@ -768,7 +805,18 @@ async function iniciarPainelSaas() {
         .addEventListener(
             "submit",
             criarNovoCliente
+    );
+    
+    const formFinanceiro = document.getElementById(
+        "form-financeiro-saas"
+    );
+    
+    if (formFinanceiro) {
+        formFinanceiro.addEventListener(
+            "submit",
+            salvarFinanceiroEmpresa
         );
+    }
 
     document
         .getElementById("btn-sair-saas")

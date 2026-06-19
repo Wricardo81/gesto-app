@@ -240,6 +240,104 @@
 
     </main>
 
+    <div id="modal-financeiro-saas" class="modal-saas" style="display: none;">
+        <div class="modal-saas-overlay" onclick="fecharModalFinanceiroSaas()"></div>
+    
+        <div class="modal-saas-card">
+            <div class="modal-saas-header">
+                <div>
+                    <h2>Editar financeiro</h2>
+                    <p id="modal-financeiro-empresa">
+                        Atualize plano, mensalidade e vencimento.
+                    </p>
+                </div>
+    
+                <button
+                    type="button"
+                    class="btn-fechar-modal-saas"
+                    onclick="fecharModalFinanceiroSaas()"
+                >
+                    ×
+                </button>
+            </div>
+    
+            <form id="form-financeiro-saas" class="form-financeiro-saas">
+                <input type="hidden" id="financeiro-empresa-id">
+    
+                <div class="form-group">
+                    <label for="financeiro-plano-nome">Plano</label>
+                    <input
+                        id="financeiro-plano-nome"
+                        type="text"
+                        placeholder="Ex: Profissional"
+                        required
+                    >
+                </div>
+    
+                <div class="form-group">
+                    <label for="financeiro-valor-mensal">Valor mensal</label>
+                    <input
+                        id="financeiro-valor-mensal"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="99.00"
+                        required
+                    >
+                </div>
+    
+                <div class="form-group">
+                    <label for="financeiro-vencimento">Vencimento</label>
+                    <input
+                        id="financeiro-vencimento"
+                        type="date"
+                    >
+                </div>
+    
+                <div class="form-group">
+                    <label for="financeiro-status">Status</label>
+                    <select id="financeiro-status" required>
+                        <option value="em_dia">Em dia</option>
+                        <option value="pendente">Pendente</option>
+                        <option value="vencido">Vencido</option>
+                        <option value="cancelado">Cancelado</option>
+                        <option value="teste">Teste</option>
+                    </select>
+                </div>
+    
+                <div class="form-group">
+                    <label for="financeiro-dias-tolerancia">Dias de tolerância</label>
+                    <input
+                        id="financeiro-dias-tolerancia"
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder="3"
+                        required
+                    >
+                </div>
+    
+                <div class="modal-saas-acoes">
+                    <button
+                        type="button"
+                        class="btn-sair"
+                        onclick="fecharModalFinanceiroSaas()"
+                    >
+                        Cancelar
+                    </button>
+    
+                    <button
+                        type="submit"
+                        class="btn-criar"
+                        id="btn-salvar-financeiro-saas"
+                    >
+                        Salvar financeiro
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <footer class="rodape-creditos">
         <strong>Desenvolvido por Engenharia de Bits</strong>
     
@@ -255,7 +353,7 @@
         </span>
     </footer>
 
-    <script src="./js/api.js?v=35"></script>
-    <script src="./js/saas.js?v=35"></script>
+    <script src="./js/api.js?v=36"></script>
+    <script src="./js/saas.js?v=36"></script>
 </body>
 </html>

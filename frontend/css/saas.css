@@ -461,3 +461,105 @@ small {
     background: rgba(239, 68, 68, 0.12);
     color: var(--cor-perigo);
 }
+
+.modal-saas {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal-saas-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.82);
+    backdrop-filter: blur(8px);
+}
+
+.modal-saas-card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 520px;
+    padding: 24px;
+    background: var(--bg-card);
+    border: 1px solid var(--borda);
+    border-radius: 18px;
+    box-shadow: 0 30px 90px rgba(0,0,0,0.42);
+}
+
+.modal-saas-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.modal-saas-header h2 {
+    margin: 0 0 6px;
+    color: var(--cor-foco);
+    font-size: 20px;
+}
+
+.modal-saas-header p {
+    margin: 0;
+    color: var(--texto-secundario);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.btn-fechar-modal-saas {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--borda);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--texto-principal);
+    font-size: 22px;
+    line-height: 1;
+}
+
+.form-financeiro-saas {
+    display: grid;
+    gap: 14px;
+}
+
+.form-financeiro-saas select {
+    width: 100%;
+    padding: 11px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--borda);
+    border-radius: 8px;
+    color: white;
+    font-family: inherit;
+}
+
+.form-financeiro-saas select:focus {
+    outline: none;
+    border-color: var(--cor-foco);
+}
+
+.modal-saas-acoes {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+@media (max-width: 560px) {
+    .modal-saas-card {
+        padding: 20px;
+    }
+
+    .modal-saas-acoes {
+        flex-direction: column;
+    }
+
+    .modal-saas-acoes button {
+        width: 100%;
+    }
+}

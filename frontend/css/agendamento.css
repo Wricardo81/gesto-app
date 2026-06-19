@@ -464,3 +464,31 @@ line-height: 1;
         align-items: flex-start;
     }
 }
+
+.aviso-assinatura-inativa {
+    margin: 22px 0;
+    padding: 18px;
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    border-radius: 16px;
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--texto-principal);
+}
+
+.aviso-assinatura-inativa strong {
+    display: block;
+    margin-bottom: 8px;
+    color: #f59e0b;
+    font-size: 16px;
+}
+
+.aviso-assinatura-inativa p {
+    margin: 0;
+    color: var(--texto-secundario);
+    line-height: 1.6;
+}
+
+.formulario-bloqueado {
+    opacity: 0.45;
+    pointer-events: none;
+    filter: grayscale(0.2);
+}

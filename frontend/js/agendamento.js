@@ -8,6 +8,7 @@ let reserva = {
 };
 
 let identificadorUltimaBusca = 0;
+let assinaturaTenantInativa = false;
 
 
 /* =========================================================
@@ -629,6 +630,114 @@ function selecionarProfissional(
    HORÁRIOS
 ========================================================= */
 
+function obterDetalheErroApi(erro) {
+    if (!erro) {
+        return null;
+    }
+
+    if (erro.detail) {
+        return erro.detail;
+    }
+
+    if (erro.data && erro.data.detail) {
+        return erro.data.detail;
+    }
+
+    if (erro.response && erro.response.detail) {
+        return erro.response.detail;
+    }
+
+    return null;
+}
+
+
+function erroEhAssinaturaInativa(erro) {
+    const detalhe = obterDetalheErroApi(erro);
+
+    if (erro && Number(erro.status) === 402) {
+        return true;
+    }
+
+    if (
+        detalhe
+        && typeof detalhe === "object"
+        && detalhe.codigo === "ASSINATURA_INATIVA"
+    ) {
+        return true;
+    }
+
+    const mensagem = String(
+        erro?.message
+        || erro?.detail
+        || ""
+    ).toLowerCase();
+
+    return (
+        mensagem.includes("assinatura")
+        || mensagem.includes("payment required")
+    );
+}
+
+
+function mostrarAvisoAssinaturaInativa(mensagemPersonalizada = null) {
+    assinaturaTenantInativa = true;
+
+    const aviso = document.getElementById("aviso-assinatura-inativa");
+
+    if (aviso) {
+        const paragrafo = aviso.querySelector("p");
+
+        if (paragrafo && mensagemPersonalizada) {
+            paragrafo.textContent = mensagemPersonalizada;
+        }
+
+        aviso.style.display = "block";
+    }
+
+    const etapaHorario = document.getElementById("etapa-horario");
+    const etapaDados = document.getElementById("etapa-dados");
+
+    if (etapaHorario) {
+        etapaHorario.classList.add("formulario-bloqueado");
+    }
+
+    if (etapaDados) {
+        etapaDados.classList.add("formulario-bloqueado");
+    }
+
+    const listaHorarios = document.getElementById("lista-horarios");
+
+    if (listaHorarios) {
+        listaHorarios.innerHTML = `
+        <p class="horarios-vazios">
+            Agenda temporariamente indisponível para novos agendamentos.
+        </p>
+    `;
+    }
+}
+
+
+function ocultarAvisoAssinaturaInativa() {
+    assinaturaTenantInativa = false;
+
+    const aviso = document.getElementById("aviso-assinatura-inativa");
+
+    if (aviso) {
+        aviso.style.display = "none";
+    }
+
+    const etapaHorario = document.getElementById("etapa-horario");
+    const etapaDados = document.getElementById("etapa-dados");
+
+    if (etapaHorario) {
+        etapaHorario.classList.remove("formulario-bloqueado");
+    }
+
+    if (etapaDados) {
+        etapaDados.classList.remove("formulario-bloqueado");
+    }
+}
+
 async function buscarHorariosLivres() {
     reserva.data = document
         .getElementById("input-data")
@@ -686,14 +795,16 @@ async function buscarHorariosLivres() {
         .style
         .display = "block";
 
-    try {
-        const url =
-            `/api/${encodeURIComponent(tenantSlug)}`
-            + `/horarios/${encodeURIComponent(reserva.data)}`
-            + `/${encodeURIComponent(reserva.servico.duracao)}`
-            + `/${encodeURIComponent(reserva.profissional.nome)}`;
-
-        const dados = await apiRequest(url);
+        try {
+            ocultarAvisoAssinaturaInativa();
+    
+            const url =
+                `/api/${encodeURIComponent(tenantSlug)}`
+                + `/horarios/${encodeURIComponent(reserva.data)}`
+                + `/${encodeURIComponent(reserva.servico.duracao)}`
+                + `/${encodeURIComponent(reserva.profissional.nome)}`;
+    
+            const dados = await apiRequest(url);
 
         /*
           Se o usuário alterar rapidamente serviço ou profissional,
@@ -737,15 +848,24 @@ async function buscarHorariosLivres() {
             container.appendChild(botao);
         }
 
-    } catch (erro) {
-        console.error(erro);
+    }      catch (erro) {
+        if (erroEhAssinaturaInativa(erro)) {
+            const detalhe = obterDetalheErroApi(erro);
+
+            mostrarAvisoAssinaturaInativa(
+                detalhe?.mensagem
+                || "No momento, este estabelecimento não está recebendo novos agendamentos online."
+            );
+
+            return;
+        }
 
         exibirMensagem(
             erro.message
-            || "Não foi possível consultar os horários.",
+            || "Não foi possível carregar os horários disponíveis.",
             "erro"
-        );
-
+            );
+            
     } finally {
         if (
             identificadorBuscaAtual
@@ -760,23 +880,23 @@ async function buscarHorariosLivres() {
 }
 
 
-function selecionarHorario(
-    botaoSelecionado,
-    horario
-) {
-    document
-        .querySelectorAll(".btn-horario")
-        .forEach(
-            botao => botao.classList.remove("selecionado")
-        );
+        function selecionarHorario(
+            botaoSelecionado,
+            horario
+        ) {
+            document
+                .querySelectorAll(".btn-horario")
+                .forEach(
+                    botao => botao.classList.remove("selecionado")
+                );
 
-    botaoSelecionado.classList.add("selecionado");
+            botaoSelecionado.classList.add("selecionado");
 
-    reserva.horario = horario;
+            reserva.horario = horario;
 
-    atualizarBotaoFinalizar();
-    mostrarEtapaPublica("etapa-dados");
-}
+            atualizarBotaoFinalizar();
+            mostrarEtapaPublica("etapa-dados");
+        }
 
 
 /* =========================================================
@@ -837,6 +957,14 @@ function resetarFluxoAgendamento() {
 async function confirmarAgendamento() {
     limparMensagem();
 
+    if (assinaturaTenantInativa) {
+        mostrarAvisoAssinaturaInativa(
+            "A agenda deste estabelecimento está temporariamente indisponível para novos agendamentos."
+        );
+
+        return;
+    }
+
     const clienteNome = document
         .getElementById("cliente-nome")
         .value
@@ -888,24 +1016,12 @@ async function confirmarAgendamento() {
                     servico: reserva.servico.nome,
                     data: reserva.data,
                     horario: reserva.horario,
-
-                    /*
-                      Mantido temporariamente por compatibilidade
-                      com o schema atual. O backend ignora este valor
-                      e utiliza o preço cadastrado no banco.
-                    */
                     valor: reserva.servico.preco,
-
-                    profissional:
-                        reserva.profissional.nome,
-
-                        telefone_cliente:
-                        telefoneCliente,
-                    
+                    profissional: reserva.profissional.nome,
+                    telefone_cliente: telefoneCliente,
                     aceita_lembrete_whatsapp: checkboxMarcado(
                         "aceita-lembrete-whatsapp"
                     ),
-                    
                     aceita_promocoes_whatsapp: checkboxMarcado(
                         "aceita-promocoes-whatsapp"
                     )
@@ -920,31 +1036,31 @@ async function confirmarAgendamento() {
 
         resetarFluxoAgendamento();
 
-setTimeout(() => {
-    limparMensagem();
-}, 4000);
-
-        document
-            .getElementById("cliente-nome")
-            .value = "";
-
-        document
-            .getElementById("cliente-telefone")
-            .value = "";
-
-        reserva.horario = "";
+        setTimeout(() => {
+            limparMensagem();
+        }, 4000);
 
         await buscarHorariosLivres();
 
     } catch (erro) {
         console.error(erro);
 
+        if (erroEhAssinaturaInativa(erro)) {
+            const detalhe = obterDetalheErroApi(erro);
+
+            mostrarAvisoAssinaturaInativa(
+                detalhe?.mensagem
+                || "A agenda deste estabelecimento está temporariamente indisponível para novos agendamentos."
+            );
+
+            return;
+        }
+
         if (erro.status === 409) {
             exibirMensagem(
                 "Este horário acabou de ficar indisponível. Escolha outro horário.",
                 "erro"
             );
-
 
             return;
         }

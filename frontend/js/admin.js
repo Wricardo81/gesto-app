@@ -9,6 +9,7 @@ const secoesAdminCarregando = new Set();
 let timeoutAtualizacaoAgendaVisual = null;
 let agendaVisualEmCarregamento = false;
 let agendaVisualRecarregarDepois = false;
+const WHATSAPP_SUPORTE_ADMIN = "5581988996085";
 
 /* =========================================================
    UTILITÁRIOS
@@ -398,6 +399,75 @@ function inicializarNavegacaoAdmin() {
 
 
 window.alternarMenuAdmin = alternarMenuAdmin;
+
+function alternarCaixaSuporteAdmin() {
+    const caixa = document.getElementById("suporte-admin-caixa");
+
+    if (!caixa) {
+        return;
+    }
+
+    caixa.style.display =
+        caixa.style.display === "none" || !caixa.style.display
+            ? "block"
+            : "none";
+}
+
+
+function obterTextoTipoSuporteAdmin(tipo) {
+    const mapa = {
+        erro: "Erro",
+        bug: "Bug",
+        sugestao: "Sugestão",
+        elogio: "Elogio",
+    };
+
+    return mapa[tipo] || "Suporte";
+}
+
+
+function montarMensagemSuporteAdmin(tipo) {
+    const tipoTexto = obterTextoTipoSuporteAdmin(tipo);
+
+    const tenant = tenantSlugLogado || "não identificado";
+
+    const paginaAtual = window.location.href;
+
+    const dataHora = new Date().toLocaleString("pt-BR");
+
+    return [
+        `Olá, Engenharia de Bits!`,
+        ``,
+        `Preciso de suporte no sistema Gesto App.`,
+        ``,
+        `Tipo: ${tipoTexto}`,
+        `Empresa/Tenant: ${tenant}`,
+        `Página: ${paginaAtual}`,
+        `Data/Hora: ${dataHora}`,
+        ``,
+        `Descrição:`,
+        ``
+    ].join("\n");
+}
+
+
+function abrirSuporteWhatsAppAdmin(tipo) {
+    const mensagem = montarMensagemSuporteAdmin(tipo);
+
+    const url =
+        `https://wa.me/${WHATSAPP_SUPORTE_ADMIN}`
+        + `?text=${encodeURIComponent(mensagem)}`;
+
+    window.open(
+        url,
+        "_blank",
+        "noopener,noreferrer"
+    );
+}
+
+
+window.alternarCaixaSuporteAdmin = alternarCaixaSuporteAdmin;
+window.abrirSuporteWhatsAppAdmin = abrirSuporteWhatsAppAdmin;
 
 
 function iniciarPainel() {

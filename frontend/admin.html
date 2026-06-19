@@ -704,9 +704,56 @@
                 </div>
             </section>
 
+            <div id="suporte-admin" class="suporte-admin">
+                <button
+                    type="button"
+                    class="suporte-admin-botao"
+                    onclick="alternarCaixaSuporteAdmin()"
+                    aria-label="Abrir suporte"
+                >
+                    💬
+                </button>
+
+                <div id="suporte-admin-caixa" class="suporte-admin-caixa" style="display: none;">
+                    <div class="suporte-admin-topo">
+                        <div>
+                            <strong>Suporte Engenharia de Bits</strong>
+                            <p>Fale conosco sobre erro, bug, sugestão ou elogio.</p>
+                        </div>
+
+                        <button
+                            type="button"
+                            onclick="alternarCaixaSuporteAdmin()"
+                            aria-label="Fechar suporte"
+                        >
+                            ×
+                        </button>
+                    </div>
+
+                    <div class="suporte-admin-opcoes">
+                        <button type="button" onclick="abrirSuporteWhatsAppAdmin('erro')">
+                            Reportar erro
+                        </button>
+
+                        <button type="button" onclick="abrirSuporteWhatsAppAdmin('bug')">
+                            Reportar bug
+                        </button>
+
+                        <button type="button" onclick="abrirSuporteWhatsAppAdmin('sugestao')">
+                            Enviar sugestão
+                        </button>
+
+                        <button type="button" onclick="abrirSuporteWhatsAppAdmin('elogio')">
+                            Enviar elogio
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            
             <footer class="rodape-creditos">
                 <strong>Desenvolvido por Engenharia de Bits</strong>
-            
+                
                 <span>
                     E-mail:
                     <a href="mailto:Engenhariadebits@hotmail.com">
@@ -718,11 +765,11 @@
                     Redes sociais: @engenhariadebits
                 </span>
             </footer>
-    </main>
+        </main>
     
 
-    <script src="./js/api.js?v=34"></script>
-    <script src="./js/auth.js?v=34"></script>
-    <script src="./js/admin.js?v=34"></script>
+    <script src="./js/api.js?v=40"></script>
+    <script src="./js/auth.js?v=40"></script>
+    <script src="./js/admin.js?v=40"></script>
 </body>
 </html>

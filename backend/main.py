@@ -10,8 +10,6 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from routers import aviso_router
 
-
-
 # Importando os roteadores refatorados
 from routers import profissional_router
 from routers import agendamento_router
@@ -24,6 +22,7 @@ from routers import cliente_router
 from routers import bloqueio_router
 from routers import agenda_router
 from routers import suporte_router
+from routers import assinatura_stripe_router
 
 app = FastAPI()
 
@@ -65,6 +64,7 @@ app.include_router(bloqueio_router.router)
 app.include_router(agenda_router.router)
 app.include_router(aviso_router.router)
 app.include_router(suporte_router.router)
+app.include_router(assinatura_stripe_router.router)
 
 # ==========================================
 # MÓDULO MESTRE: PAINEL SAAS & STRIPE

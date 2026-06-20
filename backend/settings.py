@@ -27,8 +27,14 @@ class Settings(BaseSettings):
     )
 
     # Stripe: será configurado posteriormente
-    stripe_secret_key: str = ""
-    stripe_webhook_secret: str = ""
+    stripe_secret_key: str | None = None
+    stripe_webhook_secret: str | None = None
+
+    stripe_price_mensal: str | None = None
+    stripe_price_trimestral: str | None = None
+    stripe_price_anual: str | None = None
+
+    frontend_base_url: str = "http://127.0.0.1:5500"
 
     model_config = SettingsConfigDict(
         env_file=".env",

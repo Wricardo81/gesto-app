@@ -26,6 +26,65 @@ class Barbearia(Base):
 
     ultimo_pagamento_em = Column(DateTime, nullable=True)
 
+    gateway_pagamento = Column(
+    String(40),
+    nullable=True,
+)
+
+plano_codigo = Column(
+    String(40),
+    nullable=True,
+)
+
+plano_periodicidade = Column(
+    String(40),
+    nullable=True,
+)
+
+status_assinatura = Column(
+    String(40),
+    default="trial",
+    nullable=False,
+)
+
+stripe_customer_id = Column(
+    String,
+    nullable=True,
+    index=True,
+)
+
+stripe_subscription_id = Column(
+    String,
+    nullable=True,
+    index=True,
+)
+
+stripe_checkout_session_id = Column(
+    String,
+    nullable=True,
+    index=True,
+)
+
+assinatura_iniciada_em = Column(
+    DateTime,
+    nullable=True,
+)
+
+assinatura_renova_em = Column(
+    DateTime,
+    nullable=True,
+)
+
+periodo_trial_ate = Column(
+    DateTime,
+    nullable=True,
+)
+
+ultima_cobranca_status = Column(
+    String(80),
+    nullable=True,
+)
+
 
 # ==========================================
 # 1. TABELA DE AGENDAMENTOS

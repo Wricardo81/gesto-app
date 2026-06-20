@@ -16,7 +16,7 @@
     >
     <link
         rel="stylesheet"
-        href="./css/saas.css?v=7">
+        href="./css/saas.css?v=8">
 </head>
 
 <body>
@@ -122,6 +122,14 @@
             <button
                 type="button"
                 class="saas-tab"
+                data-secao="secao-saas-assinaturas"
+            >
+                Assinaturas
+            </button>
+
+            <button
+                type="button"
+                class="saas-tab"
                 data-secao="secao-saas-avisos"
             >
                 Avisos
@@ -164,6 +172,44 @@
                     <span>MRR previsto</span>
                     <strong id="visor-saas-mrr">R$ 0,00</strong>
                     <small>Baseado em R$ 99 por empresa ativa.</small>
+                </div>
+            </div>
+        </section>
+
+        <section id="secao-saas-assinaturas" class="secao-saas">
+            <div class="secao-topo">
+                <div>
+                    <h2>Planos e Assinaturas</h2>
+                    <p>
+                        Gerencie planos mensais, trimestrais e anuais das empresas.
+                    </p>
+                </div>
+        
+                <button
+                    type="button"
+                    class="btn-secundario-saas"
+                    onclick="carregarAssinaturasSaas()"
+                >
+                    Atualizar
+                </button>
+            </div>
+        
+            <div class="planos-saas-grid" id="planos-saas-grid">
+                Carregando planos...
+            </div>
+        
+            <div class="card-saas" style="margin-top: 18px;">
+                <div class="lista-topo-saas">
+                    <div>
+                        <h3>Empresas e assinatura</h3>
+                        <p>
+                            Selecione uma empresa e envie para o checkout do Stripe.
+                        </p>
+                    </div>
+                </div>
+        
+                <div id="lista-assinaturas-empresas-saas" class="lista-assinaturas-empresas-saas">
+                    Carregando empresas...
                 </div>
             </div>
         </section>
@@ -666,7 +712,7 @@
     </footer>
 </main>
 
-    <script src="./js/api.js?v=40"></script>
-    <script src="./js/saas.js?v=40"></script>
+    <script src="./js/api.js?v=42"></script>
+    <script src="./js/saas.js?v=42"></script>
 </body>
 </html>

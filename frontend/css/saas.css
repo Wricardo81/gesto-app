@@ -960,3 +960,146 @@ small {
     align-items: center;
     flex-wrap: wrap;
 }
+
+.planos-saas-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.plano-saas-card {
+    position: relative;
+    padding: 18px;
+    border: 1px solid var(--borda);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.plano-saas-card.destaque {
+    border-color: var(--cor-foco);
+    background: rgba(100, 255, 218, 0.07);
+}
+
+.plano-saas-card h3 {
+    margin: 0 0 8px;
+    color: var(--texto-principal);
+}
+
+.plano-saas-card p {
+    margin: 0;
+    color: var(--texto-secundario);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.plano-saas-preco {
+    display: block;
+    margin: 16px 0 4px;
+    color: var(--cor-foco);
+    font-size: 30px;
+    font-weight: 900;
+}
+
+.plano-saas-total {
+    display: block;
+    margin-bottom: 12px;
+    color: var(--texto-secundario);
+    font-size: 13px;
+}
+
+.plano-saas-desconto {
+    display: inline-flex;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: rgba(34, 197, 94, 0.14);
+    color: var(--cor-sucesso);
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.lista-assinaturas-empresas-saas {
+    display: grid;
+    gap: 12px;
+}
+
+.assinatura-empresa-card {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) auto;
+    gap: 16px;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid var(--borda);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.assinatura-empresa-info h4 {
+    margin: 0 0 5px;
+    color: var(--texto-principal);
+}
+
+.assinatura-empresa-info p {
+    margin: 0;
+    color: var(--texto-secundario);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.assinatura-empresa-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.assinatura-empresa-meta span {
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--texto-secundario);
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.assinatura-empresa-acoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.assinatura-empresa-acoes button {
+    padding: 9px 11px;
+    border: 1px solid var(--borda);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--texto-principal);
+    font-size: 12px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.assinatura-empresa-acoes button:hover {
+    border-color: var(--cor-foco);
+    background: rgba(100, 255, 218, 0.08);
+}
+
+.assinatura-empresa-acoes button.destaque {
+    background: linear-gradient(135deg, #64ffda, #38bdf8);
+    color: #06111f;
+    border: none;
+}
+
+@media (max-width: 980px) {
+    .planos-saas-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .assinatura-empresa-card {
+        grid-template-columns: 1fr;
+    }
+
+    .assinatura-empresa-acoes {
+        justify-content: flex-start;
+    }
+}

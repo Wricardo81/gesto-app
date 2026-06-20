@@ -6,6 +6,7 @@ let avisosSaasCache = [];
 let chamadosSaasCache = [];
 const secoesSaasCarregadas = new Set();
 const secoesSaasCarregando = new Set();
+let planosAssinaturaSaasCache = [];
 
 let listenersNavegacaoSaasRegistrados = false;
 
@@ -1728,6 +1729,10 @@ async function carregarDadosDaSecaoSaas(secaoId, opcoes = {}) {
             await carregarChamadosSaas();
         }
 
+        if (secaoId === "secao-saas-assinaturas") {
+            await carregarAssinaturasSaas();
+        }
+
         secoesSaasCarregadas.add(secaoId);
 
     } catch (erro) {
@@ -1776,6 +1781,277 @@ async function atualizarPainelSaas() {
 }
 
 window.atualizarPainelSaas = atualizarPainelSaas;
+
+
+function traduzirStatusAssinaturaSaas(status) {
+    const mapa = {
+        trial: "Teste",
+        checkout_criado: "Checkout criado",
+        checkout_concluido: "Checkout concluído",
+        active: "Ativa",
+        trialing: "Teste ativo",
+        past_due: "Pagamento atrasado",
+        unpaid: "Não pago",
+        canceled: "Cancelada",
+        incomplete: "Incompleta",
+        incomplete_expired: "Expirada",
+        desconhecido: "Desconhecido",
+    };
+
+    return mapa[status] || status || "Sem assinatura";
+}
+
+
+function obterPlanoPorCodigoSaas(codigo) {
+    return planosAssinaturaSaasCache.find((plano) => {
+        return plano.codigo === codigo;
+    });
+}
+
+
+function renderizarPlanosAssinaturaSaas(planos) {
+    const container = document.getElementById("planos-saas-grid");
+
+    if (!container) {
+        return;
+    }
+
+    if (!planos.length) {
+        container.innerHTML = `
+            <p class="texto-vazio-saas">
+                Nenhum plano configurado.
+            </p>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = planos
+        .map((plano) => {
+            const destaque = plano.codigo === "anual"
+                ? "destaque"
+                : "";
+
+            return `
+                <article class="plano-saas-card ${destaque}">
+                    <h3>${plano.nome}</h3>
+
+                    <p>
+                        Ideal para empresas que querem manter o sistema ativo
+                        com previsibilidade.
+                    </p>
+
+                    <strong class="plano-saas-preco">
+                        ${formatarMoedaSaas(plano.valor_mensal_equivalente)}/mês
+                    </strong>
+
+                    <span class="plano-saas-total">
+                        Total do período: ${formatarMoedaSaas(plano.valor_total)}
+                    </span>
+
+                    ${
+                        plano.desconto_percentual > 0
+                            ? `
+                                <span class="plano-saas-desconto">
+                                    ${plano.desconto_percentual}% de desconto
+                                </span>
+                            `
+                            : `
+                                <span class="plano-saas-desconto">
+                                    Sem fidelidade
+                                </span>
+                            `
+                    }
+                </article>
+            `;
+        })
+        .join("");
+}
+
+
+function renderizarAssinaturasEmpresasSaas(empresas) {
+    const container = document.getElementById(
+        "lista-assinaturas-empresas-saas"
+    );
+
+    if (!container) {
+        return;
+    }
+
+    if (!empresas.length) {
+        container.innerHTML = `
+            <p class="texto-vazio-saas">
+                Nenhuma empresa cadastrada.
+            </p>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = empresas
+        .map((empresa) => {
+            const planoAtual = obterPlanoPorCodigoSaas(
+                empresa.plano_codigo
+            );
+
+            return `
+                <article class="assinatura-empresa-card">
+                    <div class="assinatura-empresa-info">
+                        <h4>${empresa.nome}</h4>
+
+                        <p>
+                            ${empresa.email || "Sem e-mail"}<br>
+                            Tenant: ${empresa.slug}
+                        </p>
+
+                        <div class="assinatura-empresa-meta">
+                            <span>
+                                Assinatura: ${traduzirStatusAssinaturaSaas(empresa.status_assinatura)}
+                            </span>
+
+                            <span>
+                                Plano: ${planoAtual ? planoAtual.nome : empresa.plano_nome || "Não definido"}
+                            </span>
+
+                            <span>
+                                Pagamento: ${traduzirStatusPagamento(empresa.status_pagamento)}
+                            </span>
+
+                            <span>
+                                Vencimento: ${formatarDataSaas(empresa.vencimento_plano)}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="assinatura-empresa-acoes">
+                        <button
+                            type="button"
+                            onclick="criarCheckoutAssinaturaSaas(${empresa.id}, 'mensal')"
+                        >
+                            Mensal
+                        </button>
+
+                        <button
+                            type="button"
+                            onclick="criarCheckoutAssinaturaSaas(${empresa.id}, 'trimestral')"
+                        >
+                            Trimestral
+                        </button>
+
+                        <button
+                            type="button"
+                            class="destaque"
+                            onclick="criarCheckoutAssinaturaSaas(${empresa.id}, 'anual')"
+                        >
+                            Anual
+                        </button>
+                    </div>
+                </article>
+            `;
+        })
+        .join("");
+}
+
+
+async function carregarPlanosAssinaturaSaas() {
+    const planos = await saasRequest(
+        "/api/saas/assinaturas/planos"
+    );
+
+    planosAssinaturaSaasCache = planos;
+
+    renderizarPlanosAssinaturaSaas(planos);
+
+    return planos;
+}
+
+
+async function carregarAssinaturasSaas() {
+    const containerPlanos = document.getElementById("planos-saas-grid");
+    const containerEmpresas = document.getElementById(
+        "lista-assinaturas-empresas-saas"
+    );
+
+    if (containerPlanos) {
+        containerPlanos.innerHTML = "Carregando planos...";
+    }
+
+    if (containerEmpresas) {
+        containerEmpresas.innerHTML = "Carregando empresas...";
+    }
+
+    try {
+        const [planos, empresas] = await Promise.all([
+            carregarPlanosAssinaturaSaas(),
+            saasRequest("/api/saas/barbearias"),
+        ]);
+
+        clientesSaasCache = empresas;
+
+        atualizarResumoSaas(empresas);
+
+        renderizarAssinaturasEmpresasSaas(empresas);
+
+        return {
+            planos,
+            empresas,
+        };
+
+    } catch (erro) {
+        tratarErroSaas(erro);
+    }
+}
+
+
+async function criarCheckoutAssinaturaSaas(empresaId, planoCodigo) {
+    const confirmar = window.confirm(
+        `Deseja gerar checkout do plano ${planoCodigo.toUpperCase()} para esta empresa?`
+    );
+
+    if (!confirmar) {
+        return;
+    }
+
+    try {
+        const resposta = await saasRequest(
+            "/api/saas/assinaturas/checkout",
+            {
+                method: "POST",
+                body: {
+                    barbearia_id: empresaId,
+                    plano_codigo: planoCodigo,
+                },
+            }
+        );
+
+        invalidarSecoesSaas([
+            "secao-saas-dashboard",
+            "secao-saas-empresas",
+            "secao-saas-assinaturas",
+        ]);
+
+        if (resposta.checkout_url) {
+            window.open(
+                resposta.checkout_url,
+                "_blank",
+                "noopener,noreferrer"
+            );
+
+            exibirMensagemSaas(
+                "Checkout Stripe aberto em nova aba."
+            );
+
+        } else {
+            exibirMensagemSaas(
+                "Checkout criado, mas URL não retornada.",
+                "erro"
+            );
+        }
+
+    } catch (erro) {
+        tratarErroSaas(erro);
+    }
+}
 
 
 async function iniciarPainelSaas() {
@@ -1865,3 +2141,5 @@ window.carregarDiagnosticoEmpresa = carregarDiagnosticoEmpresa;
 window.salvarConfiguracaoEmpresa = salvarConfiguracaoEmpresa;
 window.carregarAvisosSaas = carregarAvisosSaas;
 window.alternarStatusAvisoSaas = alternarStatusAvisoSaas;
+window.carregarAssinaturasSaas = carregarAssinaturasSaas;
+window.criarCheckoutAssinaturaSaas = criarCheckoutAssinaturaSaas;

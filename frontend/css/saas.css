@@ -953,3 +953,10 @@ small {
         flex-direction: column;
     }
 }
+
+.header-acoes-saas {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}

@@ -4,6 +4,11 @@ let clientesSaasCache = [];
 let empresaConfiguracaoAtual = null;
 let avisosSaasCache = [];
 let chamadosSaasCache = [];
+const secoesSaasCarregadas = new Set();
+const secoesSaasCarregando = new Set();
+
+let listenersNavegacaoSaasRegistrados = false;
+
 
 function obterTokenSaas() {
     return localStorage.getItem(
@@ -154,10 +159,13 @@ async function realizarLoginSaas(event) {
         salvarTokenSaas(
             dados.access_token
         );
-
+        
         exibirPainelSaas();
-
-        await carregarClientes();
+        
+        secoesSaasCarregadas.clear();
+        secoesSaasCarregando.clear();
+        
+        inicializarNavegacaoSaas();
 
     } catch (erro) {
         console.error(erro);
@@ -539,13 +547,25 @@ async function criarNovoCliente(event) {
             }
         );
 
+        invalidarSecoesSaas([
+            "secao-saas-dashboard",
+            "secao-saas-empresas",
+        ]);
+
+        await carregarDadosDaSecaoSaas(
+            "secao-saas-empresas",
+            {
+                forcar: true,
+            }
+        );
+
         document
             .getElementById(
                 "form-nova-barbearia"
             )
             .reset();
 
-        await carregarClientes();
+            exibirMensagemSaas("Empresa criada com sucesso.");
 
         exibirMensagemSaas("Pagamento registrado com sucesso.");
 
@@ -564,7 +584,18 @@ async function alterarStatus(id) {
             }
         );
 
-        await carregarClientes();
+        invalidarSecoesSaas([
+            "secao-saas-dashboard",
+            "secao-saas-empresas",
+        ]);
+
+        await carregarDadosDaSecaoSaas(
+            "secao-saas-empresas",
+            {
+                forcar: true,
+            }
+        );
+
         
         exibirMensagemSaas("Status manual atualizado com sucesso.");
 
@@ -617,17 +648,23 @@ function mostrarSecaoSaas(secaoId) {
         top: 0,
         behavior: "smooth",
     });
+
+    carregarDadosDaSecaoSaas(secaoId);
 }
 
 
 function inicializarNavegacaoSaas() {
     const botoes = document.querySelectorAll(".saas-tab");
 
-    botoes.forEach((botao) => {
-        botao.addEventListener("click", () => {
-            mostrarSecaoSaas(botao.dataset.secao);
+    if (!listenersNavegacaoSaasRegistrados) {
+        botoes.forEach((botao) => {
+            botao.addEventListener("click", () => {
+                mostrarSecaoSaas(botao.dataset.secao);
+            });
         });
-    });
+
+        listenersNavegacaoSaasRegistrados = true;
+    }
 
     const secaoSalva = localStorage.getItem(
         "gesto_saas_secao_ativa"
@@ -661,8 +698,18 @@ async function marcarEmpresaComoPaga(id) {
                 },
             }
         );
+        invalidarSecoesSaas([
+            "secao-saas-dashboard",
+            "secao-saas-empresas",
+        ]);
 
-        await carregarClientes();
+        await carregarDadosDaSecaoSaas(
+            "secao-saas-empresas",
+            {
+                forcar: true,
+            }
+        );
+
 
         exibirMensagemSaas("Pagamento registrado com sucesso.");
 
@@ -783,11 +830,21 @@ async function salvarFinanceiroEmpresa(event) {
 
         fecharModalFinanceiroSaas();
 
-        await carregarClientes();
+            invalidarSecoesSaas([
+                "secao-saas-dashboard",
+                "secao-saas-empresas",
+            ]);
 
-        exibirMensagemSaas(
-            "Dados financeiros atualizados com sucesso."
-        );
+            await carregarDadosDaSecaoSaas(
+                "secao-saas-empresas",
+                {
+                    forcar: true,
+                }
+            );
+
+            exibirMensagemSaas(
+                "Dados financeiros atualizados com sucesso."
+            );
 
     } catch (erro) {
         tratarErroSaas(erro);
@@ -1006,9 +1063,19 @@ async function salvarConfiguracaoEmpresa(event) {
 
         empresaConfiguracaoAtual = resposta.barbearia;
 
-        await carregarClientes();
+            invalidarSecoesSaas([
+                "secao-saas-dashboard",
+                "secao-saas-empresas",
+            ]);
 
-        fecharModalConfiguracaoEmpresa();
+            await carregarDadosDaSecaoSaas(
+                "secao-saas-empresas",
+                {
+                    forcar: true,
+                }
+            );
+
+            fecharModalConfiguracaoEmpresa();
 
         exibirMensagemSaas(
             resposta.mensagem || "Dados da empresa atualizados com sucesso."
@@ -1366,7 +1433,14 @@ async function criarAvisoSaas(event) {
 
         document.getElementById("form-aviso-saas").reset();
 
-        await carregarAvisosSaas();
+        invalidarSecaoSaas("secao-saas-avisos");
+
+        await carregarDadosDaSecaoSaas(
+            "secao-saas-avisos",
+            {
+                forcar: true,
+            }
+        );
 
         exibirMensagemSaas(
             "Aviso criado com sucesso."
@@ -1394,13 +1468,20 @@ async function alternarStatusAvisoSaas(id, ativo) {
             }
         );
 
-        await carregarAvisosSaas();
+        invalidarSecaoSaas("secao-saas-avisos");
 
-        exibirMensagemSaas(
-            ativo
-                ? "Aviso ativado com sucesso."
-                : "Aviso desativado com sucesso."
+        await carregarDadosDaSecaoSaas(
+            "secao-saas-avisos",
+            {
+                forcar: true,
+            }
         );
+        
+        exibirMensagemSaas(
+                ativo
+                    ? "Aviso ativado com sucesso."
+                    : "Aviso desativado com sucesso."
+            );
 
     } catch (erro) {
         tratarErroSaas(erro);
@@ -1560,11 +1641,18 @@ async function atualizarStatusChamadoSaas(id, status) {
             }
         );
 
-        await carregarChamadosSaas();
+        invalidarSecaoSaas("secao-saas-suporte");
 
-        exibirMensagemSaas(
-            "Chamado atualizado com sucesso."
+        await carregarDadosDaSecaoSaas(
+            "secao-saas-suporte",
+            {
+                forcar: true,
+            }
         );
+
+exibirMensagemSaas(
+    "Chamado atualizado com sucesso."
+);
 
     } catch (erro) {
         tratarErroSaas(erro);
@@ -1576,36 +1664,154 @@ window.carregarChamadosSaas = carregarChamadosSaas;
 window.atualizarStatusChamadoSaas = atualizarStatusChamadoSaas;
 
 
+async function carregarEmpresasSaasCompat() {
+    if (typeof carregarClientesSaas === "function") {
+        return carregarClientesSaas();
+    }
+
+    if (typeof carregarBarbeariasSaas === "function") {
+        return carregarBarbeariasSaas();
+    }
+
+    if (typeof carregarClientes === "function") {
+        return carregarClientes();
+    }
+
+    if (typeof carregarBarbearias === "function") {
+        return carregarBarbearias();
+    }
+
+    throw new Error(
+        "Função de carregamento de empresas não encontrada no saas.js."
+    );
+}
+
+
+async function carregarDadosDaSecaoSaas(secaoId, opcoes = {}) {
+    const forcar = Boolean(opcoes.forcar);
+
+    if (!secaoId) {
+        return;
+    }
+
+    if (secoesSaasCarregando.has(secaoId)) {
+        return;
+    }
+
+    if (
+        secoesSaasCarregadas.has(secaoId)
+        && !forcar
+    ) {
+        return;
+    }
+
+    secoesSaasCarregando.add(secaoId);
+
+    try {
+        if (secaoId === "secao-saas-dashboard") {
+            await carregarEmpresasSaasCompat();
+        }
+
+        if (secaoId === "secao-saas-empresas") {
+            await carregarEmpresasSaasCompat();
+        }
+
+        if (secaoId === "secao-saas-criar") {
+            // Não precisa carregar dados externos.
+        }
+
+        if (secaoId === "secao-saas-avisos") {
+            await carregarAvisosSaas();
+        }
+
+        if (secaoId === "secao-saas-suporte") {
+            await carregarChamadosSaas();
+        }
+
+        secoesSaasCarregadas.add(secaoId);
+
+    } catch (erro) {
+        console.error(
+            "Erro ao carregar seção SaaS:",
+            secaoId,
+            erro
+        );
+
+        tratarErroSaas(erro);
+
+    } finally {
+        secoesSaasCarregando.delete(secaoId);
+    }
+}
+
+
+function invalidarSecaoSaas(secaoId) {
+    secoesSaasCarregadas.delete(secaoId);
+}
+
+
+function invalidarSecoesSaas(secaoIds = []) {
+    secaoIds.forEach((secaoId) => {
+        invalidarSecaoSaas(secaoId);
+    });
+}
+
+
+async function atualizarPainelSaas() {
+    const secaoAtual =
+        document.querySelector(".secao-saas.ativa")?.id
+        || localStorage.getItem("gesto_saas_secao_ativa")
+        || "secao-saas-dashboard";
+
+    await carregarDadosDaSecaoSaas(
+        secaoAtual,
+        {
+            forcar: true,
+        }
+    );
+
+    exibirMensagemSaas(
+        "Painel SaaS atualizado com sucesso."
+    );
+}
+
+window.atualizarPainelSaas = atualizarPainelSaas;
+
+
 async function iniciarPainelSaas() {
-    document
-        .getElementById("form-login-saas")
-        .addEventListener(
+    const formLoginSaas = document.getElementById("form-login-saas");
+
+    if (formLoginSaas) {
+        formLoginSaas.addEventListener(
             "submit",
             realizarLoginSaas
         );
+    }
 
-    document
-        .getElementById(
-            "form-nova-barbearia"
-        )
-        .addEventListener(
+    const formNovaBarbearia = document.getElementById(
+        "form-nova-barbearia"
+    );
+
+    if (formNovaBarbearia) {
+        formNovaBarbearia.addEventListener(
             "submit",
             criarNovoCliente
-    );
+        );
+    }
 
     const formAvisoSaas = document.getElementById("form-aviso-saas");
 
-        if (formAvisoSaas) {
-            formAvisoSaas.addEventListener(
-                "submit",
-                criarAvisoSaas
-            );
-        }
-    
+    if (formAvisoSaas) {
+        formAvisoSaas.addEventListener(
+            "submit",
+            criarAvisoSaas
+        );
+    }
+
     const formFinanceiro = document.getElementById(
         "form-financeiro-saas"
     );
-    
+
     if (formFinanceiro) {
         formFinanceiro.addEventListener(
             "submit",
@@ -1613,27 +1819,35 @@ async function iniciarPainelSaas() {
         );
     }
 
-    document
-        .getElementById("btn-sair-saas")
-        .addEventListener(
+    const botaoSair = document.getElementById("btn-sair-saas");
+
+    if (botaoSair) {
+        botaoSair.addEventListener(
             "click",
             fazerLogoutSaas
-    );
-    
-    inicializarNavegacaoSaas();
+        );
+    }
 
     if (!obterTokenSaas()) {
         exibirLoginSaas();
         return;
     }
 
-    carregarChamadosSaas();
-    exibirPainelSaas(); 
-    await carregarClientes();
-    mostrarSecaoSaas("secao-saas-empresas");
-    exibirMensagemSaas(
-        "Empresa criada com sucesso."
+    invalidarSecoesSaas([
+        "...",
+        "...",
+    ]);
+    
+    await carregarDadosDaSecaoSaas(
+        "...",
+        {
+            forcar: true,
+        }
     );
+
+    exibirPainelSaas();
+
+    inicializarNavegacaoSaas();
 }
 
 

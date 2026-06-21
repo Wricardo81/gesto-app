@@ -2099,6 +2099,51 @@ function tratarRetornoStripeSaas() {
     );
 }
 
+const BANNER_COMERCIAL_SAAS_KEY =
+    "gesto_banner_comercial_saas_dispensado";
+
+
+function exibirBannerComercialSaas() {
+    const banner = document.getElementById(
+        "banner-comercial-saas"
+    );
+
+    if (!banner) {
+        return;
+    }
+
+    const dispensado = localStorage.getItem(
+        BANNER_COMERCIAL_SAAS_KEY
+    );
+
+    if (dispensado === "true") {
+        banner.classList.remove("visivel");
+        return;
+    }
+
+    banner.classList.add("visivel");
+}
+
+
+function dispensarBannerComercialSaas() {
+    localStorage.setItem(
+        BANNER_COMERCIAL_SAAS_KEY,
+        "true"
+    );
+
+    const banner = document.getElementById(
+        "banner-comercial-saas"
+    );
+
+    if (banner) {
+        banner.classList.remove("visivel");
+    }
+}
+
+
+    window.dispensarBannerComercialSaas =
+    dispensarBannerComercialSaas;
+
 
 async function iniciarPainelSaas() {
     const formLoginSaas = document.getElementById("form-login-saas");
@@ -2156,6 +2201,8 @@ async function iniciarPainelSaas() {
     }
     
     exibirPainelSaas();
+
+    exibirBannerComercialSaas();
     
     tratarRetornoStripeSaas();
     

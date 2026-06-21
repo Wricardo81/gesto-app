@@ -20,6 +20,52 @@ let chamadosAdminCache = [];
    UTILITÁRIOS
 ========================================================= */
 
+const BANNER_FUNCIONALIDADES_ADMIN_KEY =
+    "gesto_banner_funcionalidades_admin_dispensado";
+
+
+function exibirBannerFuncionalidadesAdmin() {
+    const banner = document.getElementById(
+        "banner-funcionalidades-admin"
+    );
+
+    if (!banner) {
+        return;
+    }
+
+    const dispensado = localStorage.getItem(
+        BANNER_FUNCIONALIDADES_ADMIN_KEY
+    );
+
+    if (dispensado === "true") {
+        banner.classList.remove("visivel");
+        return;
+    }
+
+    banner.classList.add("visivel");
+}
+
+
+function dispensarBannerFuncionalidadesAdmin() {
+    localStorage.setItem(
+        BANNER_FUNCIONALIDADES_ADMIN_KEY,
+        "true"
+    );
+
+    const banner = document.getElementById(
+        "banner-funcionalidades-admin"
+    );
+
+    if (banner) {
+        banner.classList.remove("visivel");
+    }
+}
+
+
+window.dispensarBannerFuncionalidadesAdmin =
+    dispensarBannerFuncionalidadesAdmin;
+
+
 function formatarMoeda(valor) {
     return Number(valor || 0).toLocaleString(
         "pt-BR",
@@ -1005,6 +1051,7 @@ function iniciarPainel() {
     inicializarNavegacaoAdmin();
     carregarAvisosAdmin();
     carregarStatusAssinaturaAdmin();
+    exibirBannerFuncionalidadesAdmin();
 
 }
 
@@ -3117,3 +3164,9 @@ window.abrirModalHistoricoChamadosAdmin = abrirModalHistoricoChamadosAdmin;
 window.fecharModalHistoricoChamadosAdmin = fecharModalHistoricoChamadosAdmin;
 window.carregarTudo = carregarTudo;
 window.atualizarPainelAdmin = atualizarPainelAdmin;
+
+document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(() => {
+        exibirBannerFuncionalidadesAdmin();
+    }, 700);
+});

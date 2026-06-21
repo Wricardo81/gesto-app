@@ -1586,3 +1586,83 @@
         width: 100%;
     }
 }
+
+.banner-funcionalidades-admin {
+    display: none;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: center;
+    margin: 18px 0;
+    padding: 20px;
+    border: 1px solid rgba(100, 255, 218, 0.28);
+    border-radius: 18px;
+    background:
+        linear-gradient(135deg, rgba(100, 255, 218, 0.12), rgba(56, 189, 248, 0.08));
+}
+
+.banner-funcionalidades-admin.visivel {
+    display: flex;
+}
+
+.banner-funcionalidades-admin span {
+    display: inline-flex;
+    margin-bottom: 8px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: rgba(100, 255, 218, 0.14);
+    color: #64ffda;
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.banner-funcionalidades-admin h3 {
+    margin: 0 0 6px;
+    color: #ffffff;
+}
+
+.banner-funcionalidades-admin p {
+    margin: 0;
+    color: #8892b0;
+    line-height: 1.5;
+}
+
+.banner-funcionalidades-admin-acoes {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.banner-funcionalidades-admin-acoes a,
+.banner-funcionalidades-admin-acoes button {
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.banner-funcionalidades-admin-acoes a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #64ffda, #38bdf8);
+    color: #06111f;
+    text-decoration: none;
+}
+
+.banner-funcionalidades-admin-acoes button {
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: transparent;
+    color: #ffffff;
+}
+
+@media (max-width: 760px) {
+    .banner-funcionalidades-admin {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

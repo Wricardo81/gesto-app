@@ -275,6 +275,29 @@ def serializar_barbearia_saas(barbearia: models.Barbearia) -> dict:
 
         "pagamento_vencido": financeiro["pagamento_vencido"],
         "dias_em_atraso": financeiro["dias_em_atraso"],
+        "gateway_pagamento": barbearia.gateway_pagamento,
+        "plano_codigo": barbearia.plano_codigo,
+        "plano_periodicidade": barbearia.plano_periodicidade,
+        "status_assinatura": barbearia.status_assinatura,
+        "stripe_customer_id": barbearia.stripe_customer_id,
+        "stripe_subscription_id": barbearia.stripe_subscription_id,
+        "stripe_checkout_session_id": barbearia.stripe_checkout_session_id,
+        "assinatura_iniciada_em": (
+            barbearia.assinatura_iniciada_em.isoformat()
+            if barbearia.assinatura_iniciada_em
+            else None
+        ),
+        "assinatura_renova_em": (
+            barbearia.assinatura_renova_em.isoformat()
+            if barbearia.assinatura_renova_em
+            else None
+        ),
+        "periodo_trial_ate": (
+            barbearia.periodo_trial_ate.isoformat()
+            if barbearia.periodo_trial_ate
+            else None
+        ),
+        "ultima_cobranca_status": barbearia.ultima_cobranca_status,
     }
 
 

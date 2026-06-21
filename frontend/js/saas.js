@@ -2024,33 +2024,79 @@ async function criarCheckoutAssinaturaSaas(empresaId, planoCodigo) {
             }
         );
 
+        console.log(
+            "Resposta checkout Stripe:",
+            resposta
+        );
+
+        if (
+            !resposta
+            || !resposta.checkout_url
+        ) {
+            exibirMensagemSaas(
+                "Checkout criado, mas o backend não retornou a URL do Stripe.",
+                "erro"
+            );
+
+            return;
+        }
+
         invalidarSecoesSaas([
             "secao-saas-dashboard",
             "secao-saas-empresas",
             "secao-saas-assinaturas",
         ]);
 
-        if (resposta.checkout_url) {
-            window.open(
-                resposta.checkout_url,
-                "_blank",
-                "noopener,noreferrer"
-            );
-
-            exibirMensagemSaas(
-                "Checkout Stripe aberto em nova aba."
-            );
-
-        } else {
-            exibirMensagemSaas(
-                "Checkout criado, mas URL não retornada.",
-                "erro"
-            );
-        }
+        window.location.href = resposta.checkout_url;
 
     } catch (erro) {
         tratarErroSaas(erro);
     }
+}
+
+
+function tratarRetornoStripeSaas() {
+    const parametros = new URLSearchParams(
+        window.location.search
+    );
+
+    const statusStripe = parametros.get("stripe");
+
+    if (!statusStripe) {
+        return;
+    }
+
+    if (statusStripe === "sucesso") {
+        exibirMensagemSaas(
+            "Pagamento recebido pelo Stripe. Atualizando assinatura..."
+        );
+
+        invalidarSecoesSaas([
+            "secao-saas-dashboard",
+            "secao-saas-empresas",
+            "secao-saas-assinaturas",
+        ]);
+
+        localStorage.setItem(
+            "gesto_saas_secao_ativa",
+            "secao-saas-assinaturas"
+        );
+    }
+
+    if (statusStripe === "cancelado") {
+        exibirMensagemSaas(
+            "Checkout cancelado. Nenhuma alteração foi feita.",
+            "erro"
+        );
+    }
+
+    const urlLimpa = `${window.location.origin}${window.location.pathname}`;
+
+    window.history.replaceState(
+        {},
+        document.title,
+        urlLimpa
+    );
 }
 
 
@@ -2108,24 +2154,14 @@ async function iniciarPainelSaas() {
         exibirLoginSaas();
         return;
     }
-
-    invalidarSecoesSaas([
-        "...",
-        "...",
-    ]);
     
-    await carregarDadosDaSecaoSaas(
-        "...",
-        {
-            forcar: true,
-        }
-    );
-
     exibirPainelSaas();
-
+    
+    tratarRetornoStripeSaas();
+    
     inicializarNavegacaoSaas();
-}
 
+}
 
 window.addEventListener(
     "DOMContentLoaded",

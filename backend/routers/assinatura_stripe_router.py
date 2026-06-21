@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Any
+import re
 
 import stripe
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
@@ -62,7 +63,19 @@ def obter_price_id_por_plano(
     if not price_id:
         raise HTTPException(
             status_code=500,
-            detail=f"Price ID do plano {plano.codigo} não configurado.",
+            detail=f"Price ID do plano {plano.codigo} não configurado no .env.",
+        )
+
+    price_id = str(price_id).strip()
+
+    if not re.match(r"^price_[A-Za-z0-9_]+$", price_id):
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                f"Price ID inválido para o plano {plano.codigo}. "
+                "Use o ID real do Stripe que começa com 'price_', "
+                "não o valor em reais."
+            ),
         )
 
     return price_id
@@ -197,30 +210,50 @@ def criar_checkout_assinatura_saas(
         customer_id = customer["id"]
         barbearia.stripe_customer_id = customer_id
 
-    checkout = stripe.checkout.Session.create(
-        mode="subscription",
-        customer=customer_id,
-        line_items=[
-            {
-                "price": price_id,
-                "quantity": 1,
-            }
-        ],
-        success_url=success_url,
-        cancel_url=cancel_url,
-        metadata={
-            "barbearia_id": str(barbearia.id),
-            "tenant_slug": barbearia.slug,
-            "plano_codigo": plano.codigo,
-        },
-        subscription_data={
-            "metadata": {
+    try:
+        checkout = stripe.checkout.Session.create(
+            mode="subscription",
+            customer=customer_id,
+            line_items=[
+                {
+                    "price": price_id,
+                    "quantity": 1,
+                }
+            ],
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata={
                 "barbearia_id": str(barbearia.id),
                 "tenant_slug": barbearia.slug,
                 "plano_codigo": plano.codigo,
-            }
-        },
-    )
+            },
+            subscription_data={
+                "metadata": {
+                    "barbearia_id": str(barbearia.id),
+                    "tenant_slug": barbearia.slug,
+                    "plano_codigo": plano.codigo,
+                }
+            },
+        )
+
+    except stripe.error.InvalidRequestError as erro:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Erro ao criar checkout no Stripe. "
+                "Verifique se o Price ID existe no painel do Stripe. "
+                f"Detalhe: {str(erro)}"
+            ),
+        )
+
+    except stripe.error.StripeError as erro:
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                "Erro de comunicação com o Stripe. "
+                f"Detalhe: {str(erro)}"
+            ),
+        )
 
     barbearia.gateway_pagamento = "stripe"
     barbearia.plano_codigo = plano.codigo

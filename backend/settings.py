@@ -57,3 +57,8 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
+
+
+mercado_pago_access_token: str | None = None
+mercado_pago_webhook_secret: str | None = None
+mercado_pago_notification_url: str | None = None

@@ -23,6 +23,7 @@ from routers import bloqueio_router
 from routers import agenda_router
 from routers import suporte_router
 from routers import assinatura_stripe_router
+from routers import mercado_pago_router
 
 app = FastAPI()
 
@@ -65,6 +66,7 @@ app.include_router(agenda_router.router)
 app.include_router(aviso_router.router)
 app.include_router(suporte_router.router)
 app.include_router(assinatura_stripe_router.router)
+app.include_router(mercado_pago_router.router)
 
 # ==========================================
 # MÓDULO MESTRE: PAINEL SAAS & STRIPE

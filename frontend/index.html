@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Gesto App é um sistema de agendamento online para barbearias e negócios de atendimento. Organize agenda, clientes, equipe, pagamentos e suporte em uma única plataforma."
+    >
+
+    <title>Gesto App | Sistema de Agendamento para Barbearias</title>
+
+    <link
+        rel="stylesheet"
+        href="./css/landing.css?v=1"
+    >
+</head>
+<body>
+    <header class="landing-header">
+        <a href="#inicio" class="landing-logo">
+            <span>Gesto</span> App
+        </a>
+
+        <nav class="landing-nav" id="landing-nav">
+            <a href="#funcionalidades">Funcionalidades</a>
+            <a href="#beneficios">Benefícios</a>
+            <a href="#planos">Planos</a>
+            <a href="#faq">FAQ</a>
+        </nav>
+
+        <div class="landing-header-acoes">
+            <a
+                class="btn-header"
+                href="https://wa.me/5581988996085?text=Ol%C3%A1%2C%20quero%20conhecer%20o%20Gesto%20App"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                Falar no WhatsApp
+            </a>
+
+            <button
+                class="btn-menu-mobile"
+                type="button"
+                onclick="alternarMenuLanding()"
+                aria-label="Abrir menu"
+            >
+                ☰
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <section id="inicio" class="hero-section">
+            <div class="hero-conteudo">
+                <span class="tag-produto">
+                    SaaS para barbearias, salões e negócios de atendimento
+                </span>
+
+                <h1>
+                    Transforme sua agenda em uma máquina de organização, atendimento e vendas.
+                </h1>
+
+                <p>
+                    O Gesto App ajuda barbearias e negócios locais a controlar agendamentos,
+                    clientes, equipe, serviços, pagamentos e suporte em um só lugar.
+                </p>
+
+                <div class="hero-acoes">
+                    <a
+                        class="btn-principal"
+                        href="https://wa.me/5581988996085?text=Ol%C3%A1%2C%20quero%20uma%20demonstra%C3%A7%C3%A3o%20do%20Gesto%20App"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Quero uma demonstração
+                    </a>
+
+                    <a class="btn-secundario" href="#planos">
+                        Ver planos
+                    </a>
+                </div>
+
+                <div class="hero-metricas">
+                    <div>
+                        <strong>24h</strong>
+                        <span>agenda online</span>
+                    </div>
+
+                    <div>
+                        <strong>CRM</strong>
+                        <span>clientes organizados</span>
+                    </div>
+
+                    <div>
+                        <strong>SaaS</strong>
+                        <span>controle recorrente</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-card">
+                <div class="mockup-topo">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+
+                <div class="mockup-agenda">
+                    <div class="mockup-linha destaque">
+                        <span>09:00</span>
+                        <strong>Corte Tradicional</strong>
+                        <small>Marcos • Confirmado</small>
+                    </div>
+
+                    <div class="mockup-linha">
+                        <span>10:30</span>
+                        <strong>Barba Completa</strong>
+                        <small>Rafael • Confirmado</small>
+                    </div>
+
+                    <div class="mockup-linha">
+                        <span>14:00</span>
+                        <strong>Corte + Sobrancelha</strong>
+                        <small>Cliente novo • Online</small>
+                    </div>
+
+                    <div class="mockup-status">
+                        <span>Agenda ativa</span>
+                        <strong>R$ 99/mês</strong>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="beneficios" class="secao">
+            <div class="secao-titulo">
+                <span>Por que usar</span>
+                <h2>Menos bagunça na agenda. Mais controle no negócio.</h2>
+                <p>
+                    O Gesto App foi pensado para negócios que precisam vender melhor,
+                    reduzir faltas e profissionalizar o atendimento.
+                </p>
+            </div>
+
+            <div class="beneficios-grid">
+                <article>
+                    <h3>Agenda online 24h</h3>
+                    <p>
+                        Clientes podem consultar horários disponíveis e agendar sem depender
+                        de mensagens manuais.
+                    </p>
+                </article>
+
+                <article>
+                    <h3>Gestão de equipe</h3>
+                    <p>
+                        Cadastre profissionais, serviços, duração dos atendimentos e horários
+                        de trabalho.
+                    </p>
+                </article>
+
+                <article>
+                    <h3>Controle financeiro</h3>
+                    <p>
+                        Planos recorrentes, status de pagamento e bloqueio automático por
+                        inadimplência.
+                    </p>
+                </article>
+
+                <article>
+                    <h3>CRM de clientes</h3>
+                    <p>
+                        Acompanhe histórico, contatos e oportunidades para reativação de
+                        clientes.
+                    </p>
+                </article>
+            </div>
+        </section>
+
+        <section id="funcionalidades" class="secao secao-dark">
+            <div class="secao-titulo">
+                <span>Funcionalidades</span>
+                <h2>Tudo que uma barbearia moderna precisa para operar melhor.</h2>
+            </div>
+
+            <div class="funcionalidades-grid">
+                <div class="funcionalidade-card">
+                    <strong>01</strong>
+                    <h3>Agendamento público</h3>
+                    <p>Link personalizado para cada empresa receber agendamentos online.</p>
+                </div>
+
+                <div class="funcionalidade-card">
+                    <strong>02</strong>
+                    <h3>Painel administrativo</h3>
+                    <p>Controle de agenda, serviços, profissionais, clientes e bloqueios.</p>
+                </div>
+
+                <div class="funcionalidade-card">
+                    <strong>03</strong>
+                    <h3>Bloqueio de horários</h3>
+                    <p>Bloqueie dias, horários específicos ou profissionais indisponíveis.</p>
+                </div>
+
+                <div class="funcionalidade-card">
+                    <strong>04</strong>
+                    <h3>Cancelamento inteligente</h3>
+                    <p>Regras de cancelamento e controle de status dos agendamentos.</p>
+                </div>
+
+                <div class="funcionalidade-card">
+                    <strong>05</strong>
+                    <h3>Central de avisos</h3>
+                    <p>Comunique novidades, manutenção, promoções e alertas para clientes SaaS.</p>
+                </div>
+
+                <div class="funcionalidade-card">
+                    <strong>06</strong>
+                    <h3>Suporte interno</h3>
+                    <p>Empresas podem abrir chamados direto pelo painel administrativo.</p>
+                </div>
+
+                <div class="funcionalidade-card">
+                    <strong>07</strong>
+                    <h3>Assinaturas Stripe</h3>
+                    <p>Planos recorrentes mensais, trimestrais e anuais com atualização automática.</p>
+                </div>
+
+                <div class="funcionalidade-card">
+                    <strong>08</strong>
+                    <h3>Painel SaaS Master</h3>
+                    <p>Controle todas as empresas, pagamentos, planos, suporte e comunicados.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="planos" class="secao">
+            <div class="secao-titulo">
+                <span>Planos</span>
+                <h2>Escolha o plano ideal para começar.</h2>
+                <p>
+                    Planos com descontos progressivos para quem quer mais previsibilidade.
+                </p>
+            </div>
+
+            <div class="planos-grid">
+                <article class="plano-card">
+                    <h3>Mensal</h3>
+                    <p>Para começar sem compromisso.</p>
+
+                    <strong class="preco">R$ 99</strong>
+                    <span class="periodo">por mês</span>
+
+                    <ul>
+                        <li>Agenda online</li>
+                        <li>Gestão de serviços</li>
+                        <li>Gestão de profissionais</li>
+                        <li>Suporte básico</li>
+                    </ul>
+
+                    <a
+                        href="https://wa.me/5581988996085?text=Quero%20assinar%20o%20plano%20mensal%20do%20Gesto%20App"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Quero o mensal
+                    </a>
+                </article>
+
+                <article class="plano-card destaque">
+                    <span class="badge-plano">Mais escolhido</span>
+
+                    <h3>Trimestral</h3>
+                    <p>Para empresas que querem economia e continuidade.</p>
+
+                    <strong class="preco">R$ 267</strong>
+                    <span class="periodo">equivale a R$ 89/mês</span>
+
+                    <ul>
+                        <li>Tudo do mensal</li>
+                        <li>10% de desconto</li>
+                        <li>Prioridade em suporte</li>
+                        <li>Melhor previsibilidade</li>
+                    </ul>
+
+                    <a
+                        href="https://wa.me/5581988996085?text=Quero%20assinar%20o%20plano%20trimestral%20do%20Gesto%20App"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Quero o trimestral
+                    </a>
+                </article>
+
+                <article class="plano-card">
+                    <h3>Anual</h3>
+                    <p>Para quem quer o maior desconto.</p>
+
+                    <strong class="preco">R$ 948</strong>
+                    <span class="periodo">equivale a R$ 79/mês</span>
+
+                    <ul>
+                        <li>Tudo do trimestral</li>
+                        <li>20% de desconto</li>
+                        <li>Consultoria inicial</li>
+                        <li>Melhor custo-benefício</li>
+                    </ul>
+
+                    <a
+                        href="https://wa.me/5581988996085?text=Quero%20assinar%20o%20plano%20anual%20do%20Gesto%20App"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Quero o anual
+                    </a>
+                </article>
+            </div>
+        </section>
+
+        <section class="cta-section">
+            <div>
+                <span>Pronto para vender melhor?</span>
+                <h2>Leve sua barbearia para uma operação mais profissional.</h2>
+                <p>
+                    Receba uma demonstração do Gesto App e veja como ele pode organizar
+                    sua agenda, equipe e clientes.
+                </p>
+            </div>
+
+            <a
+                class="btn-principal"
+                href="https://wa.me/5581988996085?text=Ol%C3%A1%2C%20quero%20testar%20o%20Gesto%20App"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                Quero testar o Gesto App
+            </a>
+        </section>
+
+        <section id="faq" class="secao">
+            <div class="secao-titulo">
+                <span>Dúvidas frequentes</span>
+                <h2>Perguntas comuns antes de contratar.</h2>
+            </div>
+
+            <div class="faq-lista">
+                <details>
+                    <summary>Precisa instalar algum programa?</summary>
+                    <p>
+                        Não. O sistema roda pelo navegador e pode ser acessado pelo computador,
+                        tablet ou celular.
+                    </p>
+                </details>
+
+                <details>
+                    <summary>Funciona para salões e clínicas?</summary>
+                    <p>
+                        Sim. Apesar de ser pensado inicialmente para barbearias, também pode ser
+                        adaptado para outros negócios de atendimento com horário marcado.
+                    </p>
+                </details>
+
+                <details>
+                    <summary>Consigo controlar minha equipe?</summary>
+                    <p>
+                        Sim. Você pode cadastrar profissionais, serviços e horários de atendimento.
+                    </p>
+                </details>
+
+                <details>
+                    <summary>Posso cancelar?</summary>
+                    <p>
+                        Sim. A assinatura pode ser ajustada conforme o plano contratado e as regras
+                        comerciais combinadas.
+                    </p>
+                </details>
+            </div>
+        </section>
+    </main>
+
+    <footer class="landing-footer">
+        <strong>Gesto App</strong>
+
+        <p>
+            Desenvolvido por Engenharia de Bits • Engenhariadebits@hotmail.com • @engenhariadebits
+        </p>
+    </footer>
+
+    <a
+        class="whatsapp-float"
+        href="https://wa.me/5581988996085?text=Ol%C3%A1%2C%20quero%20conhecer%20o%20Gesto%20App"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Falar no WhatsApp"
+    >
+        WhatsApp
+    </a>
+
+    <script src="./js/landing.js?v=1"></script>
+</body>
+</html>

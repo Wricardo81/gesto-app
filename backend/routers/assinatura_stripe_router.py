@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 import models
 from database import SessaoLocal
-from security import obter_saas_admin_logado
+from security import obter_saas_admin_logado, validar_tenant_logado
 from services.planos_service import (
     listar_planos_assinatura,
     obter_plano_assinatura,
@@ -149,32 +149,16 @@ def listar_planos_saas(
     return listar_planos_assinatura()
 
 
-@router.post("/api/saas/assinaturas/checkout")
-def criar_checkout_assinatura_saas(
-    dados: CriarCheckoutAssinatura,
-    db: Session = Depends(get_db),
-    _usuario_admin: str = Depends(
-        obter_saas_admin_logado
-    ),
-):
+def criar_checkout_stripe_para_barbearia(
+    *,
+    barbearia: models.Barbearia,
+    plano_codigo: str,
+    db: Session,
+) -> dict:
     configurar_stripe()
 
-    barbearia = (
-        db.query(models.Barbearia)
-        .filter(
-            models.Barbearia.id == dados.barbearia_id
-        )
-        .first()
-    )
-
-    if not barbearia:
-        raise HTTPException(
-            status_code=404,
-            detail="Empresa não encontrada.",
-        )
-
     plano = obter_plano_assinatura(
-        dados.plano_codigo
+        plano_codigo
     )
 
     price_id = obter_price_id_por_plano(
@@ -184,14 +168,16 @@ def criar_checkout_assinatura_saas(
     frontend_base_url = settings.frontend_base_url.rstrip("/")
 
     success_url = (
-        f"{frontend_base_url}/saas.html"
-        f"?stripe=sucesso"
+        f"{frontend_base_url}/admin.html"
+        f"?tenant={barbearia.slug}"
+        f"&stripe=sucesso"
         f"&empresa_id={barbearia.id}"
     )
 
     cancel_url = (
-        f"{frontend_base_url}/saas.html"
-        f"?stripe=cancelado"
+        f"{frontend_base_url}/admin.html"
+        f"?tenant={barbearia.slug}"
+        f"&stripe=cancelado"
         f"&empresa_id={barbearia.id}"
     )
 
@@ -271,6 +257,95 @@ def criar_checkout_assinatura_saas(
         "checkout_session_id": checkout["id"],
         "empresa": serializar_plano_empresa(barbearia),
     }
+
+
+@router.post("/api/saas/assinaturas/checkout")
+def criar_checkout_assinatura_saas(
+    dados: CriarCheckoutAssinatura,
+    db: Session = Depends(get_db),
+    _usuario_admin: str = Depends(
+        obter_saas_admin_logado
+    ),
+):
+    configurar_stripe()
+
+    barbearia = (
+        db.query(models.Barbearia)
+        .filter(
+            models.Barbearia.id == dados.barbearia_id
+        )
+        .first()
+    )
+
+    if not barbearia:
+        raise HTTPException(
+            status_code=404,
+            detail="Empresa não encontrada.",
+        )
+
+    plano = obter_plano_assinatura(
+        dados.plano_codigo
+    )
+
+    price_id = obter_price_id_por_plano(
+        plano.codigo
+    )
+
+    frontend_base_url = settings.frontend_base_url.rstrip("/")
+
+    success_url = (
+        f"{frontend_base_url}/saas.html"
+        f"?stripe=sucesso"
+        f"&empresa_id={barbearia.id}"
+    )
+
+    cancel_url = (
+        f"{frontend_base_url}/saas.html"
+        f"?stripe=cancelado"
+        f"&empresa_id={barbearia.id}"
+    )
+
+    return criar_checkout_stripe_para_barbearia(
+        barbearia=barbearia,
+        plano_codigo=dados.plano_codigo,
+        db=db,
+    )
+
+
+@router.post("/api/{tenant_slug}/admin/assinaturas/stripe/checkout")
+def criar_checkout_assinatura_admin(
+    tenant_slug: str,
+    dados: CriarCheckoutAssinatura,
+    db: Session = Depends(get_db),
+    _tenant_logado: str = Depends(
+        validar_tenant_logado
+    ),
+):
+    if tenant_slug != _tenant_logado:
+        raise HTTPException(
+            status_code=403,
+            detail="Tenant inválido para esta sessão.",
+        )
+
+    barbearia = (
+        db.query(models.Barbearia)
+        .filter(
+            models.Barbearia.slug == tenant_slug
+        )
+        .first()
+    )
+
+    if not barbearia:
+        raise HTTPException(
+            status_code=404,
+            detail="Empresa não encontrada.",
+        )
+
+    return criar_checkout_stripe_para_barbearia(
+        barbearia=barbearia,
+        plano_codigo=dados.plano_codigo,
+        db=db,
+    )
 
 
 def atualizar_barbearia_por_assinatura(

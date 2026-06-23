@@ -1,5 +1,9 @@
 const SAAS_TOKEN_STORAGE_KEY =
     "gesto_saas_token";
+
+const BANNER_COMERCIAL_SAAS_KEY =
+    "gesto_banner_comercial_saas_dispensado";
+
 let clientesSaasCache = [];
 let empresaConfiguracaoAtual = null;
 let avisosSaasCache = [];
@@ -1924,27 +1928,57 @@ function renderizarAssinaturasEmpresasSaas(empresas) {
                     </div>
 
                     <div class="assinatura-empresa-acoes">
-                        <button
-                            type="button"
-                            onclick="criarCheckoutAssinaturaSaas(${empresa.id}, 'mensal')"
-                        >
-                            Mensal
-                        </button>
+                        <div class="grupo-gateway-assinatura">
+                            <strong>Stripe</strong>
 
-                        <button
-                            type="button"
-                            onclick="criarCheckoutAssinaturaSaas(${empresa.id}, 'trimestral')"
-                        >
-                            Trimestral
-                        </button>
+                            <button
+                                type="button"
+                                onclick="criarCheckoutAssinaturaSaas(${empresa.id}, 'mensal')"
+                            >
+                                Mensal
+                            </button>
 
-                        <button
-                            type="button"
-                            class="destaque"
-                            onclick="criarCheckoutAssinaturaSaas(${empresa.id}, 'anual')"
-                        >
-                            Anual
-                        </button>
+                            <button
+                                type="button"
+                                onclick="criarCheckoutAssinaturaSaas(${empresa.id}, 'trimestral')"
+                            >
+                                Trimestral
+                            </button>
+
+                            <button
+                                type="button"
+                                class="destaque"
+                                onclick="criarCheckoutAssinaturaSaas(${empresa.id}, 'anual')"
+                            >
+                                Anual
+                            </button>
+                        </div>
+
+                        <div class="grupo-gateway-assinatura mercado-pago">
+                            <strong>Mercado Pago</strong>
+
+                            <button
+                                type="button"
+                                onclick="criarCheckoutMercadoPagoSaas(${empresa.id}, 'mensal')"
+                            >
+                                Mensal
+                            </button>
+
+                            <button
+                                type="button"
+                                onclick="criarCheckoutMercadoPagoSaas(${empresa.id}, 'trimestral')"
+                            >
+                                Trimestral
+                            </button>
+
+                            <button
+                                type="button"
+                                class="destaque"
+                                onclick="criarCheckoutMercadoPagoSaas(${empresa.id}, 'anual')"
+                            >
+                                Anual
+                            </button>
+                        </div>
                     </div>
                 </article>
             `;
@@ -2055,14 +2089,70 @@ async function criarCheckoutAssinaturaSaas(empresaId, planoCodigo) {
 }
 
 
-function tratarRetornoStripeSaas() {
+async function criarCheckoutMercadoPagoSaas(empresaId, planoCodigo) {
+    const confirmar = window.confirm(
+        `Deseja gerar checkout Mercado Pago do plano ${planoCodigo.toUpperCase()} para esta empresa?`
+    );
+
+    if (!confirmar) {
+        return;
+    }
+
+    try {
+        const resposta = await saasRequest(
+            "/api/saas/mercado-pago/checkout",
+            {
+                method: "POST",
+                body: {
+                    barbearia_id: empresaId,
+                    plano_codigo: planoCodigo,
+                },
+            }
+        );
+
+        console.log(
+            "Resposta checkout Mercado Pago:",
+            resposta
+        );
+
+        if (
+            !resposta
+            || !resposta.checkout_url
+        ) {
+            exibirMensagemSaas(
+                "Checkout criado, mas o Mercado Pago não retornou a URL.",
+                "erro"
+            );
+
+            return;
+        }
+
+        invalidarSecoesSaas([
+            "secao-saas-dashboard",
+            "secao-saas-empresas",
+            "secao-saas-assinaturas",
+        ]);
+
+        window.location.href = resposta.checkout_url;
+
+    } catch (erro) {
+        tratarErroSaas(erro);
+    }
+}
+
+
+function tratarRetornoPagamentosSaas() {
     const parametros = new URLSearchParams(
         window.location.search
     );
 
     const statusStripe = parametros.get("stripe");
+    const statusMercadoPago = parametros.get("mercado_pago");
 
-    if (!statusStripe) {
+    if (
+        !statusStripe
+        && !statusMercadoPago
+    ) {
         return;
     }
 
@@ -2070,12 +2160,6 @@ function tratarRetornoStripeSaas() {
         exibirMensagemSaas(
             "Pagamento recebido pelo Stripe. Atualizando assinatura..."
         );
-
-        invalidarSecoesSaas([
-            "secao-saas-dashboard",
-            "secao-saas-empresas",
-            "secao-saas-assinaturas",
-        ]);
 
         localStorage.setItem(
             "gesto_saas_secao_ativa",
@@ -2085,10 +2169,51 @@ function tratarRetornoStripeSaas() {
 
     if (statusStripe === "cancelado") {
         exibirMensagemSaas(
-            "Checkout cancelado. Nenhuma alteração foi feita.",
+            "Checkout Stripe cancelado. Nenhuma alteração foi feita.",
             "erro"
         );
     }
+
+    if (statusMercadoPago === "sucesso") {
+        exibirMensagemSaas(
+            "Pagamento Mercado Pago recebido. Atualizando assinatura..."
+        );
+
+        localStorage.setItem(
+            "gesto_saas_secao_ativa",
+            "secao-saas-assinaturas"
+        );
+    }
+
+    if (statusMercadoPago === "pendente") {
+        exibirMensagemSaas(
+            "Pagamento Mercado Pago está pendente. Atualize mais tarde para conferir.",
+            "erro"
+        );
+
+        localStorage.setItem(
+            "gesto_saas_secao_ativa",
+            "secao-saas-assinaturas"
+        );
+    }
+
+    if (statusMercadoPago === "falha") {
+        exibirMensagemSaas(
+            "Pagamento Mercado Pago não foi concluído.",
+            "erro"
+        );
+
+        localStorage.setItem(
+            "gesto_saas_secao_ativa",
+            "secao-saas-assinaturas"
+        );
+    }
+
+    invalidarSecoesSaas([
+        "secao-saas-dashboard",
+        "secao-saas-empresas",
+        "secao-saas-assinaturas",
+    ]);
 
     const urlLimpa = `${window.location.origin}${window.location.pathname}`;
 
@@ -2098,9 +2223,6 @@ function tratarRetornoStripeSaas() {
         urlLimpa
     );
 }
-
-const BANNER_COMERCIAL_SAAS_KEY =
-    "gesto_banner_comercial_saas_dispensado";
 
 
 function exibirBannerComercialSaas() {
@@ -2142,7 +2264,7 @@ function dispensarBannerComercialSaas() {
 
 
     window.dispensarBannerComercialSaas =
-    dispensarBannerComercialSaas;
+        dispensarBannerComercialSaas;
 
 
 async function iniciarPainelSaas() {
@@ -2204,7 +2326,7 @@ async function iniciarPainelSaas() {
 
     exibirBannerComercialSaas();
     
-    tratarRetornoStripeSaas();
+    tratarRetornoPagamentosSaas();
     
     inicializarNavegacaoSaas();
 
@@ -2226,3 +2348,4 @@ window.carregarAvisosSaas = carregarAvisosSaas;
 window.alternarStatusAvisoSaas = alternarStatusAvisoSaas;
 window.carregarAssinaturasSaas = carregarAssinaturasSaas;
 window.criarCheckoutAssinaturaSaas = criarCheckoutAssinaturaSaas;
+window.criarCheckoutMercadoPagoSaas = criarCheckoutMercadoPagoSaas;

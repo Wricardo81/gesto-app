@@ -147,6 +147,14 @@
             >
                 Clientes / CRM
             </button>
+
+            <button
+                type="button"
+                class="admin-tab"
+                data-secao="secao-admin-assinatura"
+            >
+                Plano / Assinatura
+            </button>
         </nav>
 
         <section class="dashboard-grid secao-admin ativa" id="secao-dashboard">
@@ -324,6 +332,7 @@
                         </div>
                     </div>
                 </section>
+                
 
                 <section class="bloco-config">
                     <h3>WhatsApp e consentimento 💬</h3>
@@ -397,6 +406,64 @@
                     <div id="lista-cardapio" style="margin-top: 16px;"></div>
                 </section>
             </aside>
+        </section>
+
+        <section id="secao-admin-assinatura" class="secao-admin">
+            <div class="secao-topo">
+                <div>
+                    <h2>Plano / Assinatura</h2>
+                    <p>
+                        Acompanhe seu plano, status de pagamento e opções de assinatura.
+                    </p>
+                </div>
+            </div>
+        
+            <div id="card-assinatura-admin" class="card-assinatura-admin">
+                Carregando informações da assinatura...
+            </div>
+        
+            <div id="planos-assinatura-admin" class="planos-assinatura-admin">
+                <article class="plano-admin-card">
+                    <h3>Mensal</h3>
+                    <strong>R$ 99/mês</strong>
+                    <p>Ideal para começar sem compromisso.</p>
+        
+                    <button
+                        type="button"
+                        onclick="assinarPlanoAdmin('mensal')"
+                    >
+                        Assinar mensal
+                    </button>
+                </article>
+        
+                <article class="plano-admin-card destaque">
+                    <span>10% de desconto</span>
+                    <h3>Trimestral</h3>
+                    <strong>R$ 267</strong>
+                    <p>Equivale a R$ 89/mês.</p>
+        
+                    <button
+                        type="button"
+                        onclick="assinarPlanoAdmin('trimestral')"
+                    >
+                        Assinar trimestral
+                    </button>
+                </article>
+        
+                <article class="plano-admin-card">
+                    <span>20% de desconto</span>
+                    <h3>Anual</h3>
+                    <strong>R$ 948</strong>
+                    <p>Equivale a R$ 79/mês.</p>
+        
+                    <button
+                        type="button"
+                        onclick="assinarPlanoAdmin('anual')"
+                    >
+                        Assinar anual
+                    </button>
+                </article>
+            </div>
         </section>
 
         <section class="bloco-config secao-admin" id="secao-agenda">

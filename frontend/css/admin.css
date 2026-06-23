@@ -1666,3 +1666,108 @@
         align-items: flex-start;
     }
 }
+
+.card-assinatura-admin {
+    margin-bottom: 18px;
+    padding: 22px;
+    border: 1px solid rgba(100, 255, 218, 0.28);
+    border-radius: 18px;
+    background:
+        linear-gradient(135deg, rgba(100, 255, 218, 0.10), rgba(56, 189, 248, 0.06));
+}
+
+.card-assinatura-admin h3 {
+    margin: 0 0 8px;
+    color: #ffffff;
+}
+
+.card-assinatura-admin p {
+    margin: 0;
+    color: #8892b0;
+    line-height: 1.5;
+}
+
+.assinatura-admin-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+}
+
+.assinatura-admin-meta span {
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.planos-assinatura-admin {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.plano-admin-card {
+    position: relative;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.plano-admin-card.destaque {
+    border-color: rgba(100, 255, 218, 0.42);
+    background: rgba(100, 255, 218, 0.08);
+}
+
+.plano-admin-card span {
+    display: inline-flex;
+    margin-bottom: 10px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: rgba(34, 197, 94, 0.14);
+    color: #22c55e;
+    font-size: 11px;
+    font-weight: 900;
+}
+
+.plano-admin-card h3 {
+    margin: 0 0 8px;
+    color: #ffffff;
+}
+
+.plano-admin-card strong {
+    display: block;
+    color: #64ffda;
+    font-size: 30px;
+    margin-bottom: 8px;
+}
+
+.plano-admin-card p {
+    color: #8892b0;
+    line-height: 1.5;
+}
+
+.plano-admin-card button {
+    width: 100%;
+    min-height: 42px;
+    margin-top: 12px;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #64ffda, #38bdf8);
+    color: #06111f;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.assinatura-ativa-admin .planos-assinatura-admin {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    .planos-assinatura-admin {
+        grid-template-columns: 1fr;
+    }
+}

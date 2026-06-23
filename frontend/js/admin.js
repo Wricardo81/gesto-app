@@ -20,30 +20,222 @@ let chamadosAdminCache = [];
    UTILITÁRIOS
 ========================================================= */
 
+
+function traduzirStatusAssinaturaAdmin(status) {
+    const mapa = {
+        trial: "Teste gratuito",
+        checkout_criado: "Checkout criado",
+        checkout_concluido: "Checkout concluído",
+        active: "Ativa",
+        trialing: "Teste ativo",
+        past_due: "Pagamento atrasado",
+        unpaid: "Não pago",
+        canceled: "Cancelada",
+        mercado_pago_aprovado: "Ativa via Mercado Pago",
+        mercado_pago_pendente: "Pagamento pendente",
+    };
+
+    return mapa[status] || status || "Não definida";
+}
+
+
+function assinaturaAdminEstaAtiva(config) {
+    return Boolean(config?.acesso_ativo)
+        || config?.status_pagamento === "em_dia"
+        || config?.status_assinatura === "active"
+        || config?.status_assinatura === "trialing"
+        || config?.status_assinatura === "mercado_pago_aprovado";
+}
+
+
+function renderizarAssinaturaAdmin(config) {
+    const card = document.getElementById("card-assinatura-admin");
+    const planos = document.getElementById("planos-assinatura-admin");
+
+    if (!card) {
+        return;
+    }
+
+    const ativa = assinaturaAdminEstaAtiva(config);
+
+    if (ativa) {
+        document.body.classList.add("assinatura-ativa-admin");
+
+        if (planos) {
+            planos.style.display = "none";
+        }
+
+    } else {
+        document.body.classList.remove("assinatura-ativa-admin");
+
+        if (planos) {
+            planos.style.display = "grid";
+        }
+    }
+
+    card.innerHTML = `
+        <h3>
+            ${
+                ativa
+                    ? "Sua assinatura está ativa"
+                    : "Sua empresa ainda não possui assinatura ativa"
+            }
+        </h3>
+
+        <p>
+            ${
+                ativa
+                    ? "Seu acesso está liberado. Os banners de assinatura não serão exibidos enquanto o pagamento estiver em dia."
+                    : "Assine um plano para manter a agenda online, clientes, profissionais e recursos comerciais ativos."
+            }
+        </p>
+
+        <div class="assinatura-admin-meta">
+            <span>Status: ${traduzirStatusAssinaturaAdmin(config?.status_assinatura)}</span>
+            <span>Pagamento: ${traduzirStatusPagamento(config?.status_pagamento)}</span>
+            <span>Plano: ${config?.plano_codigo || config?.plano_nome || "Não definido"}</span>
+            <span>Gateway: ${config?.gateway_pagamento || "Não definido"}</span>
+        </div>
+    `;
+}
+
+
+async function carregarAssinaturaAdmin() {
+    if (!tenantSlugLogado) {
+        return;
+    }
+
+    try {
+        const config = await apiRequest(
+            `/api/${tenantSlugLogado}/configuracoes`,
+            {
+                auth: true,
+            }
+        );
+
+        renderizarAssinaturaAdmin(config);
+
+        exibirBannerFuncionalidadesAdmin(config);
+
+    } catch (erro) {
+        console.error("Erro ao carregar assinatura admin:", erro);
+    }
+}
+
+
+async function assinarPlanoAdmin(planoCodigo) {
+    const confirmar = window.confirm(
+        `Deseja assinar o plano ${planoCodigo.toUpperCase()}?`
+    );
+
+    if (!confirmar) {
+        return;
+    }
+
+    try {
+        const resposta = await apiRequest(
+            `/api/${tenantSlugLogado}/admin/assinaturas/stripe/checkout`,
+            {
+                method: "POST",
+                auth: true,
+                body: {
+                    barbearia_id: 0,
+                    plano_codigo: planoCodigo,
+                },
+            }
+        );
+
+        if (
+            !resposta
+            || !resposta.checkout_url
+        ) {
+            alert("Não foi possível gerar o checkout.");
+            return;
+        }
+
+        window.location.href = resposta.checkout_url;
+
+    } catch (erro) {
+        tratarErro(erro);
+    }
+}
+
+
+async function tratarRetornoPagamentoAdmin() {
+    const parametros = new URLSearchParams(
+        window.location.search
+    );
+
+    const statusStripe = parametros.get("stripe");
+
+    if (!statusStripe) {
+        return;
+    }
+
+    localStorage.setItem(
+        "gesto_admin_secao_ativa",
+        "secao-admin-assinatura"
+    );
+
+    if (statusStripe === "sucesso") {
+        alert(
+            "Pagamento recebido. Sua assinatura será atualizada automaticamente."
+        );
+    }
+
+    if (statusStripe === "cancelado") {
+        alert(
+            "Checkout cancelado. Nenhuma alteração foi feita."
+        );
+    }
+
+    await carregarAssinaturaAdmin();
+
+    const urlLimpa =
+        `${window.location.origin}${window.location.pathname}?tenant=${tenantSlugLogado}`;
+
+    window.history.replaceState(
+        {},
+        document.title,
+        urlLimpa
+    );
+}
+
+
+window.assinarPlanoAdmin = assinarPlanoAdmin;
+
 const BANNER_FUNCIONALIDADES_ADMIN_KEY =
     "gesto_banner_funcionalidades_admin_dispensado";
 
 
-function exibirBannerFuncionalidadesAdmin() {
-    const banner = document.getElementById(
-        "banner-funcionalidades-admin"
-    );
-
-    if (!banner) {
-        return;
+    function exibirBannerFuncionalidadesAdmin(config = null) {
+        const banner = document.getElementById(
+            "banner-funcionalidades-admin"
+        );
+    
+        if (!banner) {
+            return;
+        }
+    
+        if (
+            config
+            && assinaturaAdminEstaAtiva(config)
+        ) {
+            banner.classList.remove("visivel");
+            return;
+        }
+    
+        const dispensado = localStorage.getItem(
+            BANNER_FUNCIONALIDADES_ADMIN_KEY
+        );
+    
+        if (dispensado === "true") {
+            banner.classList.remove("visivel");
+            return;
+        }
+    
+        banner.classList.add("visivel");
     }
-
-    const dispensado = localStorage.getItem(
-        BANNER_FUNCIONALIDADES_ADMIN_KEY
-    );
-
-    if (dispensado === "true") {
-        banner.classList.remove("visivel");
-        return;
-    }
-
-    banner.classList.add("visivel");
-}
 
 
 function dispensarBannerFuncionalidadesAdmin() {
@@ -1043,16 +1235,15 @@ function iniciarPainel() {
         .getElementById("tag-tenant")
         .innerText = `@${tenantSlugLogado}`;
 
-    atualizarLinkPublico();
-    registrarListenersDePreview();
-    registrarListenersCRM();
-    registrarListenersBloqueiosAgenda();
-    registrarListenersAgendaVisual();
-    inicializarNavegacaoAdmin();
-    carregarAvisosAdmin();
-    carregarStatusAssinaturaAdmin();
-    exibirBannerFuncionalidadesAdmin();
-
+        atualizarLinkPublico();
+        registrarListenersDePreview();
+        registrarListenersCRM();
+        registrarListenersBloqueiosAgenda();
+        registrarListenersAgendaVisual();
+        inicializarNavegacaoAdmin();
+        carregarAvisosAdmin();
+        tratarRetornoPagamentoAdmin();
+        carregarAssinaturaAdmin();
 }
 
     async function atualizarStatusAgendamento(id, status) {
@@ -3054,7 +3245,12 @@ async function carregarDadosDaSecaoAdmin(secaoId, opcoes = {}) {
 
     try {
         if (secaoId === "secao-dashboard") {
-            await carregarAgendamentos();
+            await Promise.all([
+                carregarConfiguracaoAtual(),
+                carregarEquipe(),
+                carregarServicos(),
+                carregarAgendamentos(),
+            ]);
         }
 
         if (secaoId === "secao-configuracoes") {
@@ -3063,6 +3259,10 @@ async function carregarDadosDaSecaoAdmin(secaoId, opcoes = {}) {
                 carregarEquipe(),
                 carregarServicos(),
             ]);
+        }
+
+        if (secaoId === "secao-admin-assinatura") {
+            await carregarAssinaturaAdmin();
         }
 
         if (secaoId === "secao-agenda") {

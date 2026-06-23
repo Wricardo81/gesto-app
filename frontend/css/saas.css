@@ -1183,3 +1183,48 @@ small {
         align-items: flex-start;
     }
 }
+
+.grupo-gateway-assinatura {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--borda);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.grupo-gateway-assinatura strong {
+    width: 100%;
+    color: var(--texto-principal);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.grupo-gateway-assinatura.mercado-pago {
+    border-color: rgba(0, 170, 255, 0.28);
+    background: rgba(0, 170, 255, 0.06);
+}
+
+.grupo-gateway-assinatura.mercado-pago strong {
+    color: #38bdf8;
+}
+
+.assinatura-empresa-acoes {
+    min-width: 320px;
+}
+
+@media (max-width: 760px) {
+    .assinatura-empresa-acoes {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .grupo-gateway-assinatura {
+        justify-content: flex-start;
+    }
+}

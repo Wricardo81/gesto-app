@@ -1,13 +1,11 @@
-from datetime import datetime, timedelta
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 import models
 from database import SessaoLocal
 from services import configuracao_service
+from services.trial_service import calcular_resumo_trial
 from security import validar_tenant_logado
-from settings import settings
 
 
 router = APIRouter()
@@ -47,54 +45,9 @@ def ler_configuracoes(
             detail="Empresa não encontrada.",
         )
 
-    agora = datetime.utcnow()
-
-    if not barbearia.periodo_trial_ate:
-        barbearia.periodo_trial_ate = agora + timedelta(
-            days=settings.trial_dias_padrao
-        )
-
-        if not barbearia.status_pagamento:
-            barbearia.status_pagamento = "teste"
-
-        if not barbearia.status_assinatura:
-            barbearia.status_assinatura = "trial"
-
-        db.commit()
-        db.refresh(barbearia)
-
-    total_agendamentos_trial = (
-        db.query(models.Agendamento)
-        .filter(
-            models.Agendamento.barbearia_slug == tenant_slug
-        )
-        .count()
-    )
-
-    dias_restantes_trial = 0
-
-    if barbearia.periodo_trial_ate:
-        diferenca = barbearia.periodo_trial_ate.date() - agora.date()
-
-        dias_restantes_trial = max(
-            diferenca.days,
-            0,
-        )
-
-    agendamentos_restantes_trial = max(
-        settings.trial_limite_agendamentos - total_agendamentos_trial,
-        0,
-    )
-
-    trial_expirado_por_dias = dias_restantes_trial <= 0
-
-    trial_expirado_por_agendamentos = (
-        total_agendamentos_trial >= settings.trial_limite_agendamentos
-    )
-
-    trial_expirado = (
-        trial_expirado_por_dias
-        or trial_expirado_por_agendamentos
+    resumo_trial = calcular_resumo_trial(
+        db,
+        barbearia,
     )
 
     if hasattr(configuracao, "model_dump"):
@@ -128,19 +81,7 @@ def ler_configuracoes(
                 else None
             ),
             "acesso_ativo": barbearia.plano_ativo,
-            "periodo_trial_ate": (
-                barbearia.periodo_trial_ate.isoformat()
-                if barbearia.periodo_trial_ate
-                else None
-            ),
-            "trial_dias_padrao": settings.trial_dias_padrao,
-            "trial_limite_agendamentos": settings.trial_limite_agendamentos,
-            "trial_total_agendamentos": total_agendamentos_trial,
-            "trial_dias_restantes": dias_restantes_trial,
-            "trial_agendamentos_restantes": agendamentos_restantes_trial,
-            "trial_expirado": trial_expirado,
-            "trial_expirado_por_dias": trial_expirado_por_dias,
-            "trial_expirado_por_agendamentos": trial_expirado_por_agendamentos,
+            **resumo_trial,
         }
     )
 

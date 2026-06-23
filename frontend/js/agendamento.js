@@ -25,6 +25,30 @@ function obterDataLocalFormatada() {
     return `${ano}-${mes}-${dia}`;
 }
 
+function obterDetalheErroApi(erro) {
+    if (!erro) {
+        return null;
+    }
+
+    if (erro.detail) {
+        return erro.detail;
+    }
+
+    if (erro.data && erro.data.detail) {
+        return erro.data.detail;
+    }
+
+    if (erro.response && erro.response.detail) {
+        return erro.response.detail;
+    }
+
+    if (erro.message) {
+        return erro.message;
+    }
+
+    return null;
+}
+
 
 function formatarMoeda(valor) {
     return Number(valor).toLocaleString(
@@ -630,26 +654,6 @@ function selecionarProfissional(
    HORÁRIOS
 ========================================================= */
 
-function obterDetalheErroApi(erro) {
-    if (!erro) {
-        return null;
-    }
-
-    if (erro.detail) {
-        return erro.detail;
-    }
-
-    if (erro.data && erro.data.detail) {
-        return erro.data.detail;
-    }
-
-    if (erro.response && erro.response.detail) {
-        return erro.response.detail;
-    }
-
-    return null;
-}
-
 
 function erroEhAssinaturaInativa(erro) {
     const detalhe = obterDetalheErroApi(erro);
@@ -853,8 +857,10 @@ async function buscarHorariosLivres() {
             const detalhe = obterDetalheErroApi(erro);
 
             mostrarAvisoAssinaturaInativa(
-                detalhe?.mensagem
-                || "No momento, este estabelecimento não está recebendo novos agendamentos online."
+                typeof detalhe === "string"
+                    ? detalhe
+                    : detalhe?.mensagem
+                        || "No momento, este estabelecimento não está recebendo novos agendamentos online."
             );
 
             return;
@@ -1049,10 +1055,21 @@ async function confirmarAgendamento() {
             const detalhe = obterDetalheErroApi(erro);
 
             mostrarAvisoAssinaturaInativa(
-                detalhe?.mensagem
-                || "A agenda deste estabelecimento está temporariamente indisponível para novos agendamentos."
+                typeof detalhe === "string"
+                    ? detalhe
+                    : detalhe?.mensagem
+                        || "A agenda deste estabelecimento está temporariamente indisponível para novos agendamentos."
             );
 
+            return;
+        }
+
+        if (erro.status === 402) {
+            alert(
+                erro.message
+                || "A agenda desta empresa está temporariamente indisponível."
+            );
+        
             return;
         }
 

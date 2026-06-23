@@ -1,6 +1,8 @@
 from datetime import date, datetime, timedelta
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
+from services.trial_service import tenant_pode_receber_agendamento
+
 from sqlalchemy.orm import Session
 import models
 from database import SessaoLocal
@@ -74,6 +76,36 @@ def confirmar_agendamento(
     dados: agendamento_service.FichaAgendamento,
     db: Session = Depends(get_db),
 ):
+    pode_agendar, resumo_trial = tenant_pode_receber_agendamento(
+        db,
+        tenant_slug,
+    )
+
+    if not pode_agendar:
+        motivo = "O período gratuito desta empresa terminou."
+
+        if resumo_trial:
+            if resumo_trial.get("trial_expirado_por_agendamentos"):
+                motivo = (
+                    "O limite de agendamentos gratuitos desta empresa foi atingido."
+                )
+
+            elif resumo_trial.get("trial_expirado_por_dias"):
+                motivo = (
+                    "O período gratuito desta empresa expirou."
+                )
+
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "codigo": "ASSINATURA_INATIVA",
+                "mensagem": (
+                    f"{motivo} Para continuar recebendo agendamentos, "
+                    "é necessário ativar uma assinatura."
+                ),
+            },
+        )
+
     return agendamento_service.criar_novo_agendamento(
         db=db,
         tenant_slug=tenant_slug,
@@ -491,6 +523,9 @@ def listar_agendamentos_cliente_publico(
     telefone: str = Query(...),
     db: Session = Depends(get_db),
 ):
+    
+    
+
     telefone_normalizado = normalizar_telefone_cliente(telefone)
 
     if not telefone_normalizado:

@@ -39,6 +39,19 @@ function traduzirStatusAssinaturaAdmin(status) {
 }
 
 
+function traduzirStatusPagamento(status) {
+    const mapa = {
+        em_dia: "Em dia",
+        pendente: "Pendente",
+        vencido: "Vencido",
+        cancelado: "Cancelado",
+        teste: "Teste gratuito",
+    };
+
+    return mapa[status] || status || "Não definido";
+}
+
+
 function assinaturaAdminEstaAtiva(config) {
     return Boolean(config?.acesso_ativo)
         || config?.status_pagamento === "em_dia"
@@ -95,6 +108,7 @@ function renderizarAssinaturaAdmin(config) {
             <span>Pagamento: ${traduzirStatusPagamento(config?.status_pagamento)}</span>
             <span>Plano: ${config?.plano_codigo || config?.plano_nome || "Não definido"}</span>
             <span>Gateway: ${config?.gateway_pagamento || "Não definido"}</span>
+            <span>Vencimento: ${formatarDataBR(config?.vencimento_plano)}</span>
         </div>
     `;
 }

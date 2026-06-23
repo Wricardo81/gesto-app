@@ -16,11 +16,19 @@ def obter_access_token_mercado_pago() -> str:
 
     if not token:
         raise HTTPException(
-            status_code=500,
+            status_code=400,
             detail="MERCADO_PAGO_ACCESS_TOKEN não configurado no .env.",
         )
 
-    return token.strip()
+    token = token.strip()
+
+    if not token:
+        raise HTTPException(
+            status_code=400,
+            detail="MERCADO_PAGO_ACCESS_TOKEN não configurado no .env.",
+        )
+
+    return token
 
 
 def montar_headers_mercado_pago() -> dict:

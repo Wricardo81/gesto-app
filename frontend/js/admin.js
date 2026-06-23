@@ -101,8 +101,21 @@ function renderizarAssinaturaAdmin(config) {
 
 
 async function carregarAssinaturaAdmin() {
+    const card = document.getElementById("card-assinatura-admin");
+
     if (!tenantSlugLogado) {
+        if (card) {
+            card.innerHTML = `
+                <h3>Empresa não identificada</h3>
+                <p>Faça login novamente para carregar os dados da assinatura.</p>
+            `;
+        }
+
         return;
+    }
+
+    if (card) {
+        card.innerHTML = "Carregando informações da assinatura...";
     }
 
     try {
@@ -119,6 +132,13 @@ async function carregarAssinaturaAdmin() {
 
     } catch (erro) {
         console.error("Erro ao carregar assinatura admin:", erro);
+
+        if (card) {
+            card.innerHTML = `
+                <h3>Não foi possível carregar a assinatura</h3>
+                <p>${erro.message || "Erro ao buscar dados do plano."}</p>
+            `;
+        }
     }
 }
 
@@ -132,31 +152,63 @@ async function assinarPlanoAdmin(planoCodigo) {
         return;
     }
 
+    if (!tenantSlugLogado) {
+        alert("Tenant não identificado. Faça login novamente.");
+        return;
+    }
+
+    const token = obterToken();
+
+    if (!token) {
+        alert("Sessão expirada. Faça login novamente.");
+        fazerLogout();
+        return;
+    }
+
     try {
-        const resposta = await apiRequest(
-            `/api/${tenantSlugLogado}/admin/assinaturas/stripe/checkout`,
+        const respostaHttp = await fetch(
+            `${API_BASE_URL}/api/${tenantSlugLogado}/admin/assinaturas/stripe/checkout`,
             {
                 method: "POST",
-                auth: true,
-                body: {
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
                     barbearia_id: 0,
                     plano_codigo: planoCodigo,
-                },
+                }),
             }
         );
 
-        if (
-            !resposta
-            || !resposta.checkout_url
-        ) {
-            alert("Não foi possível gerar o checkout.");
+        const dados = await respostaHttp.json();
+
+        if (!respostaHttp.ok) {
+            throw new Error(
+                dados.detail
+                || "Não foi possível gerar o checkout."
+            );
+        }
+
+        console.log(
+            "Checkout Admin Stripe:",
+            dados
+        );
+
+        if (!dados.checkout_url) {
+            alert("Checkout criado, mas o backend não retornou a URL do Stripe.");
             return;
         }
 
-        window.location.href = resposta.checkout_url;
+        window.location.href = dados.checkout_url;
 
     } catch (erro) {
-        tratarErro(erro);
+        console.error("Erro no checkout admin:", erro);
+
+        alert(
+            erro.message
+            || "Erro ao gerar checkout Stripe."
+        );
     }
 }
 

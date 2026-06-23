@@ -2002,6 +2002,7 @@ async function carregarPlanosAssinaturaSaas() {
 
 async function carregarAssinaturasSaas() {
     const containerPlanos = document.getElementById("planos-saas-grid");
+
     const containerEmpresas = document.getElementById(
         "lista-assinaturas-empresas-saas"
     );
@@ -2015,14 +2016,33 @@ async function carregarAssinaturasSaas() {
     }
 
     try {
-        const [planos, empresas] = await Promise.all([
-            carregarPlanosAssinaturaSaas(),
-            saasRequest("/api/saas/barbearias"),
-        ]);
+        const planos = await carregarPlanosAssinaturaSaas();
+
+        const respostaEmpresas = await saasRequest(
+            "/api/saas/barbearias"
+        );
+
+        const empresas = Array.isArray(respostaEmpresas)
+            ? respostaEmpresas
+            : (
+                respostaEmpresas?.barbearias
+                || respostaEmpresas?.clientes
+                || respostaEmpresas?.empresas
+                || respostaEmpresas?.items
+                || []
+            );
 
         clientesSaasCache = empresas;
 
-        atualizarResumoSaas(empresas);
+        try {
+            atualizarResumoSaas(empresas);
+
+        } catch (erroResumo) {
+            console.warn(
+                "Resumo SaaS não atualizado nesta seção:",
+                erroResumo
+            );
+        }
 
         renderizarAssinaturasEmpresasSaas(empresas);
 
@@ -2032,6 +2052,20 @@ async function carregarAssinaturasSaas() {
         };
 
     } catch (erro) {
+        console.error(
+            "Erro ao carregar assinaturas SaaS:",
+            erro
+        );
+
+        if (containerEmpresas) {
+            containerEmpresas.innerHTML = `
+                <p class="texto-vazio-saas">
+                    Não foi possível carregar as empresas.
+                    ${erro.message || ""}
+                </p>
+            `;
+        }
+
         tratarErroSaas(erro);
     }
 }

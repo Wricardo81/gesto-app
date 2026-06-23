@@ -71,6 +71,26 @@ function renderizarAssinaturaAdmin(config) {
 
     const ativa = assinaturaAdminEstaAtiva(config);
 
+    const trialDiasRestantes = Number(
+        config?.trial_dias_restantes ?? 0
+    );
+
+    const trialLimiteAgendamentos = Number(
+        config?.trial_limite_agendamentos ?? 0
+    );
+
+    const trialTotalAgendamentos = Number(
+        config?.trial_total_agendamentos ?? 0
+    );
+
+    const trialAgendamentosRestantes = Number(
+        config?.trial_agendamentos_restantes ?? 0
+    );
+
+    const trialExpirado = Boolean(
+        config?.trial_expirado
+    );
+
     if (ativa) {
         document.body.classList.add("assinatura-ativa-admin");
 
@@ -86,22 +106,24 @@ function renderizarAssinaturaAdmin(config) {
         }
     }
 
-    card.innerHTML = `
-        <h3>
-            ${
-                ativa
-                    ? "Sua assinatura está ativa"
-                    : "Sua empresa ainda não possui assinatura ativa"
-            }
-        </h3>
+    let titulo = "Sua empresa ainda não possui assinatura ativa";
+    let descricao = "Assine um plano para manter a agenda online, clientes, profissionais e recursos comerciais ativos.";
 
-        <p>
-            ${
-                ativa
-                    ? "Seu acesso está liberado. Os banners de assinatura não serão exibidos enquanto o pagamento estiver em dia."
-                    : "Assine um plano para manter a agenda online, clientes, profissionais e recursos comerciais ativos."
-            }
-        </p>
+    if (ativa) {
+        titulo = "Sua assinatura está ativa";
+        descricao = "Seu acesso está liberado. Os banners de assinatura não serão exibidos enquanto o pagamento estiver em dia.";
+    } else if (trialExpirado) {
+        titulo = "Seu teste gratuito terminou";
+        descricao = "O período gratuito ou o limite de agendamentos foi atingido. Escolha um plano para manter o sistema ativo.";
+    } else {
+        titulo = "Você está no teste gratuito";
+        descricao = `Restam ${trialDiasRestantes} dia(s) ou ${trialAgendamentosRestantes} agendamento(s) grátis.`;
+    }
+
+    card.innerHTML = `
+        <h3>${titulo}</h3>
+
+        <p>${descricao}</p>
 
         <div class="assinatura-admin-meta">
             <span>Status: ${traduzirStatusAssinaturaAdmin(config?.status_assinatura)}</span>
@@ -110,6 +132,29 @@ function renderizarAssinaturaAdmin(config) {
             <span>Gateway: ${config?.gateway_pagamento || "Não definido"}</span>
             <span>Vencimento: ${formatarDataBR(config?.vencimento_plano)}</span>
         </div>
+
+        ${
+            !ativa
+                ? `
+                    <div class="trial-admin-box">
+                        <div>
+                            <span>Dias restantes</span>
+                            <strong>${trialDiasRestantes}</strong>
+                        </div>
+
+                        <div>
+                            <span>Agendamentos usados</span>
+                            <strong>${trialTotalAgendamentos}/${trialLimiteAgendamentos}</strong>
+                        </div>
+
+                        <div>
+                            <span>Agendamentos restantes</span>
+                            <strong>${trialAgendamentosRestantes}</strong>
+                        </div>
+                    </div>
+                `
+                : ""
+        }
     `;
 }
 

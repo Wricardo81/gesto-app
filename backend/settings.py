@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     mercado_pago_webhook_secret: str | None = None
     mercado_pago_notification_url: str | None = None
 
+    # Trial / Teste gratuito
+    trial_dias_padrao: int = 7
+    trial_limite_agendamentos: int = 30
+
     # Frontend
     frontend_base_url: str = "http://127.0.0.1:5500/frontend"
 

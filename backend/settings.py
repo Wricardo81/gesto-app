@@ -26,7 +26,7 @@ class Settings(BaseSettings):
         "http://localhost:5500"
     )
 
-    # Stripe: será configurado posteriormente
+    # Stripe
     stripe_secret_key: str | None = None
     stripe_webhook_secret: str | None = None
 
@@ -34,7 +34,13 @@ class Settings(BaseSettings):
     stripe_price_trimestral: str | None = None
     stripe_price_anual: str | None = None
 
-    frontend_base_url: str = "http://127.0.0.1:5500"
+    # Mercado Pago
+    mercado_pago_access_token: str | None = None
+    mercado_pago_webhook_secret: str | None = None
+    mercado_pago_notification_url: str | None = None
+
+    # Frontend
+    frontend_base_url: str = "http://127.0.0.1:5500/frontend"
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -57,8 +63,3 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
-
-
-mercado_pago_access_token: str | None = None
-mercado_pago_webhook_secret: str | None = None
-mercado_pago_notification_url: str | None = None

@@ -53,11 +53,61 @@ function traduzirStatusPagamento(status) {
 
 
 function assinaturaAdminEstaAtiva(config) {
-    return Boolean(config?.acesso_ativo)
-        || config?.status_pagamento === "em_dia"
-        || config?.status_assinatura === "active"
-        || config?.status_assinatura === "trialing"
-        || config?.status_assinatura === "mercado_pago_aprovado";
+    const statusPagamento = String(
+        config?.status_pagamento || ""
+    )
+        .trim()
+        .toLowerCase();
+
+    const statusAssinatura = String(
+        config?.status_assinatura || ""
+    )
+        .trim()
+        .toLowerCase();
+
+    const gatewayPagamento = String(
+        config?.gateway_pagamento || ""
+    )
+        .trim()
+        .toLowerCase();
+
+    const planoCodigo = String(
+        config?.plano_codigo || ""
+    )
+        .trim()
+        .toLowerCase();
+
+    if (config?.assinatura_ativa === true) {
+        return true;
+    }
+
+    if (statusPagamento === "em_dia") {
+        return true;
+    }
+
+    if (
+        [
+            "active",
+            "checkout_concluido",
+            "mercado_pago_aprovado",
+        ].includes(statusAssinatura)
+    ) {
+        return true;
+    }
+
+    if (
+        gatewayPagamento
+        && planoCodigo
+        && statusPagamento !== "teste"
+        && statusPagamento !== "trial"
+        && statusPagamento !== "pendente"
+        && statusPagamento !== "vencido"
+        && statusPagamento !== "cancelado"
+    ) {
+        return true;
+    }
+
+    return false;
 }
 
 
@@ -114,7 +164,14 @@ function renderizarAssinaturaAdmin(config) {
         descricao = "Seu acesso está liberado. Os banners de assinatura não serão exibidos enquanto o pagamento estiver em dia.";
     } else if (trialExpirado) {
         titulo = "Seu teste gratuito terminou";
-        descricao = "O período gratuito ou o limite de agendamentos foi atingido. Escolha um plano para manter o sistema ativo.";
+    
+        if (config?.trial_expirado_por_agendamentos) {
+            descricao = "Você atingiu o limite de agendamentos gratuitos. Escolha um plano para continuar recebendo reservas.";
+        } else if (config?.trial_expirado_por_dias) {
+            descricao = "Seu período gratuito de 7 dias terminou. Escolha um plano para manter sua agenda online.";
+        } else {
+            descricao = "Seu teste gratuito terminou. Escolha um plano para manter o sistema ativo.";
+        }
     } else {
         titulo = "Você está no teste gratuito";
         descricao = `Restam ${trialDiasRestantes} dia(s) ou ${trialAgendamentosRestantes} agendamento(s) grátis.`;

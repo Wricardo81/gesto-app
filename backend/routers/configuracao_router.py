@@ -80,7 +80,9 @@ def ler_configuracoes(
                 if barbearia.vencimento_plano
                 else None
             ),
-            "acesso_ativo": barbearia.plano_ativo,
+            "plano_ativo": barbearia.plano_ativo,
+            "acesso_ativo": resumo_trial.get("acesso_liberado"),
+            "assinatura_ativa": resumo_trial.get("assinatura_ativa"),
             **resumo_trial,
         }
     )

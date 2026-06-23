@@ -8,7 +8,7 @@ from settings import settings
 
 STATUS_ASSINATURA_ATIVA = {
     "active",
-    "trialing",
+    # "trialing",
     "checkout_concluido",
     "mercado_pago_aprovado",
 }
@@ -21,13 +21,38 @@ STATUS_PAGAMENTO_ATIVO = {
 def assinatura_esta_ativa(
     barbearia: models.Barbearia,
 ) -> bool:
-    if bool(barbearia.plano_ativo):
+    status_pagamento = (
+        barbearia.status_pagamento
+        or ""
+    ).strip().lower()
+
+    status_assinatura = (
+        barbearia.status_assinatura
+        or ""
+    ).strip().lower()
+
+    plano_codigo = (
+        barbearia.plano_codigo
+        or ""
+    ).strip().lower()
+
+    gateway_pagamento = (
+        barbearia.gateway_pagamento
+        or ""
+    ).strip().lower()
+
+    if status_pagamento in STATUS_PAGAMENTO_ATIVO:
         return True
 
-    if barbearia.status_pagamento in STATUS_PAGAMENTO_ATIVO:
+    if status_assinatura in STATUS_ASSINATURA_ATIVA:
         return True
 
-    if barbearia.status_assinatura in STATUS_ASSINATURA_ATIVA:
+    if (
+        bool(barbearia.plano_ativo)
+        and plano_codigo
+        and gateway_pagamento
+        and status_pagamento not in {"teste", "trial", "pendente", "vencido", "cancelado"}
+    ):
         return True
 
     return False

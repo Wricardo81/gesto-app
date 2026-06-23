@@ -20,6 +20,106 @@ let chamadosAdminCache = [];
    UTILITÁRIOS
 ========================================================= */
 
+function normalizarTelefoneWhatsApp(numero) {
+    const apenasNumeros = String(numero || "").replace(/\D/g, "");
+
+    if (!apenasNumeros) {
+        return "";
+    }
+
+    if (apenasNumeros.startsWith("55")) {
+        return apenasNumeros;
+    }
+
+    return `55${apenasNumeros}`;
+}
+
+
+function formatarDataMensagemWhatsApp(data) {
+    if (!data) {
+        return "";
+    }
+
+    const partes = String(data).split("-");
+
+    if (partes.length !== 3) {
+        return data;
+    }
+
+    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+}
+
+
+function montarMensagemWhatsAppAgendamento(agendamento, tipo = "confirmacao") {
+    const nomeCliente = agendamento?.cliente_nome || "cliente";
+    const servico = agendamento?.servico || "seu atendimento";
+    const profissional = agendamento?.profissional || "nossa equipe";
+    const data = formatarDataMensagemWhatsApp(agendamento?.data);
+    const horario = agendamento?.horario || "";
+
+    const nomeEmpresa =
+        configuracoesAdminCache?.nome_publico
+        || configuracoesAdminCache?.nome_empresa
+        || tenantSlugLogado
+        || "nossa empresa";
+
+    if (tipo === "remarcacao") {
+        return (
+            `Olá, ${nomeCliente}! Aqui é da ${nomeEmpresa}. ` +
+            `Precisamos falar sobre seu agendamento de ${servico}, marcado para ${data} às ${horario} com ${profissional}. ` +
+            `Podemos combinar um novo horário?`
+        );
+    }
+
+    if (tipo === "agradecimento") {
+        return (
+            `Olá, ${nomeCliente}! Aqui é da ${nomeEmpresa}. ` +
+            `Passando para agradecer pela sua visita. Foi um prazer atender você! ` +
+            `Quando quiser agendar novamente, estamos à disposição.`
+        );
+    }
+
+    return (
+        `Olá, ${nomeCliente}! Aqui é da ${nomeEmpresa}. ` +
+        `Confirmando seu agendamento de ${servico} para ${data} às ${horario} com ${profissional}. ` +
+        `Qualquer dúvida, estamos à disposição.`
+    );
+}
+
+
+function abrirWhatsAppAgendamento(agendamentoId, tipo = "confirmacao") {
+    const agendamento = agendamentosAdminCache.find(
+        (item) => Number(item.id) === Number(agendamentoId)
+    );
+
+    if (!agendamento) {
+        alert("Agendamento não encontrado.");
+        return;
+    }
+
+    const telefone = normalizarTelefoneWhatsApp(
+        agendamento.telefone_cliente
+    );
+
+    if (!telefone) {
+        alert("Este cliente não possui telefone cadastrado.");
+        return;
+    }
+
+    const mensagem = montarMensagemWhatsAppAgendamento(
+        agendamento,
+        tipo
+    );
+
+    const url = `https://wa.me/${telefone}?text=${encodeURIComponent(mensagem)}`;
+
+    window.open(
+        url,
+        "_blank",
+        "noopener,noreferrer"
+    );
+}
+
 
 function traduzirStatusAssinaturaAdmin(status) {
     const mapa = {
@@ -2092,29 +2192,57 @@ async function carregarAgendamentos() {
                     <button type="button" onclick="atualizarStatusAgendamento(${agendamento.id}, 'confirmado')">
                         Confirmar
                     </button>
-            
+
                     <button type="button" onclick="atualizarStatusAgendamento(${agendamento.id}, 'concluido')">
                         Concluir
                     </button>
-            
+
                     <button type="button" onclick="cancelarAgendamentoComMotivo(${agendamento.id})">
                         Cancelar
                     </button>
-            
+
                     <button type="button" onclick="atualizarStatusAgendamento(${agendamento.id}, 'faltou')">
                         Faltou
                     </button>
-            
+
                     <button type="button" onclick="abrirHistoricoCliente('${agendamento.telefone_cliente || ""}')">
                         Histórico
                     </button>
-            
+
                     <button type="button" onclick="atualizarObservacaoAgendamento(${agendamento.id}, '${observacaoEscapada}')">
                         Obs.
                     </button>
+
+                    <div class="acoes-whatsapp-agendamento">
+                        <button
+                            type="button"
+                            class="btn-whatsapp-agendamento"
+                            onclick="abrirWhatsAppAgendamento(${agendamento.id}, 'confirmacao')"
+                        >
+                            WhatsApp
+                        </button>
+
+                        <button
+                            type="button"
+                            class="btn-whatsapp-secundario"
+                            onclick="abrirWhatsAppAgendamento(${agendamento.id}, 'remarcacao')"
+                        >
+                            Remarcar
+                        </button>
+
+                        <button
+                            type="button"
+                            class="btn-whatsapp-secundario"
+                            onclick="abrirWhatsAppAgendamento(${agendamento.id}, 'agradecimento')"
+                        >
+                            Agradecer
+                        </button>
+                    </div>
                 </div>
             `;
+            
             tr.appendChild(tdAcoes);
+            tbody.appendChild(tr);
 
             if (agendamento.motivo_cancelamento || agendamento.observacao_interna) {
                 const trDetalhes = document.createElement("tr");
@@ -3532,6 +3660,7 @@ window.abrirModalHistoricoChamadosAdmin = abrirModalHistoricoChamadosAdmin;
 window.fecharModalHistoricoChamadosAdmin = fecharModalHistoricoChamadosAdmin;
 window.carregarTudo = carregarTudo;
 window.atualizarPainelAdmin = atualizarPainelAdmin;
+window.abrirWhatsAppAgendamento = abrirWhatsAppAgendamento;
 
 document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => {

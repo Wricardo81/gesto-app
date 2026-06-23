@@ -1807,3 +1807,38 @@
         grid-template-columns: 1fr;
     }
 }
+
+.acoes-whatsapp-agendamento {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.btn-whatsapp-agendamento,
+.btn-whatsapp-secundario {
+    border: 0;
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.btn-whatsapp-agendamento {
+    background: #25d366;
+    color: #062014;
+}
+
+.btn-whatsapp-secundario {
+    background: rgba(100, 255, 218, 0.12);
+    color: #64ffda;
+    border: 1px solid rgba(100, 255, 218, 0.28);
+}
+
+.btn-whatsapp-agendamento:hover,
+.btn-whatsapp-secundario:hover {
+    transform: translateY(-1px);
+    opacity: 0.9;
+}

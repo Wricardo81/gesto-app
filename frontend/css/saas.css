@@ -1228,3 +1228,37 @@ small {
         justify-content: flex-start;
     }
 }
+
+.btn-desativar-empresa-saas,
+.btn-reativar-empresa-saas {
+    border: 0;
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.btn-desativar-empresa-saas {
+    background: rgba(248, 113, 113, 0.14);
+    color: #fca5a5;
+    border: 1px solid rgba(248, 113, 113, 0.35);
+}
+
+.btn-reativar-empresa-saas {
+    background: rgba(100, 255, 218, 0.14);
+    color: #64ffda;
+    border: 1px solid rgba(100, 255, 218, 0.35);
+}
+
+.badge-empresa-desativada {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 4px 8px;
+    background: rgba(248, 113, 113, 0.14);
+    color: #fca5a5;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+}

@@ -17,12 +17,14 @@ from security import (
     verificar_senha,
 )
 from settings import settings
+from typing import Optional
 
 
 router = APIRouter(
     prefix="/api/saas",
     tags=["Painel Mestre SaaS"],
 )
+
 
 
 def get_db():
@@ -208,6 +210,18 @@ def validar_slug_email_unicos(
         )
 
 
+class AtualizarAtivacaoEmpresaSaas(BaseModel):
+    ativa: bool
+
+
+
+
+
+
+
+
+
+
 def serializar_barbearia_saas(barbearia: models.Barbearia) -> dict:
     financeiro = calcular_acesso_financeiro(barbearia)
 
@@ -388,6 +402,52 @@ def listar_clientes_do_software(
     ]
 
 
+@router.put("/barbearias/{barbearia_id}/ativacao")
+def atualizar_ativacao_empresa_saas(
+    barbearia_id: int,
+    dados: AtualizarAtivacaoEmpresaSaas,
+    db: Session = Depends(get_db),
+    _saas_admin=Depends(obter_saas_admin_logado),
+):
+    barbearia = (
+        db.query(models.Barbearia)
+        .filter(models.Barbearia.id == barbearia_id)
+        .first()
+    )
+
+    if not barbearia:
+        raise HTTPException(
+            status_code=404,
+            detail="Empresa não encontrada.",
+        )
+
+    if dados.ativa:
+        barbearia.plano_ativo = True
+
+        if barbearia.status_assinatura == "desativada":
+            barbearia.status_assinatura = "trial"
+
+        if barbearia.status_pagamento == "cancelado":
+            barbearia.status_pagamento = "teste"
+
+    else:
+        barbearia.plano_ativo = False
+        barbearia.status_assinatura = "desativada"
+        barbearia.status_pagamento = "cancelado"
+
+    db.commit()
+    db.refresh(barbearia)
+
+    return {
+        "mensagem": (
+            "Empresa reativada com sucesso."
+            if dados.ativa
+            else "Empresa desativada com sucesso."
+        ),
+        "barbearia": serializar_barbearia_saas(barbearia),
+    }
+
+
 @router.post(
     "/barbearias",
     status_code=201,
@@ -453,50 +513,11 @@ def registrar_nova_barbearia(
     )
 
 
-@router.put(
-    "/barbearias/{barbearia_id}/status"
-)
+@router.put("/barbearias/{barbearia_id}/status")
 def alterar_status_assinatura(
     barbearia_id: int,
     db: Session = Depends(get_db),
-    _usuario_admin: str = Depends(
-        obter_saas_admin_logado
-    ),
-):
-    cliente = (
-        db.query(models.Barbearia)
-        .filter(
-            models.Barbearia.id
-            == barbearia_id
-        )
-        .first()
-    )
-
-    if not cliente:
-        raise HTTPException(
-            status_code=404,
-            detail="Cliente não encontrado.",
-        )
-
-    cliente.plano_ativo = not bool(
-        cliente.plano_ativo
-    )
-
-    db.commit()
-    db.refresh(cliente)
-
-    return serializar_barbearia(
-        cliente
-    )
-
-@router.put("/barbearias/{barbearia_id}/financeiro")
-def atualizar_financeiro_barbearia(
-    barbearia_id: int,
-    dados: AtualizacaoFinanceiraBarbearia,
-    db: Session = Depends(get_db),
-    _usuario_admin: str = Depends(
-        obter_saas_admin_logado
-    ),
+    _usuario_admin: str = Depends(obter_saas_admin_logado),
 ):
     barbearia = (
         db.query(models.Barbearia)
@@ -507,72 +528,16 @@ def atualizar_financeiro_barbearia(
     if not barbearia:
         raise HTTPException(
             status_code=404,
-            detail="Empresa não encontrada.",
+            detail="Cliente não encontrado.",
         )
 
-    if dados.plano_nome is not None:
-        plano_nome = dados.plano_nome.strip()
-
-        if not plano_nome:
-            raise HTTPException(
-                status_code=422,
-                detail="O nome do plano não pode ser vazio.",
-            )
-
-        barbearia.plano_nome = plano_nome
-
-    if dados.valor_mensal is not None:
-        if dados.valor_mensal < 0:
-            raise HTTPException(
-                status_code=422,
-                detail="O valor mensal não pode ser negativo.",
-            )
-
-        barbearia.valor_mensal = dados.valor_mensal
-
-    if dados.status_pagamento is not None:
-        status = dados.status_pagamento.strip().lower()
-
-        if status not in STATUS_PAGAMENTO_VALIDOS:
-            raise HTTPException(
-                status_code=422,
-                detail="Status de pagamento inválido.",
-            )
-
-        barbearia.status_pagamento = status
-
-    if dados.vencimento_plano is not None:
-        barbearia.vencimento_plano = converter_data_opcional(
-            dados.vencimento_plano
-        )
-
-    if dados.dias_tolerancia is not None:
-        if dados.dias_tolerancia < 0:
-            raise HTTPException(
-                status_code=422,
-                detail="Dias de tolerância não pode ser negativo.",
-            )
-
-        barbearia.dias_tolerancia = dados.dias_tolerancia
-
-    if dados.marcar_como_pago:
-        barbearia.status_pagamento = "em_dia"
-        barbearia.ultimo_pagamento_em = datetime.utcnow()
-
-        vencimento_atual = barbearia.vencimento_plano or date.today()
-
-        if vencimento_atual < date.today():
-            vencimento_atual = date.today()
-
-        barbearia.vencimento_plano = vencimento_atual + timedelta(
-            days=30
-        )
+    barbearia.plano_ativo = not bool(barbearia.plano_ativo)
 
     db.commit()
     db.refresh(barbearia)
 
     return {
-        "mensagem": "Dados financeiros atualizados com sucesso.",
+        "mensagem": "Status manual atualizado com sucesso.",
         "barbearia": serializar_barbearia_saas(barbearia),
     }
 

@@ -1800,6 +1800,7 @@ function traduzirStatusAssinaturaSaas(status) {
         incomplete: "Incompleta",
         incomplete_expired: "Expirada",
         desconhecido: "Desconhecido",
+        desativada: "Desativada",
     };
 
     return mapa[status] || status || "Sem assinatura";
@@ -1898,10 +1899,16 @@ function renderizarAssinaturasEmpresasSaas(empresas) {
                 empresa.plano_codigo
             );
 
+            const empresaDesativada =
+                String(empresa.status_assinatura || "").toLowerCase() === "desativada";
+
             return `
                 <article class="assinatura-empresa-card">
                     <div class="assinatura-empresa-info">
-                        <h4>${empresa.nome}</h4>
+                        <h4>
+                            ${empresa.nome}
+                            ${empresaDesativada ? `<span class="badge-empresa-desativada">Desativada</span>` : ""}
+                        </h4>
 
                         <p>
                             ${empresa.email || "Sem e-mail"}<br>
@@ -1977,6 +1984,18 @@ function renderizarAssinaturasEmpresasSaas(empresas) {
                                 onclick="criarCheckoutMercadoPagoSaas(${empresa.id}, 'anual')"
                             >
                                 Anual
+                            </button>
+                        </div>
+
+                        <div class="grupo-gateway-assinatura">
+                            <strong>Status da empresa</strong>
+
+                            <button
+                                type="button"
+                                class="${empresaDesativada ? "btn-reativar-empresa-saas" : "btn-desativar-empresa-saas"}"
+                                onclick="alterarStatusEmpresaSaas(${empresa.id}, ${empresaDesativada ? "true" : "false"})"
+                            >
+                                ${empresaDesativada ? "Reativar empresa" : "Desativar empresa"}
                             </button>
                         </div>
                     </div>
@@ -2258,6 +2277,45 @@ function tratarRetornoPagamentosSaas() {
     );
 }
 
+async function alterarStatusEmpresaSaas(barbeariaId, ativar) {
+    const acao = ativar ? "reativar" : "desativar";
+
+    const confirmar = window.confirm(
+        `Deseja realmente ${acao} esta empresa?`
+    );
+
+    if (!confirmar) {
+        return;
+    }
+
+    try {
+        await saasRequest(
+            `/api/saas/barbearias/${barbeariaId}/ativacao`,
+            {
+                method: "PUT",
+                body: {
+                    ativa: ativar,
+                },
+            }
+        );
+
+        alert(
+            ativar
+                ? "Empresa reativada com sucesso."
+                : "Empresa desativada com sucesso."
+        );
+
+        await carregarEmpresasSaasCompat();
+
+        if (typeof carregarAssinaturasSaas === "function") {
+            await carregarAssinaturasSaas();
+        }
+
+    } catch (erro) {
+        tratarErroSaas(erro);
+    }
+}
+
 
 function exibirBannerComercialSaas() {
     const banner = document.getElementById(
@@ -2383,3 +2441,4 @@ window.alternarStatusAvisoSaas = alternarStatusAvisoSaas;
 window.carregarAssinaturasSaas = carregarAssinaturasSaas;
 window.criarCheckoutAssinaturaSaas = criarCheckoutAssinaturaSaas;
 window.criarCheckoutMercadoPagoSaas = criarCheckoutMercadoPagoSaas;
+window.alterarStatusEmpresaSaas = alterarStatusEmpresaSaas;

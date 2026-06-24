@@ -15,6 +15,8 @@ let agendaVisualEmCarregamento = false;
 let agendaVisualRecarregarDepois = false;
 let avisosAdminCache = [];
 let chamadosAdminCache = [];
+let agendamentosAdminCache = [];
+let configuracoesAdminCache = {};
 
 /* =========================================================
    UTILITÁRIOS
@@ -56,6 +58,7 @@ function montarMensagemWhatsAppAgendamento(agendamento, tipo = "confirmacao") {
     const profissional = agendamento?.profissional || "nossa equipe";
     const data = formatarDataMensagemWhatsApp(agendamento?.data);
     const horario = agendamento?.horario || "";
+
 
     const nomeEmpresa =
         configuracoesAdminCache?.nome_publico
@@ -941,28 +944,45 @@ function obterTextoTipoSuporteAdmin(tipo) {
 }
 
 
-function montarMensagemSuporteAdmin(tipo) {
-    const tipoTexto = obterTextoTipoSuporteAdmin(tipo);
+function montarMensagemWhatsAppAgendamento(agendamento, tipo = "confirmacao") {
+    const nomeCliente = agendamento?.cliente_nome || "cliente";
+    const servico = agendamento?.servico || "seu atendimento";
+    const profissional = agendamento?.profissional || "nossa equipe";
+    const data = formatarDataMensagemWhatsApp(agendamento?.data);
+    const horario = agendamento?.horario || "";
 
-    const tenant = tenantSlugLogado || "não identificado";
+    const nomeEmpresa =
+        configuracoesAdminCache?.nome_publico
+        || configuracoesAdminCache?.nome_empresa
+        || tenantSlugLogado
+        || "nossa empresa";
 
-    const paginaAtual = window.location.href;
+    const linkAgenda =
+        `${window.location.origin}/frontend/agendamento.html?tenant=${encodeURIComponent(tenantSlugLogado)}`;
 
-    const dataHora = new Date().toLocaleString("pt-BR");
+    if (tipo === "remarcacao") {
+        return (
+            `Olá, ${nomeCliente}! Aqui é da ${nomeEmpresa}.\n\n` +
+            `Precisamos falar sobre seu agendamento de ${servico}, marcado para ${data} às ${horario} com ${profissional}.\n\n` +
+            `Podemos combinar um novo horário?\n\n` +
+            `Você também pode acessar nossa agenda online:\n${linkAgenda}`
+        );
+    }
 
-    return [
-        `Olá, Engenharia de Bits!`,
-        ``,
-        `Preciso de suporte no sistema Gesto App.`,
-        ``,
-        `Tipo: ${tipoTexto}`,
-        `Empresa/Tenant: ${tenant}`,
-        `Página: ${paginaAtual}`,
-        `Data/Hora: ${dataHora}`,
-        ``,
-        `Descrição:`,
-        ``
-    ].join("\n");
+    if (tipo === "agradecimento") {
+        return (
+            `Olá, ${nomeCliente}! Aqui é da ${nomeEmpresa}.\n\n` +
+            `Passando para agradecer pela sua visita. Foi um prazer atender você!\n\n` +
+            `Quando quiser agendar novamente, acesse nossa agenda online:\n${linkAgenda}`
+        );
+    }
+
+    return (
+        `Olá, ${nomeCliente}! Aqui é da ${nomeEmpresa}.\n\n` +
+        `Confirmando seu agendamento de ${servico} para ${data} às ${horario} com ${profissional}.\n\n` +
+        `Qualquer dúvida, estamos à disposição.\n\n` +
+        `Para consultar ou fazer novos agendamentos, acesse:\n${linkAgenda}`
+    );
 }
 
 
@@ -1623,10 +1643,13 @@ async function carregarConfiguracaoAtual() {
     }
     try {
         const config = await apiRequest(
-            `/api/${tenantSlugLogado}/configuracoes`
+            `/api/${tenantSlugLogado}/configuracoes`,
+            {
+                auth: true
+            }
         );
-
-        configuracaoAtual = config;
+        
+        configuracoesAdminCache = config || {};
 
         const campoAbertura = document.getElementById("hora-abertura");
         const campoFechamento = document.getElementById("hora-fechamento");
@@ -2219,7 +2242,7 @@ async function carregarAgendamentos() {
                             class="btn-whatsapp-agendamento"
                             onclick="abrirWhatsAppAgendamento(${agendamento.id}, 'confirmacao')"
                         >
-                            WhatsApp
+                            Confirmar no WhatsApp
                         </button>
 
                         <button
@@ -2242,6 +2265,7 @@ async function carregarAgendamentos() {
             `;
             
             tr.appendChild(tdAcoes);
+            
             tbody.appendChild(tr);
 
             if (agendamento.motivo_cancelamento || agendamento.observacao_interna) {
@@ -2265,8 +2289,16 @@ async function carregarAgendamentos() {
             
                 tbody.appendChild(trDetalhes);
             }    
-            
-            tbody.appendChild(tr);
+        
+
+            const ticketMedio = total > 0
+            ? faturamento / total
+            : 0;
+
+            agendamentosAdminCache = dados.agendamentos || [];
+
+            document.getElementById("visor-total-agendamentos").textContent =
+                total;
         }
 
     } catch (erro) {

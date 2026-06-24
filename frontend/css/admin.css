@@ -1842,3 +1842,51 @@
     transform: translateY(-1px);
     opacity: 0.9;
 }
+
+.indicador-novos-agendamentos {
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+    padding: 16px 18px;
+    border: 1px solid rgba(100, 255, 218, 0.28);
+    border-radius: 18px;
+    background: rgba(100, 255, 218, 0.08);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+}
+
+.indicador-novos-agendamentos strong {
+    display: block;
+    color: #64ffda;
+    font-size: 16px;
+    margin-bottom: 4px;
+}
+
+.indicador-novos-agendamentos p {
+    margin: 0;
+    color: #8892b0;
+    font-size: 13px;
+}
+
+.indicador-novos-agendamentos button {
+    border: 0;
+    border-radius: 999px;
+    padding: 10px 14px;
+    background: #64ffda;
+    color: #0a192f;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.linha-agendamento-novo {
+    outline: 2px solid rgba(100, 255, 218, 0.42);
+    outline-offset: -2px;
+    background: rgba(100, 255, 218, 0.075);
+}
+
+@media (max-width: 760px) {
+    .indicador-novos-agendamentos {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

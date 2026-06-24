@@ -17,10 +17,164 @@ let avisosAdminCache = [];
 let chamadosAdminCache = [];
 let agendamentosAdminCache = [];
 let configuracoesAdminCache = {};
+let monitorNovosAgendamentosTimer = null;
 
 /* =========================================================
    UTILITÁRIOS
 ========================================================= */
+
+function obterChaveUltimoAgendamentoVisto() {
+    return `gesto_ultimo_agendamento_visto_${tenantSlugLogado || "sem_tenant"}`;
+}
+
+
+function obterUltimoAgendamentoVisto() {
+    return Number(
+        localStorage.getItem(obterChaveUltimoAgendamentoVisto()) || 0
+    );
+}
+
+
+function salvarUltimoAgendamentoVisto(id) {
+    localStorage.setItem(
+        obterChaveUltimoAgendamentoVisto(),
+        String(Number(id) || 0)
+    );
+}
+
+
+function obterMaiorIdAgendamento(agendamentos) {
+    if (!Array.isArray(agendamentos) || !agendamentos.length) {
+        return 0;
+    }
+
+    return Math.max(
+        ...agendamentos.map((item) => Number(item.id) || 0)
+    );
+}
+
+
+function garantirIndicadorNovosAgendamentos() {
+    let indicador = document.getElementById("indicador-novos-agendamentos");
+
+    if (indicador) {
+        return indicador;
+    }
+
+    const secaoAgenda =
+        document.getElementById("secao-agenda")
+        || document.querySelector(".secao-admin");
+
+    if (!secaoAgenda) {
+        return null;
+    }
+
+    indicador = document.createElement("div");
+    indicador.id = "indicador-novos-agendamentos";
+    indicador.className = "indicador-novos-agendamentos";
+    indicador.style.display = "none";
+
+    indicador.innerHTML = `
+        <div>
+            <strong id="texto-novos-agendamentos">
+                Novos agendamentos
+            </strong>
+            <p>
+                Existem agendamentos recentes que ainda não foram visualizados.
+            </p>
+        </div>
+
+        <button
+            type="button"
+            onclick="marcarAgendamentosComoVistos()"
+        >
+            Marcar como visualizados
+        </button>
+    `;
+
+    secaoAgenda.prepend(indicador);
+
+    return indicador;
+}
+
+
+function atualizarIndicadorNovosAgendamentos(agendamentos) {
+    const indicador = garantirIndicadorNovosAgendamentos();
+
+    if (!indicador) {
+        return;
+    }
+
+    const ultimoVisto = obterUltimoAgendamentoVisto();
+
+    const novos = (agendamentos || []).filter((agendamento) => {
+        return Number(agendamento.id) > ultimoVisto;
+    });
+
+    const texto = document.getElementById("texto-novos-agendamentos");
+
+    if (!novos.length) {
+        indicador.style.display = "none";
+        return;
+    }
+
+    indicador.style.display = "flex";
+
+    if (texto) {
+        texto.textContent =
+            novos.length === 1
+                ? "1 novo agendamento"
+                : `${novos.length} novos agendamentos`;
+    }
+}
+
+
+function marcarAgendamentosComoVistos() {
+    const maiorId = obterMaiorIdAgendamento(
+        agendamentosAdminCache || []
+    );
+
+    salvarUltimoAgendamentoVisto(maiorId);
+
+    atualizarIndicadorNovosAgendamentos(
+        agendamentosAdminCache || []
+    );
+
+    document
+        .querySelectorAll(".linha-agendamento-novo")
+        .forEach((linha) => {
+            linha.classList.remove("linha-agendamento-novo");
+        });
+}
+
+
+async function verificarNovosAgendamentosAdmin() {
+    if (!adminProntoParaRequisicao()) {
+        return;
+    }
+
+    try {
+        await carregarAgendamentos();
+
+    } catch (erro) {
+        console.warn(
+            "Não foi possível verificar novos agendamentos:",
+            erro
+        );
+    }
+}
+
+
+function iniciarMonitorNovosAgendamentos() {
+    if (monitorNovosAgendamentosTimer) {
+        clearInterval(monitorNovosAgendamentosTimer);
+    }
+
+    monitorNovosAgendamentosTimer = setInterval(() => {
+        verificarNovosAgendamentosAdmin();
+    }, 60000);
+}
+
 
 function normalizarTelefoneWhatsApp(numero) {
     const apenasNumeros = String(numero || "").replace(/\D/g, "");
@@ -1532,6 +1686,7 @@ function iniciarPainel() {
         carregarAvisosAdmin();
         tratarRetornoPagamentoAdmin();
         carregarAssinaturaAdmin();
+        iniciarMonitorNovosAgendamentos();
 }
 
     async function atualizarStatusAgendamento(id, status) {
@@ -2179,6 +2334,12 @@ async function carregarAgendamentos() {
         for (const agendamento of dados.agendamentos) {
             const tr = document.createElement("tr");
 
+            const ultimoVisto = obterUltimoAgendamentoVisto();
+
+            if (Number(agendamento.id) > ultimoVisto) {
+                tr.classList.add("linha-agendamento-novo");
+            }
+
             const colunas = [
                 formatarDataBR(agendamento.data),
                 agendamento.horario,
@@ -2296,6 +2457,8 @@ async function carregarAgendamentos() {
             : 0;
 
             agendamentosAdminCache = dados.agendamentos || [];
+
+            atualizarIndicadorNovosAgendamentos(agendamentosAdminCache);
 
             document.getElementById("visor-total-agendamentos").textContent =
                 total;
@@ -3693,6 +3856,7 @@ window.fecharModalHistoricoChamadosAdmin = fecharModalHistoricoChamadosAdmin;
 window.carregarTudo = carregarTudo;
 window.atualizarPainelAdmin = atualizarPainelAdmin;
 window.abrirWhatsAppAgendamento = abrirWhatsAppAgendamento;
+window.marcarAgendamentosComoVistos = marcarAgendamentosComoVistos;
 
 document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => {

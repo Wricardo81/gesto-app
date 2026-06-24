@@ -341,6 +341,20 @@ def criar_checkout_assinatura_admin(
             detail="Empresa não encontrada.",
         )
 
+    status_assinatura = (
+        barbearia.status_assinatura
+        or ""
+    ).strip().lower()
+
+    if status_assinatura == "desativada":
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Esta empresa foi desativada pela administração da plataforma. "
+                "Somente o Painel Mestre pode reativar o acesso."
+            ),
+        )
+
     return criar_checkout_stripe_para_barbearia(
         barbearia=barbearia,
         plano_codigo=dados.plano_codigo,
@@ -369,6 +383,14 @@ def atualizar_barbearia_por_assinatura(
     )
 
     if not barbearia:
+        return
+
+    status_assinatura_atual = (
+        barbearia.status_assinatura
+        or ""
+    ).strip().lower()
+
+    if status_assinatura_atual == "desativada":
         return
 
     plano = None
@@ -458,6 +480,14 @@ def atualizar_barbearia_por_invoice(
     if not barbearia:
         return
 
+    status_assinatura_atual = (
+        barbearia.status_assinatura
+        or ""
+    ).strip().lower()
+
+    if status_assinatura_atual == "desativada":
+        return
+
     status_invoice = invoice.get("status")
 
     barbearia.ultima_cobranca_status = status_invoice
@@ -543,7 +573,6 @@ async def webhook_stripe(
         )
 
         subscription_id = objeto.get("subscription")
-
         customer_id = objeto.get("customer")
 
         if barbearia_id:
@@ -556,6 +585,18 @@ async def webhook_stripe(
             )
 
             if barbearia:
+                status_assinatura_atual = (
+                    barbearia.status_assinatura
+                    or ""
+                ).strip().lower()
+
+                if status_assinatura_atual == "desativada":
+                    return {
+                        "received": True,
+                        "ignored": True,
+                        "reason": "Empresa desativada manualmente pelo SaaS Master.",
+                    }
+
                 barbearia.stripe_subscription_id = subscription_id
                 barbearia.stripe_customer_id = customer_id
                 barbearia.status_assinatura = "checkout_concluido"

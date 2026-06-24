@@ -245,6 +245,25 @@ async function carregarConfiguracoes() {
         `/api/${encodeURIComponent(tenantSlug)}/configuracoes`
     );
 
+    if (
+        config.empresa_desativada === true
+        || config.status_assinatura === "desativada"
+        || config.acesso_liberado === false
+        || config.acesso_ativo === false
+    ) {
+        mostrarAvisoAssinaturaInativa(
+            "O acesso deste estabelecimento está bloqueado manualmente pela administração da plataforma."
+        );
+
+        const formulario = document.getElementById("form-agendamento");
+
+        if (formulario) {
+            formulario.style.display = "none";
+        }
+
+        return;
+    }
+
     const nomePublico =
         config.nome_publico
         || tenantSlug.replaceAll("-", " ");

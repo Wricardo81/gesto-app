@@ -326,6 +326,97 @@ def serializar_barbearia(
     }
 
 
+def normalizar_texto_saas(valor):
+    return (
+        str(valor or "")
+        .strip()
+        .lower()
+    )
+
+
+def valor_monetario_saas(valor):
+    try:
+        return float(valor or 0)
+
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def empresa_esta_desativada_saas(barbearia):
+    status_assinatura = normalizar_texto_saas(
+        barbearia.status_assinatura
+    )
+
+    return status_assinatura == "desativada"
+
+
+def empresa_pagamento_em_dia_saas(barbearia):
+    status_pagamento = normalizar_texto_saas(
+        barbearia.status_pagamento
+    )
+
+    return status_pagamento == "em_dia"
+
+
+def contar_agendamentos_empresa_saas(
+    db: Session,
+    barbearia,
+):
+    inspector = inspect(db.bind)
+
+    for tabela in inspector.get_table_names():
+        nome_tabela = tabela.lower()
+
+        if "agend" not in nome_tabela:
+            continue
+
+        colunas = {
+            coluna["name"]
+            for coluna in inspector.get_columns(tabela)
+        }
+
+        if "tenant_slug" in colunas:
+            total = db.execute(
+                text(
+                    f'SELECT COUNT(*) FROM "{tabela}" '
+                    "WHERE tenant_slug = :tenant_slug"
+                ),
+                {
+                    "tenant_slug": barbearia.slug,
+                },
+            ).scalar()
+
+            return int(total or 0)
+
+        if "barbearia_slug" in colunas:
+            total = db.execute(
+                text(
+                    f'SELECT COUNT(*) FROM "{tabela}" '
+                    "WHERE barbearia_slug = :barbearia_slug"
+                ),
+                {
+                    "barbearia_slug": barbearia.slug,
+                },
+            ).scalar()
+
+            return int(total or 0)
+
+        if "barbearia_id" in colunas:
+            total = db.execute(
+                text(
+                    f'SELECT COUNT(*) FROM "{tabela}" '
+                    "WHERE barbearia_id = :barbearia_id"
+                ),
+                {
+                    "barbearia_id": barbearia.id,
+                },
+            ).scalar()
+
+            return int(total or 0)
+
+    return 0
+
+
 @router.post("/login")
 def login_saas(
     credenciais: RequisicaoLoginSaaS,
@@ -868,4 +959,141 @@ def excluir_empresa_teste_saas(
         "empresa_id": barbearia_id,
         "tenant_slug": tenant_slug,
         "registros_removidos": total_registros_removidos,
+    }
+
+
+@router.get("/dashboard/metricas")
+def obter_metricas_dashboard_saas(
+    db: Session = Depends(get_db),
+    _usuario_admin: str = Depends(obter_saas_admin_logado),
+):
+    empresas = (
+        db.query(models.Barbearia)
+        .order_by(models.Barbearia.id.desc())
+        .all()
+    )
+
+    total_empresas = len(empresas)
+
+    total_desativadas = 0
+    total_ativas = 0
+    total_em_dia = 0
+    total_pendentes = 0
+    total_canceladas = 0
+    total_trial = 0
+    receita_mensal_estimada = 0.0
+    total_agendamentos = 0
+
+    uso_planos = {}
+    empresas_resumo = []
+
+    for empresa in empresas:
+        status_assinatura = normalizar_texto_saas(
+            empresa.status_assinatura
+        )
+
+        status_pagamento = normalizar_texto_saas(
+            empresa.status_pagamento
+        )
+
+        empresa_desativada = empresa_esta_desativada_saas(
+            empresa
+        )
+
+        pagamento_em_dia = empresa_pagamento_em_dia_saas(
+            empresa
+        )
+
+        if empresa_desativada:
+            total_desativadas += 1
+
+        else:
+            total_ativas += 1
+
+        if pagamento_em_dia:
+            total_em_dia += 1
+
+        if status_pagamento == "pendente":
+            total_pendentes += 1
+
+        if status_pagamento == "cancelado":
+            total_canceladas += 1
+
+        if status_assinatura in {
+            "trial",
+            "trialing",
+        }:
+            total_trial += 1
+
+        plano_codigo = empresa.plano_codigo or "sem_plano"
+
+        uso_planos[plano_codigo] = (
+            uso_planos.get(plano_codigo, 0) + 1
+        )
+
+        valor_mensal = valor_monetario_saas(
+            empresa.valor_mensal
+        )
+
+        if (
+            pagamento_em_dia
+            and not empresa_desativada
+            and bool(empresa.plano_ativo)
+        ):
+            receita_mensal_estimada += valor_mensal
+
+        agendamentos_empresa = contar_agendamentos_empresa_saas(
+            db,
+            empresa,
+        )
+
+        total_agendamentos += agendamentos_empresa
+
+        empresas_resumo.append(
+            {
+                "id": empresa.id,
+                "nome": empresa.nome,
+                "slug": empresa.slug,
+                "email": empresa.email,
+                "plano_codigo": empresa.plano_codigo,
+                "plano_periodicidade": empresa.plano_periodicidade,
+                "valor_mensal": valor_mensal,
+                "plano_ativo": bool(empresa.plano_ativo),
+                "status_assinatura": empresa.status_assinatura,
+                "status_pagamento": empresa.status_pagamento,
+                "empresa_desativada": empresa_desativada,
+                "pagamento_em_dia": pagamento_em_dia,
+                "agendamentos_total": agendamentos_empresa,
+            }
+        )
+
+    plano_mais_usado = None
+
+    if uso_planos:
+        plano_mais_usado_codigo = max(
+            uso_planos,
+            key=uso_planos.get,
+        )
+
+        plano_mais_usado = {
+            "codigo": plano_mais_usado_codigo,
+            "total_empresas": uso_planos[plano_mais_usado_codigo],
+        }
+
+    return {
+        "total_empresas": total_empresas,
+        "total_ativas": total_ativas,
+        "total_desativadas": total_desativadas,
+        "total_em_dia": total_em_dia,
+        "total_pendentes": total_pendentes,
+        "total_canceladas": total_canceladas,
+        "total_trial": total_trial,
+        "receita_mensal_estimada": round(
+            receita_mensal_estimada,
+            2,
+        ),
+        "total_agendamentos": total_agendamentos,
+        "plano_mais_usado": plano_mais_usado,
+        "uso_planos": uso_planos,
+        "empresas": empresas_resumo,
     }

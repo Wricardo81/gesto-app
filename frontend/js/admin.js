@@ -1848,6 +1848,99 @@ function registrarListenersDePreview() {
    CONFIGURAÇÕES
 ========================================================= */
 
+function empresaAdminEstaBloqueadaManualmente(config) {
+    if (!config) {
+        return false;
+    }
+
+    const statusAssinatura = String(
+        config.status_assinatura || ""
+    ).trim().toLowerCase();
+
+    return (
+        config.empresa_desativada === true
+        || statusAssinatura === "desativada"
+    );
+}
+
+
+function obterMensagemBloqueioAdmin(config) {
+    const statusAssinatura = String(
+        config?.status_assinatura || ""
+    ).trim().toLowerCase();
+
+    if (
+        config?.empresa_desativada === true
+        || statusAssinatura === "desativada"
+    ) {
+        return (
+            "Esta empresa foi desativada manualmente pela administração da plataforma. " +
+            "A agenda pública está bloqueada e pagamentos não reativam a conta. " +
+            "Somente o Painel Mestre SaaS pode reativar o acesso."
+        );
+    }
+
+    if (config?.acesso_liberado === false) {
+        return (
+            "O acesso público desta empresa está temporariamente bloqueado. " +
+            "Verifique o status do plano ou entre em contato com o suporte da plataforma."
+        );
+    }
+
+    return "";
+}
+
+
+function atualizarAvisoBloqueioAdmin(config) {
+    const aviso = document.getElementById("aviso-bloqueio-admin");
+    const texto = document.getElementById("texto-aviso-bloqueio-admin");
+
+    if (!aviso || !texto) {
+        return;
+    }
+
+    const bloqueada = empresaAdminEstaBloqueadaManualmente(config);
+
+    if (!bloqueada) {
+        aviso.style.display = "none";
+        texto.innerText = "";
+        atualizarBotoesPagamentoAdminBloqueio(false);
+        return;
+    }
+
+    texto.innerText = obterMensagemBloqueioAdmin(config);
+    aviso.style.display = "block";
+
+    atualizarBotoesPagamentoAdminBloqueio(true);
+}
+
+
+function atualizarBotoesPagamentoAdminBloqueio(bloquear) {
+    const cards = document.querySelectorAll(".plano-admin-card");
+
+    cards.forEach((card) => {
+        card.classList.toggle(
+            "bloqueado-pagamento-admin",
+            bloquear
+        );
+
+        const botoes = card.querySelectorAll("button");
+
+        botoes.forEach((botao) => {
+            botao.disabled = bloquear;
+
+            if (bloquear) {
+                botao.title = (
+                    "Conta bloqueada manualmente. " +
+                    "Somente o Painel Mestre SaaS pode reativar."
+                );
+            } else {
+                botao.removeAttribute("title");
+            }
+        });
+    });
+}
+
 async function carregarConfiguracaoAtual() {
     if (!adminProntoParaRequisicao()) {
         return;
@@ -1861,6 +1954,8 @@ async function carregarConfiguracaoAtual() {
         );
         
         configuracoesAdminCache = config || {};
+        
+        atualizarAvisoBloqueioAdmin(configuracoesAdminCache);
 
         const campoAbertura = document.getElementById("hora-abertura");
         const campoFechamento = document.getElementById("hora-fechamento");
@@ -3914,6 +4009,8 @@ window.atualizarPainelAdmin = atualizarPainelAdmin;
 window.abrirWhatsAppAgendamento = abrirWhatsAppAgendamento;
 window.marcarAgendamentosComoVistos = marcarAgendamentosComoVistos;
 window.assinarPlanoMercadoPagoAdmin = assinarPlanoMercadoPagoAdmin;
+window.atualizarAvisoBloqueioAdmin = atualizarAvisoBloqueioAdmin;
+
 
 document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => {

@@ -2118,6 +2118,14 @@ function renderizarMetricasDashboardSaas(metricas) {
     renderizarTabelaResumoEmpresasDashboardSaas(
         metricas.empresas || []
     );
+
+    renderizarAlertasOperacionaisSaas(
+        metricas.empresas || []
+    );
+    
+    renderizarRankingAgendamentosSaas(
+        metricas.empresas || []
+    );
 }
 
 
@@ -2540,6 +2548,167 @@ async function alterarStatusEmpresaSaas(barbeariaId, ativar) {
     } catch (erro) {
         tratarErroSaas(erro);
     }
+}
+
+
+function obterAlertasOperacionaisSaas(empresas) {
+    const alertas = [];
+
+    empresas.forEach((empresa) => {
+        const statusPagamento = String(
+            empresa.status_pagamento || ""
+        ).trim().toLowerCase();
+
+        const statusAssinatura = String(
+            empresa.status_assinatura || ""
+        ).trim().toLowerCase();
+
+        const semPlano =
+            !empresa.plano_codigo
+            || empresa.plano_codigo === "sem_plano";
+
+        if (empresa.empresa_desativada === true) {
+            alertas.push({
+                tipo: "desativada",
+                titulo: empresa.nome || "Empresa sem nome",
+                descricao: "Empresa desativada manualmente pelo SaaS Master.",
+                prioridade: 1,
+            });
+
+            return;
+        }
+
+        if (statusPagamento === "pendente") {
+            alertas.push({
+                tipo: "pendente",
+                titulo: empresa.nome || "Empresa sem nome",
+                descricao: "Pagamento pendente. Acompanhe para evitar bloqueio.",
+                prioridade: 2,
+            });
+        }
+
+        if (statusPagamento === "cancelado") {
+            alertas.push({
+                tipo: "cancelada",
+                titulo: empresa.nome || "Empresa sem nome",
+                descricao: "Pagamento cancelado ou assinatura interrompida.",
+                prioridade: 3,
+            });
+        }
+
+        if (semPlano) {
+            alertas.push({
+                tipo: "sem-plano",
+                titulo: empresa.nome || "Empresa sem nome",
+                descricao: "Empresa sem plano definido.",
+                prioridade: 4,
+            });
+        }
+
+        if (
+            statusAssinatura === "trial"
+            || statusAssinatura === "trialing"
+        ) {
+            alertas.push({
+                tipo: "trial",
+                titulo: empresa.nome || "Empresa sem nome",
+                descricao: "Empresa em período de teste.",
+                prioridade: 5,
+            });
+        }
+    });
+
+    return alertas.sort((a, b) => a.prioridade - b.prioridade);
+}
+
+
+function renderizarAlertasOperacionaisSaas(empresas) {
+    const container = document.getElementById(
+        "alertas-operacionais-saas"
+    );
+
+    if (!container) {
+        return;
+    }
+
+    const alertas = obterAlertasOperacionaisSaas(empresas);
+
+    if (!alertas.length) {
+        container.innerHTML = `
+            <p class="texto-vazio-saas">
+                Nenhum alerta operacional no momento.
+            </p>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = alertas
+        .map((alerta) => {
+            return `
+                <article class="alerta-operacional-saas alerta-${alerta.tipo}">
+                    <div>
+                        <strong>${alerta.titulo}</strong>
+                        <p>${alerta.descricao}</p>
+                    </div>
+
+                    <span>${alerta.tipo.replace("-", " ")}</span>
+                </article>
+            `;
+        })
+        .join("");
+}
+
+
+function renderizarRankingAgendamentosSaas(empresas) {
+    const container = document.getElementById(
+        "ranking-agendamentos-saas"
+    );
+
+    if (!container) {
+        return;
+    }
+
+    const ranking = [...empresas]
+        .sort((a, b) => {
+            return Number(b.agendamentos_total || 0)
+                - Number(a.agendamentos_total || 0);
+        })
+        .slice(0, 5);
+
+    if (!ranking.length) {
+        container.innerHTML = `
+            <p class="texto-vazio-saas">
+                Nenhuma empresa encontrada para o ranking.
+            </p>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = ranking
+        .map((empresa, indice) => {
+            const posicao = indice + 1;
+
+            return `
+                <article class="item-ranking-saas">
+                    <div class="posicao-ranking-saas">
+                        ${posicao}
+                    </div>
+
+                    <div class="info-ranking-saas">
+                        <strong>${empresa.nome || "Empresa sem nome"}</strong>
+                        <span>${empresa.slug || ""}</span>
+                    </div>
+
+                    <div class="total-ranking-saas">
+                        <strong>${empresa.agendamentos_total ?? 0}</strong>
+                        <span>agendamentos</span>
+                    </div>
+                </article>
+            `;
+        })
+        .join("");
 }
 
 

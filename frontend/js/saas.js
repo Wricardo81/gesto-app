@@ -1894,21 +1894,37 @@ function renderizarAssinaturasEmpresasSaas(empresas) {
     }
 
     container.innerHTML = empresas
-        .map((empresa) => {
-            const planoAtual = obterPlanoPorCodigoSaas(
-                empresa.plano_codigo
-            );
+    .map((empresa) => {
+        const planoAtual = obterPlanoPorCodigoSaas(
+            empresa.plano_codigo
+        );
 
-            const empresaDesativada =
-                String(empresa.status_assinatura || "").toLowerCase() === "desativada";
+        const statusAssinatura = String(
+            empresa.status_assinatura || ""
+        ).toLowerCase();
 
-            return `
-                <article class="assinatura-empresa-card">
+        const empresaDesativada =
+            statusAssinatura === "desativada";
+
+        const pagamentoPendente =
+            String(empresa.status_pagamento || "").toLowerCase() === "pendente";
+
+        const pagamentoCancelado =
+            String(empresa.status_pagamento || "").toLowerCase() === "cancelado";
+
+        const empresaEmDia =
+            String(empresa.status_pagamento || "").toLowerCase() === "em_dia";
+
+        return `
+            <article class="assinatura-empresa-card">
                     <div class="assinatura-empresa-info">
-                        <h4>
-                            ${empresa.nome}
-                            ${empresaDesativada ? `<span class="badge-empresa-desativada">Desativada</span>` : ""}
-                        </h4>
+                    <h4>
+                        ${empresa.nome}
+                        ${empresaDesativada ? `<span class="badge-empresa-desativada">Desativada</span>` : ""}
+                        ${empresaEmDia ? `<span class="badge-empresa-ativa">Em dia</span>` : ""}
+                        ${pagamentoPendente ? `<span class="badge-empresa-pendente">Pendente</span>` : ""}
+                        ${pagamentoCancelado && !empresaDesativada ? `<span class="badge-empresa-cancelada">Pagamento cancelado</span>` : ""}
+                    </h4>
 
                         <p>
                             ${empresa.email || "Sem e-mail"}<br>
@@ -2299,17 +2315,24 @@ async function alterarStatusEmpresaSaas(barbeariaId, ativar) {
             }
         );
 
-        alert(
+        exibirMensagemSaas(
             ativar
                 ? "Empresa reativada com sucesso."
                 : "Empresa desativada com sucesso."
         );
 
-        await carregarEmpresasSaasCompat();
+        invalidarSecoesSaas([
+            "secao-saas-dashboard",
+            "secao-saas-empresas",
+            "secao-saas-assinaturas",
+        ]);
 
-        if (typeof carregarAssinaturasSaas === "function") {
-            await carregarAssinaturasSaas();
-        }
+        await carregarDadosDaSecaoSaas(
+            "secao-saas-assinaturas",
+            {
+                forcar: true,
+            }
+        );
 
     } catch (erro) {
         tratarErroSaas(erro);

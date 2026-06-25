@@ -1715,6 +1715,7 @@ async function carregarDadosDaSecaoSaas(secaoId, opcoes = {}) {
     try {
         if (secaoId === "secao-saas-dashboard") {
             await carregarEmpresasSaasCompat();
+            await carregarMetricasDashboardSaas();
         }
 
         if (secaoId === "secao-saas-empresas") {
@@ -2032,6 +2033,195 @@ function renderizarAssinaturasEmpresasSaas(empresas) {
 }
 
 
+function formatarMoedaSaas(valor) {
+    const numero = Number(valor || 0);
+
+    return numero.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+    });
+}
+
+
+function atualizarTextoElementoSaas(id, valor) {
+    const elemento = document.getElementById(id);
+
+    if (!elemento) {
+        return;
+    }
+
+    elemento.innerText = valor;
+}
+
+
+function traduzirPlanoCodigoSaas(codigo) {
+    const mapa = {
+        mensal: "Mensal",
+        trimestral: "Trimestral",
+        anual: "Anual",
+        sem_plano: "Sem plano",
+    };
+
+    return mapa[codigo] || codigo || "Não definido";
+}
+
+
+function renderizarMetricasDashboardSaas(metricas) {
+    if (!metricas) {
+        return;
+    }
+
+    atualizarTextoElementoSaas(
+        "metrica-total-empresas",
+        metricas.total_empresas ?? 0
+    );
+
+    atualizarTextoElementoSaas(
+        "metrica-total-ativas",
+        metricas.total_ativas ?? 0
+    );
+
+    atualizarTextoElementoSaas(
+        "metrica-total-desativadas",
+        metricas.total_desativadas ?? 0
+    );
+
+    atualizarTextoElementoSaas(
+        "metrica-receita-mensal",
+        formatarMoedaSaas(metricas.receita_mensal_estimada)
+    );
+
+    atualizarTextoElementoSaas(
+        "metrica-total-em-dia",
+        metricas.total_em_dia ?? 0
+    );
+
+    atualizarTextoElementoSaas(
+        "metrica-total-pendentes",
+        metricas.total_pendentes ?? 0
+    );
+
+    atualizarTextoElementoSaas(
+        "metrica-total-agendamentos",
+        metricas.total_agendamentos ?? 0
+    );
+
+    const planoMaisUsado = metricas.plano_mais_usado;
+
+    atualizarTextoElementoSaas(
+        "metrica-plano-mais-usado",
+        planoMaisUsado
+            ? `${traduzirPlanoCodigoSaas(planoMaisUsado.codigo)} (${planoMaisUsado.total_empresas})`
+            : "Não definido"
+    );
+
+    renderizarTabelaResumoEmpresasDashboardSaas(
+        metricas.empresas || []
+    );
+}
+
+
+function renderizarTabelaResumoEmpresasDashboardSaas(empresas) {
+    const container = document.getElementById(
+        "tabela-resumo-empresas-dashboard-saas"
+    );
+
+    if (!container) {
+        return;
+    }
+
+    if (!empresas.length) {
+        container.innerHTML = `
+            <p class="texto-vazio-saas">
+                Nenhuma empresa encontrada.
+            </p>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="tabela-scroll-saas">
+            <table class="tabela-dashboard-saas">
+                <thead>
+                    <tr>
+                        <th>Empresa</th>
+                        <th>Plano</th>
+                        <th>Status</th>
+                        <th>Pagamento</th>
+                        <th>Receita</th>
+                        <th>Agendamentos</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    ${empresas
+                        .map((empresa) => {
+                            const empresaDesativada =
+                                empresa.empresa_desativada === true;
+
+                            const pagamentoEmDia =
+                                empresa.pagamento_em_dia === true;
+
+                            return `
+                                <tr>
+                                    <td>
+                                        <strong>${empresa.nome || "Sem nome"}</strong>
+                                        <small>${empresa.slug || ""}</small>
+                                    </td>
+
+                                    <td>
+                                        ${traduzirPlanoCodigoSaas(empresa.plano_codigo)}
+                                    </td>
+
+                                    <td>
+                                        ${
+                                            empresaDesativada
+                                                ? `<span class="badge-empresa-desativada">Desativada</span>`
+                                                : `<span class="badge-empresa-ativa">Ativa</span>`
+                                        }
+                                    </td>
+
+                                    <td>
+                                        ${
+                                            pagamentoEmDia
+                                                ? `<span class="badge-empresa-ativa">Em dia</span>`
+                                                : `<span class="badge-empresa-pendente">${traduzirStatusPagamento(empresa.status_pagamento)}</span>`
+                                        }
+                                    </td>
+
+                                    <td>
+                                        ${formatarMoedaSaas(empresa.valor_mensal)}
+                                    </td>
+
+                                    <td>
+                                        ${empresa.agendamentos_total ?? 0}
+                                    </td>
+                                </tr>
+                            `;
+                        })
+                        .join("")}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+
+async function carregarMetricasDashboardSaas() {
+    try {
+        const metricas = await saasRequest(
+            "/api/saas/dashboard/metricas"
+        );
+
+        renderizarMetricasDashboardSaas(metricas);
+
+    } catch (erro) {
+        tratarErroSaas(erro);
+    }
+}
+
+
 async function carregarPlanosAssinaturaSaas() {
     const planos = await saasRequest(
         "/api/saas/assinaturas/planos"
@@ -2344,6 +2534,9 @@ async function alterarStatusEmpresaSaas(barbeariaId, ativar) {
             }
         );
 
+        await carregarMetricasDashboardSaas();
+
+
     } catch (erro) {
         tratarErroSaas(erro);
     }
@@ -2400,6 +2593,8 @@ async function excluirEmpresaTesteSaas(barbeariaId) {
                 forcar: true,
             }
         );
+
+        await carregarMetricasDashboardSaas();
 
     } catch (erro) {
         tratarErroSaas(erro);

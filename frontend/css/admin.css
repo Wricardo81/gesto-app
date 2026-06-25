@@ -1890,3 +1890,24 @@
         align-items: flex-start;
     }
 }
+
+.grupo-pagamento-admin {
+    margin-top: 18px;
+    padding: 16px;
+    border: 1px solid rgba(100, 255, 218, 0.18);
+    border-radius: 18px;
+    background: rgba(15, 23, 42, 0.45);
+}
+
+.grupo-pagamento-admin h4 {
+    margin: 0 0 12px;
+    color: #ffffff;
+}
+
+.grupo-pagamento-admin button {
+    margin: 6px 8px 6px 0;
+}
+
+.grupo-pagamento-admin.mercado-pago {
+    border-color: rgba(59, 130, 246, 0.35);
+}

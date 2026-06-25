@@ -586,6 +586,62 @@ async function assinarPlanoAdmin(planoCodigo) {
 }
 
 
+async function assinarPlanoMercadoPagoAdmin(planoCodigo) {
+    if (!adminProntoParaRequisicao()) {
+        return;
+    }
+
+    const confirmar = window.confirm(
+        `Deseja assinar o plano ${planoCodigo.toUpperCase()} pelo Mercado Pago?`
+    );
+
+    if (!confirmar) {
+        return;
+    }
+
+    try {
+        const token = localStorage.getItem("gesto_token");
+
+        const resposta = await fetch(
+            `${API_BASE_URL}/api/${tenantSlugLogado}/admin/assinaturas/mercado-pago/checkout`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    plano_codigo: planoCodigo,
+                }),
+            }
+        );
+
+        const dados = await resposta.json();
+
+        if (!resposta.ok) {
+            throw new Error(
+                dados.detail
+                || "Não foi possível iniciar o checkout Mercado Pago."
+            );
+        }
+
+        if (!dados.checkout_url) {
+            throw new Error(
+                "Checkout criado, mas o backend não retornou a URL do Mercado Pago."
+            );
+        }
+
+        window.location.href = dados.checkout_url;
+
+    } catch (erro) {
+        alert(
+            erro.message
+            || "Erro ao iniciar pagamento pelo Mercado Pago."
+        );
+    }
+}
+
+
 async function tratarRetornoPagamentoAdmin() {
     const parametros = new URLSearchParams(
         window.location.search
@@ -3857,6 +3913,7 @@ window.carregarTudo = carregarTudo;
 window.atualizarPainelAdmin = atualizarPainelAdmin;
 window.abrirWhatsAppAgendamento = abrirWhatsAppAgendamento;
 window.marcarAgendamentosComoVistos = marcarAgendamentosComoVistos;
+window.assinarPlanoMercadoPagoAdmin = assinarPlanoMercadoPagoAdmin;
 
 document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => {

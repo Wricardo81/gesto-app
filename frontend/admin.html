@@ -7,7 +7,7 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="./css/admin.css?v=62">
+    <link rel="stylesheet" href="./css/admin.css?v=75">
 </head>
 
 <body>
@@ -418,50 +418,91 @@
                 </div>
             </div>
         
-            <div id="card-assinatura-admin" class="card-assinatura-admin">
-                Carregando informações da assinatura...
-            </div>
-        
             <div id="planos-assinatura-admin" class="planos-assinatura-admin">
                 <article class="plano-admin-card">
                     <h3>Mensal</h3>
                     <strong>R$ 99/mês</strong>
                     <p>Ideal para começar sem compromisso.</p>
-        
-                    <button
-                        type="button"
-                        onclick="assinarPlanoAdmin('mensal')"
-                    >
-                        Assinar mensal
-                    </button>
+            
+                    <div class="grupo-pagamento-admin">
+                        <h4>Stripe</h4>
+            
+                        <button
+                            type="button"
+                            onclick="assinarPlanoAdmin('mensal')"
+                        >
+                            Assinar mensal com Stripe
+                        </button>
+                    </div>
+            
+                    <div class="grupo-pagamento-admin mercado-pago">
+                        <h4>Mercado Pago</h4>
+            
+                        <button
+                            type="button"
+                            onclick="assinarPlanoMercadoPagoAdmin('mensal')"
+                        >
+                            Assinar mensal com Mercado Pago
+                        </button>
+                    </div>
                 </article>
-        
+            
                 <article class="plano-admin-card destaque">
                     <span>10% de desconto</span>
                     <h3>Trimestral</h3>
                     <strong>R$ 267</strong>
                     <p>Equivale a R$ 89/mês.</p>
-        
-                    <button
-                        type="button"
-                        onclick="assinarPlanoAdmin('trimestral')"
-                    >
-                        Assinar trimestral
-                    </button>
+            
+                    <div class="grupo-pagamento-admin">
+                        <h4>Stripe</h4>
+            
+                        <button
+                            type="button"
+                            onclick="assinarPlanoAdmin('trimestral')"
+                        >
+                            Assinar trimestral com Stripe
+                        </button>
+                    </div>
+            
+                    <div class="grupo-pagamento-admin mercado-pago">
+                        <h4>Mercado Pago</h4>
+            
+                        <button
+                            type="button"
+                            onclick="assinarPlanoMercadoPagoAdmin('trimestral')"
+                        >
+                            Assinar trimestral com Mercado Pago
+                        </button>
+                    </div>
                 </article>
-        
+            
                 <article class="plano-admin-card">
                     <span>20% de desconto</span>
                     <h3>Anual</h3>
                     <strong>R$ 948</strong>
                     <p>Equivale a R$ 79/mês.</p>
-        
-                    <button
-                        type="button"
-                        onclick="assinarPlanoAdmin('anual')"
-                    >
-                        Assinar anual
-                    </button>
+            
+                    <div class="grupo-pagamento-admin">
+                        <h4>Stripe</h4>
+            
+                        <button
+                            type="button"
+                            onclick="assinarPlanoAdmin('anual')"
+                        >
+                            Assinar anual com Stripe
+                        </button>
+                    </div>
+            
+                    <div class="grupo-pagamento-admin mercado-pago">
+                        <h4>Mercado Pago</h4>
+            
+                        <button
+                            type="button"
+                            onclick="assinarPlanoMercadoPagoAdmin('anual')"
+                        >
+                            Assinar anual com Mercado Pago
+                        </button>
+                    </div>
                 </article>
             </div>
         </section>
@@ -1041,8 +1082,8 @@
         </div>
     
 
-    <script src="./js/api.js?v=62"></script>
-    <script src="./js/auth.js?v=62"></script>
-    <script src="./js/admin.js?v=62"></script>
+    <script src="./js/api.js?v=75"></script>
+    <script src="./js/auth.js?v=75"></script>
+    <script src="./js/admin.js?v=75"></script>
 </body>
 </html>

@@ -6,7 +6,10 @@ from sqlalchemy.orm import Session
 
 import models
 from database import SessaoLocal
-from security import obter_saas_admin_logado
+from security import (
+    obter_saas_admin_logado,
+    validar_tenant_logado,
+)
 from services.mercado_pago_service import (
     buscar_pagamento_mercado_pago,
     criar_preferencia_mercado_pago,
@@ -22,6 +25,9 @@ router = APIRouter(
 
 class CriarCheckoutMercadoPago(BaseModel):
     barbearia_id: int
+    plano_codigo: str
+
+class CriarCheckoutMercadoPagoAdmin(BaseModel):
     plano_codigo: str
 
 
@@ -118,6 +124,89 @@ def criar_checkout_mercado_pago_saas(
     }
 
 
+@router.post("/api/{tenant_slug}/admin/assinaturas/mercado-pago/checkout")
+def criar_checkout_mercado_pago_admin(
+    tenant_slug: str,
+    dados: CriarCheckoutMercadoPagoAdmin,
+    db: Session = Depends(get_db),
+    _tenant_logado: str = Depends(validar_tenant_logado),
+):
+    if tenant_slug != _tenant_logado:
+        raise HTTPException(
+            status_code=403,
+            detail="Tenant inválido para esta sessão.",
+        )
+
+    barbearia = (
+        db.query(models.Barbearia)
+        .filter(models.Barbearia.slug == tenant_slug)
+        .first()
+    )
+
+    if not barbearia:
+        raise HTTPException(
+            status_code=404,
+            detail="Empresa não encontrada.",
+        )
+
+    status_assinatura = (
+        barbearia.status_assinatura
+        or ""
+    ).strip().lower()
+
+    if status_assinatura == "desativada":
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Esta empresa foi desativada pela administração da plataforma. "
+                "Somente o Painel Mestre pode reativar o acesso."
+            ),
+        )
+
+    plano = obter_plano_assinatura(
+        dados.plano_codigo
+    )
+
+    preferencia = criar_preferencia_mercado_pago(
+        barbearia_id=barbearia.id,
+        tenant_slug=barbearia.slug,
+        nome_empresa=barbearia.nome,
+        email_empresa=barbearia.email,
+        plano_codigo=plano.codigo,
+    )
+
+    checkout_url = (
+        preferencia.get("init_point")
+        or preferencia.get("sandbox_init_point")
+    )
+
+    if not checkout_url:
+        raise HTTPException(
+            status_code=500,
+            detail="Mercado Pago não retornou URL de checkout.",
+        )
+
+    barbearia.gateway_pagamento = "mercado_pago"
+    barbearia.plano_codigo = plano.codigo
+    barbearia.plano_periodicidade = plano.periodicidade
+    barbearia.valor_mensal = plano.valor_mensal_equivalente
+    barbearia.status_assinatura = "checkout_mercado_pago_criado"
+    barbearia.status_pagamento = "pendente"
+
+    db.commit()
+    db.refresh(barbearia)
+
+    return {
+        "mensagem": "Checkout Mercado Pago criado com sucesso.",
+        "checkout_url": checkout_url,
+        "preference_id": preferencia.get("id"),
+        "barbearia_id": barbearia.id,
+        "plano_codigo": plano.codigo,
+    }
+
+
+
+
 @router.post("/api/webhooks/mercado-pago")
 async def webhook_mercado_pago(
     request: Request,
@@ -186,6 +275,18 @@ async def webhook_mercado_pago(
             "recebido": True,
             "ignorado": True,
             "motivo": "Empresa não encontrada.",
+        }
+    
+    status_assinatura_atual = (
+        barbearia.status_assinatura
+        or ""
+    ).strip().lower()
+
+    if status_assinatura_atual == "desativada":
+        return {
+            "recebido": True,
+            "ignorado": True,
+            "motivo": "Empresa desativada manualmente pelo SaaS Master.",
         }
 
     plano_codigo = (

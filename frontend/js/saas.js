@@ -11,6 +11,7 @@ let chamadosSaasCache = [];
 const secoesSaasCarregadas = new Set();
 const secoesSaasCarregando = new Set();
 let planosAssinaturaSaasCache = [];
+let empresasAssinaturasSaasCache = [];
 
 let listenersNavegacaoSaasRegistrados = false;
 
@@ -1875,7 +1876,202 @@ function renderizarPlanosAssinaturaSaas(planos) {
 }
 
 
+function obterValorFiltroSaas(id) {
+    const elemento = document.getElementById(id);
+
+    if (!elemento) {
+        return "";
+    }
+
+    return String(elemento.value || "").trim().toLowerCase();
+}
+
+
+function empresaCombinaComBuscaSaas(empresa, busca) {
+    if (!busca) {
+        return true;
+    }
+
+    const textoEmpresa = [
+        empresa.nome,
+        empresa.slug,
+        empresa.email,
+        empresa.telefone,
+    ]
+        .map((valor) => String(valor || "").toLowerCase())
+        .join(" ");
+
+    return textoEmpresa.includes(busca);
+}
+
+
+function empresaCombinaComStatusSaas(empresa, statusFiltro) {
+    if (!statusFiltro) {
+        return true;
+    }
+
+    const statusAssinatura = String(
+        empresa.status_assinatura || ""
+    ).trim().toLowerCase();
+
+    const statusPagamento = String(
+        empresa.status_pagamento || ""
+    ).trim().toLowerCase();
+
+    const empresaDesativada =
+        statusAssinatura === "desativada";
+
+    if (statusFiltro === "ativa") {
+        return !empresaDesativada;
+    }
+
+    if (statusFiltro === "desativada") {
+        return empresaDesativada;
+    }
+
+    if (statusFiltro === "em_dia") {
+        return statusPagamento === "em_dia";
+    }
+
+    if (statusFiltro === "pendente") {
+        return statusPagamento === "pendente";
+    }
+
+    if (statusFiltro === "cancelado") {
+        return statusPagamento === "cancelado";
+    }
+
+    if (statusFiltro === "trial") {
+        return (
+            statusAssinatura === "trial"
+            || statusAssinatura === "trialing"
+        );
+    }
+
+    return true;
+}
+
+
+function empresaCombinaComPlanoSaas(empresa, planoFiltro) {
+    if (!planoFiltro) {
+        return true;
+    }
+
+    const planoEmpresa = String(
+        empresa.plano_codigo || "sem_plano"
+    ).trim().toLowerCase();
+
+    return planoEmpresa === planoFiltro;
+}
+
+
+function obterEmpresasFiltradasSaas() {
+    const busca = obterValorFiltroSaas(
+        "filtro-busca-empresa-saas"
+    );
+
+    const statusFiltro = obterValorFiltroSaas(
+        "filtro-status-empresa-saas"
+    );
+
+    const planoFiltro = obterValorFiltroSaas(
+        "filtro-plano-empresa-saas"
+    );
+
+    return empresasAssinaturasSaasCache.filter((empresa) => {
+        return (
+            empresaCombinaComBuscaSaas(empresa, busca)
+            && empresaCombinaComStatusSaas(empresa, statusFiltro)
+            && empresaCombinaComPlanoSaas(empresa, planoFiltro)
+        );
+    });
+}
+
+
+function aplicarFiltrosEmpresasSaas() {
+    const empresasFiltradas = obterEmpresasFiltradasSaas();
+
+    renderizarAssinaturasEmpresasSaasSemAtualizarCache(
+        empresasFiltradas
+    );
+}
+
+
+function limparFiltrosEmpresasSaas() {
+    const campoBusca = document.getElementById(
+        "filtro-busca-empresa-saas"
+    );
+
+    const campoStatus = document.getElementById(
+        "filtro-status-empresa-saas"
+    );
+
+    const campoPlano = document.getElementById(
+        "filtro-plano-empresa-saas"
+    );
+
+    if (campoBusca) {
+        campoBusca.value = "";
+    }
+
+    if (campoStatus) {
+        campoStatus.value = "";
+    }
+
+    if (campoPlano) {
+        campoPlano.value = "";
+    }
+
+    aplicarFiltrosEmpresasSaas();
+}
+
+
+function configurarFiltrosEmpresasSaas() {
+    const campoBusca = document.getElementById(
+        "filtro-busca-empresa-saas"
+    );
+
+    const campoStatus = document.getElementById(
+        "filtro-status-empresa-saas"
+    );
+
+    const campoPlano = document.getElementById(
+        "filtro-plano-empresa-saas"
+    );
+
+    if (campoBusca) {
+        campoBusca.addEventListener(
+            "input",
+            aplicarFiltrosEmpresasSaas
+        );
+    }
+
+    if (campoStatus) {
+        campoStatus.addEventListener(
+            "change",
+            aplicarFiltrosEmpresasSaas
+        );
+    }
+
+    if (campoPlano) {
+        campoPlano.addEventListener(
+            "change",
+            aplicarFiltrosEmpresasSaas
+        );
+    }
+}
+
+
 function renderizarAssinaturasEmpresasSaas(empresas) {
+    empresasAssinaturasSaasCache = empresas || [];
+
+    renderizarAssinaturasEmpresasSaasSemAtualizarCache(
+        empresasAssinaturasSaasCache
+    );
+}
+
+
+function renderizarAssinaturasEmpresasSaasSemAtualizarCache(empresas) {
     const container = document.getElementById(
         "lista-assinaturas-empresas-saas"
     );
@@ -1887,7 +2083,7 @@ function renderizarAssinaturasEmpresasSaas(empresas) {
     if (!empresas.length) {
         container.innerHTML = `
             <p class="texto-vazio-saas">
-                Nenhuma empresa cadastrada.
+                Nenhuma empresa encontrada com os filtros atuais.
             </p>
         `;
 
@@ -2867,16 +3063,17 @@ async function iniciarPainelSaas() {
         exibirLoginSaas();
         return;
     }
-    
+
     exibirPainelSaas();
 
-    exibirBannerComercialSaas();
-    
-    tratarRetornoPagamentosSaas();
-    
-    inicializarNavegacaoSaas();
+    configurarFiltrosEmpresasSaas();
 
-}
+    exibirBannerComercialSaas();
+
+    tratarRetornoPagamentosSaas();
+
+    inicializarNavegacaoSaas();
+    }
 
 window.addEventListener(
     "DOMContentLoaded",
@@ -2897,3 +3094,4 @@ window.criarCheckoutAssinaturaSaas = criarCheckoutAssinaturaSaas;
 window.criarCheckoutMercadoPagoSaas = criarCheckoutMercadoPagoSaas;
 window.alterarStatusEmpresaSaas = alterarStatusEmpresaSaas;
 window.excluirEmpresaTesteSaas = excluirEmpresaTesteSaas;
+window.limparFiltrosEmpresasSaas = limparFiltrosEmpresasSaas;

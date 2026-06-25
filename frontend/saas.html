@@ -16,7 +16,7 @@
     >
     <link
         rel="stylesheet"
-        href="./css/saas.css?v=81">
+        href="./css/saas.css?v=83">
 </head>
 
 <body>
@@ -341,6 +341,59 @@
                         <p>
                             Selecione uma empresa e envie para o checkout do Stripe.
                         </p>
+                    </div>
+                </div>
+
+                <div class="filtros-empresas-saas">
+                    <div class="campo-filtro-saas campo-busca-saas">
+                        <label for="filtro-busca-empresa-saas">
+                            Buscar empresa
+                        </label>
+                
+                        <input
+                            id="filtro-busca-empresa-saas"
+                            type="search"
+                            placeholder="Nome, slug ou e-mail..."
+                        >
+                    </div>
+                
+                    <div class="campo-filtro-saas">
+                        <label for="filtro-status-empresa-saas">
+                            Status
+                        </label>
+                
+                        <select id="filtro-status-empresa-saas">
+                            <option value="">Todos</option>
+                            <option value="ativa">Ativas</option>
+                            <option value="desativada">Desativadas</option>
+                            <option value="em_dia">Pagamento em dia</option>
+                            <option value="pendente">Pendentes</option>
+                            <option value="cancelado">Canceladas</option>
+                            <option value="trial">Trial</option>
+                        </select>
+                    </div>
+                
+                    <div class="campo-filtro-saas">
+                        <label for="filtro-plano-empresa-saas">
+                            Plano
+                        </label>
+                
+                        <select id="filtro-plano-empresa-saas">
+                            <option value="">Todos</option>
+                            <option value="mensal">Mensal</option>
+                            <option value="trimestral">Trimestral</option>
+                            <option value="anual">Anual</option>
+                            <option value="sem_plano">Sem plano</option>
+                        </select>
+                    </div>
+                
+                    <div class="acoes-filtro-saas">
+                        <button
+                            type="button"
+                            onclick="limparFiltrosEmpresasSaas()"
+                        >
+                            Limpar filtros
+                        </button>
                     </div>
                 </div>
         
@@ -848,7 +901,7 @@
     </footer>
 </main>
 
-    <script src="./js/api.js?v=81"></script>
-    <script src="./js/saas.js?v=81"></script>
+    <script src="./js/api.js?v=83"></script>
+    <script src="./js/saas.js?v=83"></script>
 </body>
 </html>

@@ -1538,3 +1538,65 @@ small {
         grid-template-columns: 1fr;
     }
 }
+
+.filtros-empresas-saas {
+    display: grid;
+    grid-template-columns: minmax(260px, 1fr) 180px 180px auto;
+    gap: 14px;
+    align-items: end;
+    margin: 18px 0;
+    padding: 16px;
+    border: 1px solid rgba(100, 255, 218, 0.16);
+    border-radius: 20px;
+    background: rgba(15, 23, 42, 0.48);
+}
+
+.campo-filtro-saas {
+    display: grid;
+    gap: 7px;
+}
+
+.campo-filtro-saas label {
+    color: #94a3b8;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.campo-filtro-saas input,
+.campo-filtro-saas select {
+    width: 100%;
+    min-height: 42px;
+    padding: 0 12px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 13px;
+    color: #e5e7eb;
+    background: rgba(2, 6, 23, 0.55);
+    outline: none;
+}
+
+.campo-filtro-saas input:focus,
+.campo-filtro-saas select:focus {
+    border-color: rgba(100, 255, 218, 0.6);
+    box-shadow: 0 0 0 3px rgba(100, 255, 218, 0.08);
+}
+
+.acoes-filtro-saas button {
+    min-height: 42px;
+    white-space: nowrap;
+}
+
+@media (max-width: 980px) {
+    .filtros-empresas-saas {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .campo-busca-saas {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 620px) {
+    .filtros-empresas-saas {
+        grid-template-columns: 1fr;
+    }
+}

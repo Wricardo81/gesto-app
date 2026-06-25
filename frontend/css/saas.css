@@ -1623,3 +1623,77 @@ small {
     border-color: rgba(100, 255, 218, 0.75);
     background: rgba(20, 184, 166, 0.16);
 }
+
+.toast-saas {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 9999;
+    max-width: 420px;
+    padding: 14px 18px;
+    border-radius: 16px;
+    color: #ffffff;
+    background: rgba(15, 23, 42, 0.96);
+    border: 1px solid rgba(100, 255, 218, 0.35);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.38);
+    backdrop-filter: blur(12px);
+}
+
+.toast-saas span {
+    line-height: 1.45;
+    font-size: 0.92rem;
+}
+
+.toast-saas.sucesso {
+    border-color: rgba(34, 197, 94, 0.5);
+}
+
+.toast-saas.erro {
+    border-color: rgba(248, 113, 113, 0.65);
+    background: rgba(69, 10, 10, 0.96);
+}
+
+.toast-saas.aviso {
+    border-color: rgba(245, 158, 11, 0.65);
+    background: rgba(69, 26, 3, 0.96);
+}
+
+@media (max-width: 640px) {
+    .toast-saas {
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        max-width: none;
+    }
+}
+
+.carregando-saas {
+    opacity: 0.58;
+    pointer-events: none;
+}
+
+.loading-texto-saas::after {
+    content: "";
+    display: inline-block;
+    width: 1em;
+    text-align: left;
+    animation: loadingDotsSaas 1.2s infinite;
+}
+
+@keyframes loadingDotsSaas {
+    0% {
+        content: "";
+    }
+
+    33% {
+        content: ".";
+    }
+
+    66% {
+        content: "..";
+    }
+
+    100% {
+        content: "...";
+    }
+}

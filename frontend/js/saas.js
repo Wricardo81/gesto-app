@@ -38,27 +38,30 @@ function limparTokenSaas() {
 }
 
 function exibirMensagemSaas(mensagem, tipo = "sucesso") {
-    let area = document.getElementById("mensagem-saas");
+    const toast = document.getElementById("toast-saas");
+    const texto = document.getElementById("toast-saas-texto");
 
-    if (!area) {
-        area = document.createElement("div");
-        area.id = "mensagem-saas";
-        area.className = "mensagem-saas";
-
-        const painel = document.getElementById("painel-saas");
-
-        if (painel) {
-            painel.prepend(area);
-        }
+    if (!toast || !texto) {
+        console.log(mensagem);
+        return;
     }
 
-    area.textContent = mensagem;
-    area.className = `mensagem-saas ${tipo}`;
-    area.style.display = "block";
+    texto.innerText = mensagem;
 
-    setTimeout(() => {
-        area.style.display = "none";
-    }, 3500);
+    toast.classList.remove(
+        "sucesso",
+        "erro",
+        "aviso"
+    );
+
+    toast.classList.add(tipo);
+    toast.style.display = "flex";
+
+    window.clearTimeout(window.toastSaasTimeout);
+
+    window.toastSaasTimeout = window.setTimeout(() => {
+        toast.style.display = "none";
+    }, 4200);
 }
 
 
@@ -107,25 +110,40 @@ function exibirPainelSaas() {
 function tratarErroSaas(erro) {
     console.error(erro);
 
-    if (
-        erro.status === 401
-        || erro.status === 403
-    ) {
-        limparTokenSaas();
-        exibirLoginSaas();
+    const mensagem =
+        erro?.message
+        || erro?.detail
+        || "Não foi possível concluir a operação.";
 
-        alert(
-            "Sua sessão administrativa expirou. Faça login novamente."
-        );
-
-        return;
-    }
-
-    alert(
-        erro.message
-        || "Não foi possível concluir a operação."
+    exibirMensagemSaas(
+        mensagem,
+        "erro"
     );
 }
+
+
+// function tratarErroSaas(erro) {
+//     console.error(erro);
+
+//     if (
+//         erro.status === 401
+//         || erro.status === 403
+//     ) {
+//         limparTokenSaas();
+//         exibirLoginSaas();
+
+//         alert(
+//             "Sua sessão administrativa expirou. Faça login novamente."
+//         );
+
+//         return;
+//     }
+
+//     alert(
+//         erro.message
+//         || "Não foi possível concluir a operação."
+//     );
+// }
 
 
 async function realizarLoginSaas(event) {
@@ -352,7 +370,7 @@ async function carregarClientes() {
             td.colSpan = 5;
             td.className = "mensagem-tabela";
             td.textContent =
-                "Nenhuma empresa cadastrada.";
+                "Nenhuma empresa encontrada com os filtros atuais.";
 
             tr.appendChild(td);
             tbody.appendChild(tr);
@@ -2339,7 +2357,7 @@ function renderizarTabelaResumoEmpresasDashboardSaas(empresas) {
     if (!empresas.length) {
         container.innerHTML = `
             <p class="texto-vazio-saas">
-                Nenhuma empresa encontrada.
+            Nenhuma empresa encontrada com os filtros atuais.
             </p>
         `;
 
@@ -2414,7 +2432,47 @@ function renderizarTabelaResumoEmpresasDashboardSaas(empresas) {
 }
 
 
+function definirLoadingDashboardSaas(ativo) {
+    const dashboard = document.getElementById(
+        "metricas-dashboard-saas"
+    );
+
+    const tabela = document.getElementById(
+        "tabela-resumo-empresas-dashboard-saas"
+    );
+
+    const alertas = document.getElementById(
+        "alertas-operacionais-saas"
+    );
+
+    const ranking = document.getElementById(
+        "ranking-agendamentos-saas"
+    );
+
+    if (dashboard) {
+        dashboard.classList.toggle(
+            "carregando-saas",
+            ativo
+        );
+    }
+
+    const mensagem = `
+        <p class="texto-vazio-saas loading-texto-saas">
+            Carregando informações...
+        </p>
+    `;
+
+    if (ativo) {
+        if (tabela) tabela.innerHTML = mensagem;
+        if (alertas) alertas.innerHTML = mensagem;
+        if (ranking) ranking.innerHTML = mensagem;
+    }
+}
+
+
 async function carregarMetricasDashboardSaas() {
+    definirLoadingDashboardSaas(true);
+
     try {
         const metricas = await saasRequest(
             "/api/saas/dashboard/metricas"
@@ -2424,6 +2482,9 @@ async function carregarMetricasDashboardSaas() {
 
     } catch (erro) {
         tratarErroSaas(erro);
+
+    } finally {
+        definirLoadingDashboardSaas(false);
     }
 }
 
@@ -2500,7 +2561,7 @@ function exportarEmpresasSaasCsv() {
 
     if (!empresas.length) {
         exibirMensagemSaas(
-            "Nenhuma empresa disponível para exportar."
+            "Nenhuma empresa encontrada com os filtros atuais disponível para exportar."
         );
         return;
     }
@@ -2597,7 +2658,7 @@ function exportarRankingSaasCsv() {
 
     if (!empresas.length) {
         exibirMensagemSaas(
-            "Nenhuma empresa disponível para ranking."
+            "Nenhuma empresa encontrada com os filtros atuais disponível para ranking."
         );
         return;
     }
@@ -2646,7 +2707,7 @@ function exportarAlertasSaasCsv() {
 
     if (!empresas.length) {
         exibirMensagemSaas(
-            "Nenhuma empresa disponível para alertas."
+            "Nenhum alerta operacional no momento. Tudo certo por aqui."
         );
         return;
     }
@@ -2657,7 +2718,7 @@ function exportarAlertasSaasCsv() {
 
     if (!alertas.length) {
         exibirMensagemSaas(
-            "Nenhum alerta operacional para exportar."
+            "Nenhuma empresa encontrada com os filtros atuais operacional para exportar."
         );
         return;
     }
@@ -2963,7 +3024,9 @@ async function alterarStatusEmpresaSaas(barbeariaId, ativar) {
     const acao = ativar ? "reativar" : "desativar";
 
     const confirmar = window.confirm(
-        `Deseja realmente ${acao} esta empresa?`
+        ativar
+            ? "Deseja reativar esta empresa? A agenda pública e os pagamentos voltarão a funcionar conforme as regras do plano."
+            : "Deseja desativar esta empresa? A agenda pública será bloqueada e pagamentos não poderão reativar a conta automaticamente."
     );
 
     if (!confirmar) {
@@ -3137,7 +3200,7 @@ function renderizarRankingAgendamentosSaas(empresas) {
     if (!ranking.length) {
         container.innerHTML = `
             <p class="texto-vazio-saas">
-                Nenhuma empresa encontrada para o ranking.
+            Ainda não há agendamentos suficientes para montar um ranking.
             </p>
         `;
 
@@ -3174,8 +3237,8 @@ async function excluirEmpresaTesteSaas(barbeariaId) {
     const confirmacaoEsperada = `EXCLUIR-${barbeariaId}`;
 
     const primeiraConfirmacao = window.confirm(
-        "Esta ação é permanente e apagará a empresa e seus dados relacionados. " +
-        "Use apenas para empresas de teste. Deseja continuar?"
+        "Atenção: esta ação apagará permanentemente a empresa e dados relacionados. " +
+        "Use somente para empresas de teste. Deseja continuar?"
     );
 
     if (!primeiraConfirmacao) {

@@ -16,7 +16,7 @@
     >
     <link
         rel="stylesheet"
-        href="./css/saas.css?v=83">
+        href="./css/saas.css?v=84">
 </head>
 
 <body>
@@ -212,6 +212,36 @@
                     <span>MRR previsto</span>
                     <strong id="visor-saas-mrr">R$ 0,00</strong>
                     <small>Baseado em R$ 99 por empresa ativa.</small>
+                </div>
+
+                <div class="acoes-relatorios-saas">
+                    <button
+                        type="button"
+                        onclick="exportarEmpresasSaasCsv()"
+                    >
+                        Exportar empresas CSV
+                    </button>
+                
+                    <button
+                        type="button"
+                        onclick="exportarMetricasSaasCsv()"
+                    >
+                        Exportar métricas CSV
+                    </button>
+                
+                    <button
+                        type="button"
+                        onclick="exportarRankingSaasCsv()"
+                    >
+                        Exportar ranking CSV
+                    </button>
+                
+                    <button
+                        type="button"
+                        onclick="exportarAlertasSaasCsv()"
+                    >
+                        Exportar alertas CSV
+                    </button>
                 </div>
 
                 <div
@@ -901,7 +931,7 @@
     </footer>
 </main>
 
-    <script src="./js/api.js?v=83"></script>
-    <script src="./js/saas.js?v=83"></script>
+    <script src="./js/api.js?v=84"></script>
+    <script src="./js/saas.js?v=84"></script>
 </body>
 </html>

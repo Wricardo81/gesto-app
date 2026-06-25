@@ -12,7 +12,7 @@ const secoesSaasCarregadas = new Set();
 const secoesSaasCarregando = new Set();
 let planosAssinaturaSaasCache = [];
 let empresasAssinaturasSaasCache = [];
-
+let metricasDashboardSaasCache = null;
 let listenersNavegacaoSaasRegistrados = false;
 
 
@@ -2263,6 +2263,8 @@ function traduzirPlanoCodigoSaas(codigo) {
 
 
 function renderizarMetricasDashboardSaas(metricas) {
+    metricasDashboardSaasCache = metricas || null;
+
     if (!metricas) {
         return;
     }
@@ -2423,6 +2425,266 @@ async function carregarMetricasDashboardSaas() {
     } catch (erro) {
         tratarErroSaas(erro);
     }
+}
+
+
+function escaparCampoCsvSaas(valor) {
+    const texto = String(valor ?? "");
+
+    if (
+        texto.includes(";")
+        || texto.includes('"')
+        || texto.includes("\n")
+        || texto.includes("\r")
+    ) {
+        return `"${texto.replaceAll('"', '""')}"`;
+    }
+
+    return texto;
+}
+
+
+function gerarCsvSaas(cabecalhos, linhas) {
+    const conteudoCabecalho = cabecalhos
+        .map(escaparCampoCsvSaas)
+        .join(";");
+
+    const conteudoLinhas = linhas.map((linha) => {
+        return linha
+            .map(escaparCampoCsvSaas)
+            .join(";");
+    });
+
+    return [
+        conteudoCabecalho,
+        ...conteudoLinhas,
+    ].join("\n");
+}
+
+
+function baixarArquivoCsvSaas(nomeArquivo, conteudoCsv) {
+    const blob = new Blob(
+        [`\uFEFF${conteudoCsv}`],
+        {
+            type: "text/csv;charset=utf-8;",
+        }
+    );
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = nomeArquivo;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+}
+
+
+function obterDataArquivoSaas() {
+    const agora = new Date();
+
+    const ano = agora.getFullYear();
+    const mes = String(agora.getMonth() + 1).padStart(2, "0");
+    const dia = String(agora.getDate()).padStart(2, "0");
+
+    return `${ano}-${mes}-${dia}`;
+}
+
+
+function exportarEmpresasSaasCsv() {
+    const empresas = empresasAssinaturasSaasCache || [];
+
+    if (!empresas.length) {
+        exibirMensagemSaas(
+            "Nenhuma empresa disponível para exportar."
+        );
+        return;
+    }
+
+    const cabecalhos = [
+        "ID",
+        "Nome",
+        "Slug",
+        "E-mail",
+        "Plano",
+        "Periodicidade",
+        "Valor mensal",
+        "Plano ativo",
+        "Status assinatura",
+        "Status pagamento",
+        "Gateway",
+        "Vencimento",
+    ];
+
+    const linhas = empresas.map((empresa) => [
+        empresa.id,
+        empresa.nome,
+        empresa.slug,
+        empresa.email,
+        empresa.plano_codigo,
+        empresa.plano_periodicidade,
+        empresa.valor_mensal,
+        empresa.plano_ativo ? "Sim" : "Não",
+        empresa.status_assinatura,
+        empresa.status_pagamento,
+        empresa.gateway_pagamento,
+        empresa.vencimento_plano,
+    ]);
+
+    const csv = gerarCsvSaas(
+        cabecalhos,
+        linhas
+    );
+
+    baixarArquivoCsvSaas(
+        `gesto-empresas-${obterDataArquivoSaas()}.csv`,
+        csv
+    );
+}
+
+
+function exportarMetricasSaasCsv() {
+    const metricas = metricasDashboardSaasCache;
+
+    if (!metricas) {
+        exibirMensagemSaas(
+            "Métricas ainda não carregadas."
+        );
+        return;
+    }
+
+    const cabecalhos = [
+        "Métrica",
+        "Valor",
+    ];
+
+    const planoMaisUsado = metricas.plano_mais_usado
+        ? `${traduzirPlanoCodigoSaas(metricas.plano_mais_usado.codigo)} (${metricas.plano_mais_usado.total_empresas})`
+        : "Não definido";
+
+    const linhas = [
+        ["Total de empresas", metricas.total_empresas ?? 0],
+        ["Empresas ativas", metricas.total_ativas ?? 0],
+        ["Empresas desativadas", metricas.total_desativadas ?? 0],
+        ["Pagamentos em dia", metricas.total_em_dia ?? 0],
+        ["Pagamentos pendentes", metricas.total_pendentes ?? 0],
+        ["Pagamentos cancelados", metricas.total_canceladas ?? 0],
+        ["Empresas em trial", metricas.total_trial ?? 0],
+        ["Receita mensal estimada", metricas.receita_mensal_estimada ?? 0],
+        ["Total de agendamentos", metricas.total_agendamentos ?? 0],
+        ["Plano mais usado", planoMaisUsado],
+    ];
+
+    const csv = gerarCsvSaas(
+        cabecalhos,
+        linhas
+    );
+
+    baixarArquivoCsvSaas(
+        `gesto-metricas-saas-${obterDataArquivoSaas()}.csv`,
+        csv
+    );
+}
+
+
+function exportarRankingSaasCsv() {
+    const metricas = metricasDashboardSaasCache;
+    const empresas = metricas?.empresas || [];
+
+    if (!empresas.length) {
+        exibirMensagemSaas(
+            "Nenhuma empresa disponível para ranking."
+        );
+        return;
+    }
+
+    const ranking = [...empresas]
+        .sort((a, b) => {
+            return Number(b.agendamentos_total || 0)
+                - Number(a.agendamentos_total || 0);
+        });
+
+    const cabecalhos = [
+        "Posição",
+        "Empresa",
+        "Slug",
+        "Plano",
+        "Status assinatura",
+        "Status pagamento",
+        "Agendamentos",
+    ];
+
+    const linhas = ranking.map((empresa, indice) => [
+        indice + 1,
+        empresa.nome,
+        empresa.slug,
+        empresa.plano_codigo,
+        empresa.status_assinatura,
+        empresa.status_pagamento,
+        empresa.agendamentos_total ?? 0,
+    ]);
+
+    const csv = gerarCsvSaas(
+        cabecalhos,
+        linhas
+    );
+
+    baixarArquivoCsvSaas(
+        `gesto-ranking-agendamentos-${obterDataArquivoSaas()}.csv`,
+        csv
+    );
+}
+
+
+function exportarAlertasSaasCsv() {
+    const metricas = metricasDashboardSaasCache;
+    const empresas = metricas?.empresas || [];
+
+    if (!empresas.length) {
+        exibirMensagemSaas(
+            "Nenhuma empresa disponível para alertas."
+        );
+        return;
+    }
+
+    const alertas = obterAlertasOperacionaisSaas(
+        empresas
+    );
+
+    if (!alertas.length) {
+        exibirMensagemSaas(
+            "Nenhum alerta operacional para exportar."
+        );
+        return;
+    }
+
+    const cabecalhos = [
+        "Tipo",
+        "Empresa",
+        "Descrição",
+        "Prioridade",
+    ];
+
+    const linhas = alertas.map((alerta) => [
+        alerta.tipo,
+        alerta.titulo,
+        alerta.descricao,
+        alerta.prioridade,
+    ]);
+
+    const csv = gerarCsvSaas(
+        cabecalhos,
+        linhas
+    );
+
+    baixarArquivoCsvSaas(
+        `gesto-alertas-operacionais-${obterDataArquivoSaas()}.csv`,
+        csv
+    );
 }
 
 
@@ -3095,3 +3357,7 @@ window.criarCheckoutMercadoPagoSaas = criarCheckoutMercadoPagoSaas;
 window.alterarStatusEmpresaSaas = alterarStatusEmpresaSaas;
 window.excluirEmpresaTesteSaas = excluirEmpresaTesteSaas;
 window.limparFiltrosEmpresasSaas = limparFiltrosEmpresasSaas;
+window.exportarEmpresasSaasCsv = exportarEmpresasSaasCsv;
+window.exportarMetricasSaasCsv = exportarMetricasSaasCsv;
+window.exportarRankingSaasCsv = exportarRankingSaasCsv;
+window.exportarAlertasSaasCsv = exportarAlertasSaasCsv;

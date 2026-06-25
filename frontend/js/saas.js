@@ -2013,6 +2013,16 @@ function renderizarAssinaturasEmpresasSaas(empresas) {
                             >
                                 ${empresaDesativada ? "Reativar empresa" : "Desativar empresa"}
                             </button>
+
+                            ${empresaDesativada ? `
+                                <button
+                                    type="button"
+                                    class="btn-excluir-empresa-saas"
+                                    onclick="excluirEmpresaTesteSaas(${empresa.id})"
+                                >
+                                    Excluir empresa de teste
+                                </button>
+                            ` : ""}
                         </div>
                     </div>
                 </article>
@@ -2340,6 +2350,63 @@ async function alterarStatusEmpresaSaas(barbeariaId, ativar) {
 }
 
 
+async function excluirEmpresaTesteSaas(barbeariaId) {
+    const confirmacaoEsperada = `EXCLUIR-${barbeariaId}`;
+
+    const primeiraConfirmacao = window.confirm(
+        "Esta ação é permanente e apagará a empresa e seus dados relacionados. " +
+        "Use apenas para empresas de teste. Deseja continuar?"
+    );
+
+    if (!primeiraConfirmacao) {
+        return;
+    }
+
+    const confirmacaoDigitada = window.prompt(
+        `Para confirmar a exclusão, digite exatamente: ${confirmacaoEsperada}`
+    );
+
+    if (confirmacaoDigitada !== confirmacaoEsperada) {
+        exibirMensagemSaas(
+            "Exclusão cancelada. Confirmação inválida."
+        );
+        return;
+    }
+
+    try {
+        const resposta = await saasRequest(
+            `/api/saas/barbearias/${barbeariaId}`,
+            {
+                method: "DELETE",
+                body: {
+                    confirmacao: confirmacaoDigitada,
+                },
+            }
+        );
+
+        exibirMensagemSaas(
+            resposta.mensagem || "Empresa excluída com sucesso."
+        );
+
+        invalidarSecoesSaas([
+            "secao-saas-dashboard",
+            "secao-saas-empresas",
+            "secao-saas-assinaturas",
+        ]);
+
+        await carregarDadosDaSecaoSaas(
+            "secao-saas-assinaturas",
+            {
+                forcar: true,
+            }
+        );
+
+    } catch (erro) {
+        tratarErroSaas(erro);
+    }
+}
+
+
 function exibirBannerComercialSaas() {
     const banner = document.getElementById(
         "banner-comercial-saas"
@@ -2465,3 +2532,4 @@ window.carregarAssinaturasSaas = carregarAssinaturasSaas;
 window.criarCheckoutAssinaturaSaas = criarCheckoutAssinaturaSaas;
 window.criarCheckoutMercadoPagoSaas = criarCheckoutMercadoPagoSaas;
 window.alterarStatusEmpresaSaas = alterarStatusEmpresaSaas;
+window.excluirEmpresaTesteSaas = excluirEmpresaTesteSaas;

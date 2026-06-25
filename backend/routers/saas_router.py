@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 import re
 
@@ -73,6 +74,10 @@ class AtualizacaoFinanceiraBarbearia(BaseModel):
     marcar_como_pago: bool = False
 
 
+class AtualizarAtivacaoEmpresaSaas(BaseModel):
+    ativa: bool
+
+
 class AtualizacaoDadosBarbearia(BaseModel):
     nome: str | None = Field(
         default=None,
@@ -97,6 +102,10 @@ class RedefinicaoSenhaBarbearia(BaseModel):
         min_length=8,
         max_length=72,
     )
+
+
+class ExcluirEmpresaTesteSaas(BaseModel):
+    confirmacao: str
 
 
 STATUS_PAGAMENTO_VALIDOS = {
@@ -208,16 +217,6 @@ def validar_slug_email_unicos(
             status_code=409,
             detail="Slug ou e-mail já está em uso por outra empresa.",
         )
-
-
-class AtualizarAtivacaoEmpresaSaas(BaseModel):
-    ativa: bool
-
-
-
-
-
-
 
 
 
@@ -751,4 +750,122 @@ def diagnosticar_barbearia(
             "possui_problemas": bool(problemas),
             "problemas": problemas,
         },
+    }
+
+
+@router.delete("/barbearias/{barbearia_id}")
+def excluir_empresa_teste_saas(
+    barbearia_id: int,
+    dados: ExcluirEmpresaTesteSaas,
+    db: Session = Depends(get_db),
+    _usuario_admin: str = Depends(obter_saas_admin_logado),
+):
+    confirmacao_esperada = f"EXCLUIR-{barbearia_id}"
+
+    if dados.confirmacao != confirmacao_esperada:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Confirmação inválida. "
+                f"Digite exatamente {confirmacao_esperada} para excluir."
+            ),
+        )
+
+    barbearia = (
+        db.query(models.Barbearia)
+        .filter(models.Barbearia.id == barbearia_id)
+        .first()
+    )
+
+    if not barbearia:
+        raise HTTPException(
+            status_code=404,
+            detail="Empresa não encontrada.",
+        )
+
+    status_assinatura = (
+        barbearia.status_assinatura
+        or ""
+    ).strip().lower()
+
+    if status_assinatura != "desativada":
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Por segurança, somente empresas desativadas podem ser excluídas. "
+                "Desative a empresa antes de excluir."
+            ),
+        )
+
+    tenant_slug = barbearia.slug
+
+    inspector = inspect(db.bind)
+    tabela_barbearias = models.Barbearia.__tablename__
+
+    parametros = {
+        "barbearia_id": barbearia.id,
+        "tenant_slug": tenant_slug,
+        "barbearia_slug": tenant_slug,
+        "empresa_id": barbearia.id,
+        "tenant_id": barbearia.id,
+    }
+
+    total_registros_removidos = {}
+
+    for tabela in inspector.get_table_names():
+        if tabela == tabela_barbearias:
+            continue
+
+        colunas = {
+            coluna["name"]
+            for coluna in inspector.get_columns(tabela)
+        }
+
+        condicoes = []
+
+        if "barbearia_id" in colunas:
+            condicoes.append("barbearia_id = :barbearia_id")
+
+        if "tenant_slug" in colunas:
+            condicoes.append("tenant_slug = :tenant_slug")
+
+        if "barbearia_slug" in colunas:
+            condicoes.append("barbearia_slug = :barbearia_slug")
+
+        if "empresa_id" in colunas:
+            condicoes.append("empresa_id = :empresa_id")
+
+        if "tenant_id" in colunas:
+            condicoes.append("tenant_id = :tenant_id")
+
+        if not condicoes:
+            continue
+
+        where_sql = " OR ".join(condicoes)
+
+        total = db.execute(
+            text(
+                f'SELECT COUNT(*) FROM "{tabela}" WHERE {where_sql}'
+            ),
+            parametros,
+        ).scalar() or 0
+
+        if total > 0:
+            db.execute(
+                text(
+                    f'DELETE FROM "{tabela}" WHERE {where_sql}'
+                ),
+                parametros,
+            )
+
+            total_registros_removidos[tabela] = int(total)
+
+    db.delete(barbearia)
+    db.commit()
+
+    return {
+        "mensagem": "Empresa de teste excluída com sucesso.",
+        "empresa_id": barbearia_id,
+        "tenant_slug": tenant_slug,
+        "registros_removidos": total_registros_removidos,
     }

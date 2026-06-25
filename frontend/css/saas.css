@@ -1299,3 +1299,15 @@ small {
     background: rgba(75, 85, 99, 0.28);
     border: 1px solid rgba(156, 163, 175, 0.35);
 }
+
+.btn-excluir-empresa-saas {
+    margin-top: 8px;
+    color: #fee2e2;
+    background: rgba(127, 29, 29, 0.35);
+    border: 1px solid rgba(248, 113, 113, 0.55);
+}
+
+.btn-excluir-empresa-saas:hover {
+    background: rgba(185, 28, 28, 0.48);
+    border-color: rgba(252, 165, 165, 0.75);
+}

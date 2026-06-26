@@ -20,11 +20,35 @@ let configuracoesAdminCache = {};
 let monitorNovosAgendamentosTimer = null;
 let painelAdminAtualizando = false;
 let intervaloNovosAgendamentosAdmin = null;
+let ultimoCarregamentoConfiguracaoAdmin = 0;
+let ultimoCarregamentoAvisosAdmin = 0;
+let ultimoCarregamentoAgendamentosAdmin = 0;
+let ultimoCarregamentoServicosAdmin = 0;
+let ultimoCarregamentoProfissionaisAdmin = 0;
+
+const TEMPO_CACHE_CURTO_ADMIN_MS = 10000;
+const TEMPO_CACHE_AGENDAMENTOS_ADMIN_MS = 15000;
+
+let carregandoConfiguracaoAdmin = false;
+let carregandoAvisosAdmin = false;
+let carregandoAgendamentosAdmin = false;
+let carregandoServicosAdmin = false;
+let carregandoProfissionaisAdmin = false;
+
 
 
 /* =========================================================
    UTILITÁRIOS
 ========================================================= */
+
+function cacheAdminAindaValido(ultimoCarregamento, tempoMaximo) {
+    if (!ultimoCarregamento) {
+        return false;
+    }
+
+    return Date.now() - ultimoCarregamento < tempoMaximo;
+}
+
 
 function exibirMensagemAdmin(mensagem, tipo = "sucesso") {
     const toast = document.getElementById("toast-admin");
@@ -1366,6 +1390,24 @@ async function carregarAvisosAdmin() {
         return;
     }
 
+    const forcar = arguments[0]?.forcar === true;
+
+    if (
+        !forcar
+        && cacheAdminAindaValido(
+            ultimoCarregamentoAvisosAdmin,
+            TEMPO_CACHE_CURTO_ADMIN_MS
+        )
+    ) {
+        return;
+    }
+
+    if (carregandoAvisosAdmin) {
+        return;
+    }
+
+    carregandoAvisosAdmin = true;
+
     try {
         const avisos = await apiRequest(
             `/api/${tenantSlugLogado}/admin/avisos`,
@@ -1376,11 +1418,16 @@ async function carregarAvisosAdmin() {
 
         renderizarAvisosAdmin(avisos);
 
+        ultimoCarregamentoAvisosAdmin = Date.now();
+
     } catch (erro) {
         console.error(
             "Erro ao carregar avisos da plataforma:",
             erro
         );
+
+    } finally {
+        carregandoAvisosAdmin = false;
     }
 }
 
@@ -2024,6 +2071,30 @@ async function carregarConfiguracaoAtual() {
     if (!adminProntoParaRequisicao()) {
         return;
     }
+
+    const forcar = arguments[0]?.forcar === true;
+
+    if (
+        !forcar
+        && configuracoesAdminCache
+        && Object.keys(configuracoesAdminCache).length > 0
+        && cacheAdminAindaValido(
+            ultimoCarregamentoConfiguracaoAdmin,
+            TEMPO_CACHE_CURTO_ADMIN_MS
+        )
+    ) {
+        atualizarAvisoBloqueioAdmin(configuracoesAdminCache);
+        return configuracoesAdminCache;
+    }
+
+    if (carregandoConfiguracaoAdmin) {
+        return configuracoesAdminCache;
+    }
+
+    carregandoConfiguracaoAdmin = true;
+
+
+
     try {
         const config = await apiRequest(
             `/api/${tenantSlugLogado}/configuracoes`,
@@ -2096,11 +2167,20 @@ async function carregarConfiguracaoAtual() {
 
         atualizarPreviewMarca();
 
+        ultimoCarregamentoConfiguracaoAdmin = Date.now();
+
+        return configuracoesAdminCache;
+
     } catch (erro) {
         console.warn(
             "Configurações ainda não cadastradas:",
             erro
         );
+
+        tratarErroAdmin(erro);
+
+    } finally {
+        carregandoConfiguracaoAdmin = false;
     }
 }
 
@@ -2500,6 +2580,24 @@ async function carregarAgendamentos() {
         return;
     }
 
+    const forcar = arguments[0]?.forcar === true;
+
+    if (
+        !forcar
+        && cacheAdminAindaValido(
+            ultimoCarregamentoAgendamentosAdmin,
+            TEMPO_CACHE_AGENDAMENTOS_ADMIN_MS
+        )
+    ) {
+        return;
+    }
+
+    if (carregandoAgendamentosAdmin) {
+        return;
+    }
+
+    carregandoAgendamentosAdmin = true;
+
     definirLoadingAgendamentosAdmin(true);
 
     const tbody = document.getElementById("lista-agendamentos");
@@ -2697,6 +2795,8 @@ async function carregarAgendamentos() {
                 total;
         }
 
+        ultimoCarregamentoAgendamentosAdmin = Date.now();
+
     } catch (erro) {
         if (erro.status === 404) {
             console.warn(
@@ -2715,6 +2815,10 @@ async function carregarAgendamentos() {
         }
 
         tratarErroAdmin(erro);
+    }
+
+    finally {
+        carregandoAgendamentosAdmin = false;
     }
 }
 
@@ -4084,13 +4188,13 @@ async function atualizarPainelAdmin() {
             }
         );
 
-        await carregarAvisosAdmin();
+        await carregarAvisosAdmin({
+            forcar: true,
+        });
 
-        if (configuracoesAdminCache) {
-            atualizarAvisoBloqueioAdmin(configuracoesAdminCache);
-        } else {
-            await carregarConfiguracaoAtual();
-        }
+        await carregarConfiguracaoAtual({
+            forcar: true,
+        });
 
         exibirMensagemAdmin(
             "Painel atualizado com sucesso.",

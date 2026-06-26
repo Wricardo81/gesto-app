@@ -18,10 +18,56 @@ let chamadosAdminCache = [];
 let agendamentosAdminCache = [];
 let configuracoesAdminCache = {};
 let monitorNovosAgendamentosTimer = null;
+let painelAdminAtualizando = false;
+let intervaloNovosAgendamentosAdmin = null;
+
 
 /* =========================================================
    UTILITÁRIOS
 ========================================================= */
+
+function exibirMensagemAdmin(mensagem, tipo = "sucesso") {
+    const toast = document.getElementById("toast-admin");
+    const texto = document.getElementById("toast-admin-texto");
+
+    if (!toast || !texto) {
+        console.log(mensagem);
+        return;
+    }
+
+    texto.innerText = mensagem;
+
+    toast.classList.remove(
+        "sucesso",
+        "erro",
+        "aviso"
+    );
+
+    toast.classList.add(tipo);
+    toast.style.display = "flex";
+
+    window.clearTimeout(window.toastAdminTimeout);
+
+    window.toastAdminTimeout = window.setTimeout(() => {
+        toast.style.display = "none";
+    }, 4200);
+}
+
+
+function tratarErroAdmin(erro) {
+    console.error(erro);
+
+    const mensagem =
+        erro?.message
+        || erro?.detail
+        || "Não foi possível concluir a operação.";
+
+    exibirMensagemAdmin(
+        mensagem,
+        "erro"
+    );
+}
+
 
 function obterChaveUltimoAgendamentoVisto() {
     return `gesto_ultimo_agendamento_visto_${tenantSlugLogado || "sem_tenant"}`;
@@ -149,6 +195,10 @@ function marcarAgendamentosComoVistos() {
 
 
 async function verificarNovosAgendamentosAdmin() {
+    if (document.hidden) {
+        return;
+    }
+
     if (!adminProntoParaRequisicao()) {
         return;
     }
@@ -165,14 +215,16 @@ async function verificarNovosAgendamentosAdmin() {
 }
 
 
+
 function iniciarMonitorNovosAgendamentos() {
-    if (monitorNovosAgendamentosTimer) {
-        clearInterval(monitorNovosAgendamentosTimer);
+    if (intervaloNovosAgendamentosAdmin) {
+        return;
     }
 
-    monitorNovosAgendamentosTimer = setInterval(() => {
-        verificarNovosAgendamentosAdmin();
-    }, 60000);
+    intervaloNovosAgendamentosAdmin = window.setInterval(
+        verificarNovosAgendamentosAdmin,
+        60000
+    );
 }
 
 
@@ -250,7 +302,7 @@ function abrirWhatsAppAgendamento(agendamentoId, tipo = "confirmacao") {
     );
 
     if (!agendamento) {
-        alert("Agendamento não encontrado.");
+        exibirMensagemAdmin("Agendamento não encontrado.");
         return;
     }
 
@@ -259,7 +311,7 @@ function abrirWhatsAppAgendamento(agendamentoId, tipo = "confirmacao") {
     );
 
     if (!telefone) {
-        alert("Este cliente não possui telefone cadastrado.");
+        exibirMensagemAdmin("Este cliente não possui telefone cadastrado.");
         return;
     }
 
@@ -526,14 +578,14 @@ async function assinarPlanoAdmin(planoCodigo) {
     }
 
     if (!tenantSlugLogado) {
-        alert("Tenant não identificado. Faça login novamente.");
+        exibirMensagemAdmin("Tenant não identificado. Faça login novamente.");
         return;
     }
 
     const token = obterToken();
 
     if (!token) {
-        alert("Sessão expirada. Faça login novamente.");
+        exibirMensagemAdmin("Sessão expirada. Faça login novamente.");
         fazerLogout();
         return;
     }
@@ -569,7 +621,7 @@ async function assinarPlanoAdmin(planoCodigo) {
         );
 
         if (!dados.checkout_url) {
-            alert("Checkout criado, mas o backend não retornou a URL do Stripe.");
+            exibirMensagemAdmin("Checkout criado, mas o backend não retornou a URL do Stripe.");
             return;
         }
 
@@ -578,9 +630,9 @@ async function assinarPlanoAdmin(planoCodigo) {
     } catch (erro) {
         console.error("Erro no checkout admin:", erro);
 
-        alert(
-            erro.message
-            || "Erro ao gerar checkout Stripe."
+        exibirMensagemAdmin(
+            erro.message || "Erro ao iniciar checkout Stripe.",
+            "erro"
         );
     }
 }
@@ -634,9 +686,9 @@ async function assinarPlanoMercadoPagoAdmin(planoCodigo) {
         window.location.href = dados.checkout_url;
 
     } catch (erro) {
-        alert(
-            erro.message
-            || "Erro ao iniciar pagamento pelo Mercado Pago."
+        exibirMensagemAdmin(
+            erro.message || "Erro ao iniciar pagamento pelo Mercado Pago.",
+            "erro"
         );
     }
 }
@@ -659,13 +711,13 @@ async function tratarRetornoPagamentoAdmin() {
     );
 
     if (statusStripe === "sucesso") {
-        alert(
+        exibirMensagemAdmin(
             "Pagamento recebido. Sua assinatura será atualizada automaticamente."
         );
     }
 
     if (statusStripe === "cancelado") {
-        alert(
+        exibirMensagemAdmin(
             "Checkout cancelado. Nenhuma alteração foi feita."
         );
     }
@@ -910,15 +962,15 @@ async function uploadImagemMarca(
     }
 
     if (!arquivo.type.startsWith("image/")) {
-        alert("Selecione um arquivo de imagem.");
+        exibirMensagemAdmin("Selecione um arquivo de imagem.");
         inputArquivo.value = "";
         return;
     }
 
-    const tamanhoMaximo = 2 * 1024 * 1024;
+    const tamanhoMaximo = 5 * 1024 * 1024;
 
     if (arquivo.size > tamanhoMaximo) {
-        alert("A imagem deve ter no máximo 2MB.");
+        exibirMensagemAdmin("A imagem deve ter no máximo 5MB.");
         inputArquivo.value = "";
         return;
     }
@@ -963,7 +1015,7 @@ async function uploadImagemMarca(
 
     } catch (erro) {
         console.error(erro);
-        alert(
+        exibirMensagemAdmin(
             erro.message
             || "Erro ao enviar imagem."
         );
@@ -997,17 +1049,17 @@ function tratarErro(erro) {
     console.error(erro);
 
     if (erro.status === 401) {
-        alert("Sua sessão expirou ou é inválida. Faça login novamente.");
+        exibirMensagemAdmin("Sua sessão expirou ou é inválida. Faça login novamente.");
         fazerLogout();
         return;
     }
 
     if (erro.status === 403) {
-        alert("Você não possui permissão para executar esta ação.");
+        exibirMensagemAdmin("Você não possui permissão para executar esta ação.");
         return;
     }
 
-    alert(
+    exibirMensagemAdmin(
         erro.message
         || "Não foi possível concluir a operação."
     );
@@ -1404,7 +1456,7 @@ function abrirModalChamadoAdmin(tipo = "erro") {
     const modal = document.getElementById("modal-chamado-admin");
 
     if (!modal) {
-        alert("Modal de chamado não encontrado no HTML.");
+        exibirMensagemAdmin("Modal de chamado não encontrado no HTML.");
         return;
     }
 
@@ -1482,7 +1534,7 @@ async function criarChamadoAdmin(event) {
         || !descricao
         || descricao.length < 5
     ) {
-        alert("Informe título e descrição do chamado.");
+        exibirMensagemAdmin("Informe título e descrição do chamado.");
         return;
     }
 
@@ -1512,12 +1564,15 @@ async function criarChamadoAdmin(event) {
 
         await carregarChamadosAdmin();
 
-        alert("Chamado aberto com sucesso.");
+        exibirMensagemAdmin(
+            "Operação realizada com sucesso.",
+            "sucesso"
+        );
 
     } catch (erro) {
         console.error(erro);
 
-        alert(
+        exibirMensagemAdmin(
             erro.message
             || "Não foi possível abrir o chamado."
         );
@@ -1626,6 +1681,25 @@ function renderizarChamadosAdmin(chamados) {
 }
 
 
+function definirLoadingAgendamentosAdmin(ativo) {
+    const tabela = document.getElementById("lista-agendamentos-admin");
+
+    if (!tabela) {
+        return;
+    }
+
+    if (ativo) {
+        tabela.innerHTML = `
+            <tr>
+                <td colspan="8" class="estado-vazio-admin carregando">
+                    Carregando agendamentos
+                </td>
+            </tr>
+        `;
+    }
+}
+
+
 async function carregarChamadosAdmin() {
     if (!adminProntoParaRequisicao()) {
         return;
@@ -1712,7 +1786,7 @@ function iniciarPainel() {
     tenantSlugLogado = obterTenantLogado();
 
     if (!tenantSlugLogado) {
-        alert("Sessão inválida. Faça login novamente.");
+        exibirMensagemAdmin("Sessão inválida. Faça login novamente.");
 
         fazerLogout();
 
@@ -1847,6 +1921,11 @@ function registrarListenersDePreview() {
 /* =========================================================
    CONFIGURAÇÕES
 ========================================================= */
+
+async function carregarStatusAssinaturaAdmin() {
+    await carregarConfiguracaoAtual();
+}
+
 
 function empresaAdminEstaBloqueadaManualmente(config) {
     if (!config) {
@@ -2190,7 +2269,7 @@ async function salvarProfissional() {
     const nome = input.value.trim();
 
     if (!nome) {
-        alert("Informe o nome do profissional.");
+        exibirMensagemAdmin("Informe o nome do profissional.");
         return;
     }
 
@@ -2342,7 +2421,7 @@ async function salvarServico() {
     );
 
     if (!nome || preco <= 0 || duracao <= 0) {
-        alert(
+        exibirMensagemAdmin(
             "Informe um serviço, um preço positivo e uma duração válida."
         );
 
@@ -2420,6 +2499,8 @@ async function carregarAgendamentos() {
     if (!adminProntoParaRequisicao()) {
         return;
     }
+
+    definirLoadingAgendamentosAdmin(true);
 
     const tbody = document.getElementById("lista-agendamentos");
 
@@ -2608,6 +2689,7 @@ async function carregarAgendamentos() {
             : 0;
 
             agendamentosAdminCache = dados.agendamentos || [];
+            
 
             atualizarIndicadorNovosAgendamentos(agendamentosAdminCache);
 
@@ -2632,7 +2714,7 @@ async function carregarAgendamentos() {
             return;
         }
 
-        tratarErro(erro);
+        tratarErroAdmin(erro);
     }
 }
 
@@ -2695,7 +2777,7 @@ async function cancelarAgendamentoComMotivo(id) {
     const motivoTratado = motivo.trim();
 
     if (!motivoTratado) {
-        alert("O motivo do cancelamento é obrigatório.");
+        exibirMensagemAdmin("O motivo do cancelamento é obrigatório.");
         return;
     }
 
@@ -2827,7 +2909,7 @@ async function abrirHistoricoCliente(telefone) {
     const telefoneNormalizado = normalizarTelefoneCliente(telefone);
 
     if (!telefoneNormalizado) {
-        alert("Este agendamento não possui telefone válido.");
+        exibirMensagemAdmin("Este agendamento não possui telefone válido.");
         return;
     }
 
@@ -3259,12 +3341,12 @@ async function criarBloqueioAgenda(event) {
     const motivo = obterValorCampo("bloqueio-motivo", "");
 
     if (!data) {
-        alert("Informe a data do bloqueio.");
+        exibirMensagemAdmin("Informe a data do bloqueio.");
         return;
     }
 
     if (!diaInteiro && (!horarioInicio || !horarioFim)) {
-        alert("Informe horário inicial e final para bloqueio parcial.");
+        exibirMensagemAdmin("Informe horário inicial e final para bloqueio parcial.");
         return;
     }
 
@@ -3300,7 +3382,10 @@ async function criarBloqueioAgenda(event) {
             "secao-bloqueios-agenda",
         ]);
 
-        alert("Bloqueio criado com sucesso.");
+        exibirMensagemAdmin(
+            "Operação realizada com sucesso.",
+            "sucesso"
+        );
 
     } catch (erro) {
         tratarErro(erro);
@@ -3336,7 +3421,10 @@ async function removerBloqueioAgenda(bloqueioId) {
             "secao-bloqueios-agenda",
         ]);
 
-        alert("Bloqueio removido com sucesso.");
+        exibirMensagemAdmin(
+            "Operação realizada com sucesso.",
+            "sucesso"
+        );
 
     } catch (erro) {
         tratarErro(erro);
@@ -3969,30 +4057,52 @@ async function carregarTudo(opcoes = {}) {
     );
 }
 
+
+
+
 async function atualizarPainelAdmin() {
     if (!adminProntoParaRequisicao()) {
         return;
     }
 
-    const secaoAtual =
-        document.querySelector(".secao-admin.ativa")?.id
-        || localStorage.getItem("gesto_admin_secao_ativa")
-        || "secao-dashboard";
+    if (painelAdminAtualizando) {
+        return;
+    }
 
-    await Promise.all([
-        carregarDadosDaSecaoAdmin(
+    painelAdminAtualizando = true;
+
+    try {
+        const secaoAtual =
+            document.querySelector(".secao-admin.ativa")?.id
+            || localStorage.getItem("gesto_admin_secao_ativa")
+            || "secao-admin-dashboard";
+
+        await carregarDadosDaSecaoAdmin(
             secaoAtual,
             {
                 forcar: true,
             }
-        ),
-        carregarAvisosAdmin(),
-        carregarStatusAssinaturaAdmin(),
-    ]);
+        );
 
-    exibirMensagemPainel(
-        "Painel atualizado com sucesso."
-    );
+        await carregarAvisosAdmin();
+
+        if (configuracoesAdminCache) {
+            atualizarAvisoBloqueioAdmin(configuracoesAdminCache);
+        } else {
+            await carregarConfiguracaoAtual();
+        }
+
+        exibirMensagemAdmin(
+            "Painel atualizado com sucesso.",
+            "sucesso"
+        );
+
+    } catch (erro) {
+        tratarErroAdmin(erro);
+
+    } finally {
+        painelAdminAtualizando = false;
+    }
 }
 
 

@@ -47,3 +47,16 @@ TRIAL_LIMITE_AGENDAMENTOS=30
 - Em produção, BACKEND_PUBLIC_URL deve apontar para a URL pública da API.
 - Em produção, FRONTEND_PUBLIC_URL deve apontar para a URL pública do frontend.
 - Webhooks de Stripe e Mercado Pago devem apontar para a URL pública do backend.
+
+## CORS em produção
+
+Quando o frontend estiver publicado, atualizar CORS_ORIGINS no backend.
+
+Exemplo:
+
+CORS_ORIGINS=https://app.seudominio.com,https://seudominio.com
+
+Se usar subdomínio para API:
+
+BACKEND_PUBLIC_URL=https://api.seudominio.com
+FRONTEND_PUBLIC_URL=https://app.seudominio.com

@@ -115,6 +115,31 @@ function tratarErroSaas(erro) {
         || erro?.detail
         || "Não foi possível concluir a operação.";
 
+    const mensagemNormalizada = String(
+        mensagem
+    ).toLowerCase();
+
+    const sessaoExpirada =
+        mensagemNormalizada.includes("acesso expirou")
+        || mensagemNormalizada.includes("not authenticated")
+        || mensagemNormalizada.includes("unauthorized")
+        || mensagemNormalizada.includes("401");
+
+    if (sessaoExpirada) {
+        localStorage.removeItem("gesto_saas_token");
+
+        exibirMensagemSaas(
+            "Sua sessão expirou. Faça login novamente.",
+            "aviso"
+        );
+
+        setTimeout(() => {
+            exibirLoginSaas();
+        }, 800);
+
+        return;
+    }
+
     exibirMensagemSaas(
         mensagem,
         "erro"

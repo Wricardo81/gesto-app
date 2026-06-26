@@ -29,8 +29,11 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origin_list,
-    allow_credentials=False,
+    allow_origins=[
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -47,6 +50,14 @@ app.mount(
     StaticFiles(directory=str(UPLOADS_DIR)),
     name="uploads",
 )
+
+@app.get("/health")
+def health_check():
+    return {
+        "status": "ok",
+        "app": "Gesto App",
+        "environment": settings.app_env,
+    }
 
 
 # Configuração do Stripe puxando do cofre seguro
@@ -97,29 +108,6 @@ def criar_checkout_stripe(tenant_slug: str):
         print(f"Erro no Stripe: {str(e)}") 
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/webhooks/stripe")
-async def webhook_stripe(request: Request):
-    try:
-        payload = await request.json()
-        
-        if payload.get("type") == "checkout.session.completed":
-            session = payload["data"]["object"]
-            tenant_slug = session.get("metadata", {}).get("tenant_slug")
-            
-            if tenant_slug:
-                db = SessaoLocal()
-                cliente = db.query(models.Barbearia).filter(models.Barbearia.slug == tenant_slug).first()
-                if cliente:
-                    cliente.plano_ativo = True
-                    db.commit()
-                db.close()
-                print(f"SUCESSO: Inquilino {tenant_slug} desbloqueado pelo Webhook!")
-
-        return {"status": "recebido com sucesso"}
-    
-    except Exception as e:
-        print(f"ERRO NO WEBHOOK: {str(e)}")
-        raise HTTPException(status_code=400, detail="Erro ao processar webhook")
 
 # ==========================================
 # MÓDULO DE SEGURANÇA

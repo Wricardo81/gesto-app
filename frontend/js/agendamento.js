@@ -306,6 +306,25 @@ async function carregarConfiguracoes() {
         );
     }
 
+    const tituloPublicoEmpresa = document.getElementById(
+        "titulo-publico-empresa"
+    );
+    
+    const subtituloPublicoEmpresa = document.getElementById(
+        "subtitulo-publico-empresa"
+    );
+    
+    if (tituloPublicoEmpresa) {
+        tituloPublicoEmpresa.innerText = config.nome
+            ? `Agende seu horário na ${config.nome}`
+            : "Agende seu horário em poucos cliques";
+    }
+    
+    if (subtituloPublicoEmpresa) {
+        subtituloPublicoEmpresa.innerText = config.descricao
+            || "Escolha o serviço, profissional, data e horário disponível. A confirmação é rápida e simples.";
+    }
+
     const logoBox = document.getElementById("logo-loja");
 
     if (config.logo_url) {
@@ -1053,6 +1072,7 @@ async function confirmarAgendamento() {
                 }
             }
         );
+
 
         exibirMensagem(
             `Agendamento confirmado para ${dados.data} às ${dados.horario}.`,

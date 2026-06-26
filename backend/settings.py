@@ -4,6 +4,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+
+    backend_public_url: str = "http://127.0.0.1:8000"
+    frontend_public_url: str = "http://127.0.0.1:5500/frontend"
+    app_env: str = "development"
+
     # Ambiente
     app_env: str = "development"
 

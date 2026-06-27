@@ -27,12 +27,16 @@ from routers import mercado_pago_router
 
 app = FastAPI()
 
+
+origins_permitidas = [
+    origem.strip()
+    for origem in settings.cors_origins.split(",")
+    if origem.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://127.0.0.1:5500",
-        "http://localhost:5500",
-    ],
+    allow_origins=origins_permitidas,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

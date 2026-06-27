@@ -58,3 +58,7 @@ Pode ser publicado em:
 - Stripe Secret Key e Mercado Pago Access Token ficam somente no backend.
 - O frontend pode conter apenas URLs públicas.
 - O backend precisa liberar o domínio do frontend em CORS_ORIGINS.
+
+## URL pública atual do frontend
+
+https://pontocomum.netlify.app

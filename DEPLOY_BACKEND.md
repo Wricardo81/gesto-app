@@ -64,3 +64,7 @@ FRONTEND_PUBLIC_URL=https://app.seudominio.com
 ## URL pública atual do backend
 
 https://gesto-app.onrender.com
+
+## URL pública atual do frontend
+
+https://pontocomum.netlify.app

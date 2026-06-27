@@ -60,3 +60,7 @@ Se usar subdomínio para API:
 
 BACKEND_PUBLIC_URL=https://api.seudominio.com
 FRONTEND_PUBLIC_URL=https://app.seudominio.com
+
+## URL pública atual do backend
+
+https://gesto-app.onrender.com

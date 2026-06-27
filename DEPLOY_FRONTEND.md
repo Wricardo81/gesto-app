@@ -59,6 +59,10 @@ Pode ser publicado em:
 - O frontend pode conter apenas URLs públicas.
 - O backend precisa liberar o domínio do frontend em CORS_ORIGINS.
 
-## URL pública atual do frontend
+## Backend produção
+
+https://gesto-app.onrender.com
+
+## Frontend produção
 
 https://pontocomum.netlify.app

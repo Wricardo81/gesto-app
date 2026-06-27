@@ -139,13 +139,23 @@ def calcular_resumo_trial(
         or expirado_por_agendamentos
     )
 
+    status_assinatura = (
+        barbearia.status_assinatura
+        or ""
+    ).strip().lower()
+
+    empresa_desativada = status_assinatura == "desativada"
+
     ativa = assinatura_esta_ativa(
         barbearia
     )
 
     acesso_liberado = (
-        ativa
-        or not trial_expirado
+        not empresa_desativada
+        and (
+            ativa
+            or not trial_expirado
+        )
     )
 
     return {
@@ -164,6 +174,7 @@ def calcular_resumo_trial(
         "trial_expirado_por_agendamentos": expirado_por_agendamentos,
         "assinatura_ativa": ativa,
         "acesso_liberado": acesso_liberado,
+        "empresa_desativada": empresa_desativada,
     }
 
 

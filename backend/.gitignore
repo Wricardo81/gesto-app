@@ -4,9 +4,21 @@ venv/
 env/
 
 # Variáveis sensíveis
-.env
 .env.local
 .env.*.local
+.env
+*.env
+backend/.env
+.env
+*.env
+backend/.env
+
+uploads/
+backend/uploads/
+__pycache__/
+*.pyc
+.venv/
+venv/
 
 # Banco local
 *.db

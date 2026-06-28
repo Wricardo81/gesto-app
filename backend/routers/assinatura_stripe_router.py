@@ -139,6 +139,28 @@ def serializar_plano_empresa(
         ),
     }
 
+def erro_stripe_customer_invalido(erro) -> bool:
+    mensagem = ""
+
+    try:
+        mensagem = str(
+            getattr(erro, "user_message", "")
+            or getattr(erro, "message", "")
+            or erro
+        )
+    except Exception:
+        mensagem = str(erro)
+
+    return "No such customer" in mensagem
+
+
+def limpar_customer_stripe_invalido(db: Session, barbearia):
+    barbearia.stripe_customer_id = None
+    barbearia.stripe_subscription_id = None
+
+    db.commit()
+    db.refresh(barbearia)
+
 
 @router.get("/api/saas/assinaturas/planos")
 def listar_planos_saas(
@@ -148,12 +170,55 @@ def listar_planos_saas(
 ):
     return listar_planos_assinatura()
 
+def criar_sessao_checkout_stripe(
+    *,
+    barbearia,
+    price_id: str,
+    success_url: str,
+    cancel_url: str,
+    plano_codigo: str,
+):
+    parametros_checkout = {
+        "mode": "subscription",
+        "line_items": [
+            {
+                "price": price_id,
+                "quantity": 1,
+            }
+        ],
+        "success_url": success_url,
+        "cancel_url": cancel_url,
+        "metadata": {
+            "barbearia_id": str(barbearia.id),
+            "tenant_slug": str(barbearia.slug),
+            "plano_codigo": str(plano_codigo),
+        },
+        "subscription_data": {
+            "metadata": {
+                "barbearia_id": str(barbearia.id),
+                "tenant_slug": str(barbearia.slug),
+                "plano_codigo": str(plano_codigo),
+            }
+        },
+    }
+
+    if barbearia.stripe_customer_id:
+        parametros_checkout["customer"] = barbearia.stripe_customer_id
+
+    elif barbearia.email:
+        parametros_checkout["customer_email"] = barbearia.email
+
+    return stripe.checkout.Session.create(
+        **parametros_checkout
+    )
+
 
 def criar_checkout_stripe_para_barbearia(
     *,
     barbearia: models.Barbearia,
     plano_codigo: str,
     db: Session,
+    origem: str = "admin",
 ) -> dict:
     configurar_stripe()
 
@@ -167,70 +232,71 @@ def criar_checkout_stripe_para_barbearia(
 
     frontend_base_url = settings.frontend_base_url.rstrip("/")
 
-    success_url = (
-        f"{frontend_base_url}/admin.html"
-        f"?tenant={barbearia.slug}"
-        f"&stripe=sucesso"
-        f"&empresa_id={barbearia.id}"
-    )
-
-    cancel_url = (
-        f"{frontend_base_url}/admin.html"
-        f"?tenant={barbearia.slug}"
-        f"&stripe=cancelado"
-        f"&empresa_id={barbearia.id}"
-    )
-
-    customer_id = barbearia.stripe_customer_id
-
-    if not customer_id:
-        customer = stripe.Customer.create(
-            email=barbearia.email,
-            name=barbearia.nome,
-            metadata={
-                "barbearia_id": str(barbearia.id),
-                "tenant_slug": barbearia.slug,
-            },
+    if origem == "saas":
+        success_url = (
+            f"{frontend_base_url}/saas.html"
+            f"?stripe=sucesso"
+            f"&empresa_id={barbearia.id}"
         )
 
-        customer_id = customer["id"]
-        barbearia.stripe_customer_id = customer_id
+        cancel_url = (
+            f"{frontend_base_url}/saas.html"
+            f"?stripe=cancelado"
+            f"&empresa_id={barbearia.id}"
+        )
+
+    else:
+        success_url = (
+            f"{frontend_base_url}/admin.html"
+            f"?tenant={barbearia.slug}"
+            f"&stripe=sucesso"
+            f"&empresa_id={barbearia.id}"
+        )
+
+        cancel_url = (
+            f"{frontend_base_url}/admin.html"
+            f"?tenant={barbearia.slug}"
+            f"&stripe=cancelado"
+            f"&empresa_id={barbearia.id}"
+        )
 
     try:
-        checkout = stripe.checkout.Session.create(
-            mode="subscription",
-            customer=customer_id,
-            line_items=[
-                {
-                    "price": price_id,
-                    "quantity": 1,
-                }
-            ],
+        checkout = criar_sessao_checkout_stripe(
+            barbearia=barbearia,
+            price_id=price_id,
             success_url=success_url,
             cancel_url=cancel_url,
-            metadata={
-                "barbearia_id": str(barbearia.id),
-                "tenant_slug": barbearia.slug,
-                "plano_codigo": plano.codigo,
-            },
-            subscription_data={
-                "metadata": {
-                    "barbearia_id": str(barbearia.id),
-                    "tenant_slug": barbearia.slug,
-                    "plano_codigo": plano.codigo,
-                }
-            },
+            plano_codigo=plano.codigo,
         )
 
     except stripe.error.InvalidRequestError as erro:
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                "Erro ao criar checkout no Stripe. "
-                "Verifique se o Price ID existe no painel do Stripe. "
-                f"Detalhe: {str(erro)}"
-            ),
-        )
+        if (
+            erro_stripe_customer_invalido(erro)
+            and barbearia.stripe_customer_id
+        ):
+            limpar_customer_stripe_invalido(
+                db,
+                barbearia,
+            )
+
+            checkout = criar_sessao_checkout_stripe(
+                barbearia=barbearia,
+                price_id=price_id,
+                success_url=success_url,
+                cancel_url=cancel_url,
+                plano_codigo=plano.codigo,
+            )
+
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Erro ao criar checkout no Stripe. "
+                    "Verifique se o Price ID existe no painel do Stripe "
+                    "ou se os dados da empresa estão corretos. "
+                    f"Detalhe: {str(erro)}"
+                ),
+            )
 
     except stripe.error.StripeError as erro:
         raise HTTPException(
@@ -309,6 +375,7 @@ def criar_checkout_assinatura_saas(
         barbearia=barbearia,
         plano_codigo=dados.plano_codigo,
         db=db,
+        origem="saas",
     )
 
 

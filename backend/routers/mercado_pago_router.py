@@ -80,12 +80,13 @@ def criar_checkout_mercado_pago_saas(
     )
 
     preferencia = criar_preferencia_mercado_pago(
-        barbearia_id=barbearia.id,
-        tenant_slug=barbearia.slug,
-        nome_empresa=barbearia.nome,
-        email_empresa=barbearia.email,
-        plano_codigo=plano.codigo,
-    )
+    barbearia_id=barbearia.id,
+    tenant_slug=barbearia.slug,
+    nome_empresa=barbearia.nome,
+    email_empresa=barbearia.email,
+    plano_codigo=plano.codigo,
+    origem="saas",
+)
 
     checkout_url = (
         preferencia.get("init_point")
@@ -173,6 +174,7 @@ def criar_checkout_mercado_pago_admin(
         nome_empresa=barbearia.nome,
         email_empresa=barbearia.email,
         plano_codigo=plano.codigo,
+        origem="admin",
     )
 
     checkout_url = (

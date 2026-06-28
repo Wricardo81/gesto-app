@@ -31,6 +31,7 @@ def obter_access_token_mercado_pago() -> str:
     return token
 
 
+
 def montar_headers_mercado_pago() -> dict:
     return {
         "Authorization": f"Bearer {obter_access_token_mercado_pago()}",
@@ -45,6 +46,7 @@ def criar_preferencia_mercado_pago(
     nome_empresa: str,
     email_empresa: str | None,
     plano_codigo: str,
+    origem: str = "saas",
 ) -> dict:
     plano = obter_plano_assinatura(
         plano_codigo
@@ -52,29 +54,53 @@ def criar_preferencia_mercado_pago(
 
     frontend_base_url = settings.frontend_base_url.rstrip("/")
 
-    back_urls = {
-        "success": (
-            f"{frontend_base_url}/saas.html"
-            f"?mercado_pago=sucesso"
-            f"&empresa_id={barbearia_id}"
-        ),
-        "failure": (
-            f"{frontend_base_url}/saas.html"
-            f"?mercado_pago=falha"
-            f"&empresa_id={barbearia_id}"
-        ),
-        "pending": (
-            f"{frontend_base_url}/saas.html"
-            f"?mercado_pago=pendente"
-            f"&empresa_id={barbearia_id}"
-        ),
-    }
+    if origem == "admin":
+        back_urls = {
+            "success": (
+                f"{frontend_base_url}/admin.html"
+                f"?tenant={tenant_slug}"
+                f"&mercado_pago=sucesso"
+                f"&empresa_id={barbearia_id}"
+            ),
+            "failure": (
+                f"{frontend_base_url}/admin.html"
+                f"?tenant={tenant_slug}"
+                f"&mercado_pago=falha"
+                f"&empresa_id={barbearia_id}"
+            ),
+            "pending": (
+                f"{frontend_base_url}/admin.html"
+                f"?tenant={tenant_slug}"
+                f"&mercado_pago=pendente"
+                f"&empresa_id={barbearia_id}"
+            ),
+        }
+
+    else:
+        back_urls = {
+            "success": (
+                f"{frontend_base_url}/saas.html"
+                f"?mercado_pago=sucesso"
+                f"&empresa_id={barbearia_id}"
+            ),
+            "failure": (
+                f"{frontend_base_url}/saas.html"
+                f"?mercado_pago=falha"
+                f"&empresa_id={barbearia_id}"
+            ),
+            "pending": (
+                f"{frontend_base_url}/saas.html"
+                f"?mercado_pago=pendente"
+                f"&empresa_id={barbearia_id}"
+            ),
+        }
 
     metadata = {
         "barbearia_id": str(barbearia_id),
         "tenant_slug": tenant_slug,
         "plano_codigo": plano.codigo,
         "gateway_pagamento": "mercado_pago",
+        "origem": origem,
     }
 
     payload: dict[str, Any] = {

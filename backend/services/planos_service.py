@@ -44,6 +44,14 @@ PLANOS_ASSINATURA = {
         desconto_percentual=20,
         stripe_price_env="stripe_price_anual",
     ),
+    "teste_mp": PlanoAssinatura(
+        codigo="teste_mp",
+        nome="Teste Mercado Pago",
+        periodicidade="teste",
+        valor_total=1.00,
+        valor_mensal_equivalente=1.00,
+        stripe_price_env="stripe_price_teste_mp",
+    ),
 }
 
 

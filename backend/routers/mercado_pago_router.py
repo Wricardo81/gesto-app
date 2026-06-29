@@ -105,6 +105,7 @@ def criar_checkout_mercado_pago_saas(
     barbearia.valor_mensal = plano.valor_mensal_equivalente
     barbearia.status_assinatura = "checkout_mercado_pago_criado"
     barbearia.status_pagamento = "pendente"
+    barbearia.plano_ativo = False
 
     db.commit()
     db.refresh(barbearia)
@@ -194,6 +195,7 @@ def criar_checkout_mercado_pago_admin(
     barbearia.valor_mensal = plano.valor_mensal_equivalente
     barbearia.status_assinatura = "checkout_mercado_pago_criado"
     barbearia.status_pagamento = "pendente"
+    barbearia.plano_ativo = False
 
     db.commit()
     db.refresh(barbearia)

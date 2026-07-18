@@ -2855,7 +2855,7 @@ async function criarCheckoutAssinaturaSaas(empresaId, planoCodigo) {
         );
 
         console.log(
-            "Resposta checkout Stripe:",
+            "Resposta pagamento seguro.",
             resposta
         );
 
@@ -2864,7 +2864,7 @@ async function criarCheckoutAssinaturaSaas(empresaId, planoCodigo) {
             || !resposta.checkout_url
         ) {
             exibirMensagemSaas(
-                "Checkout criado, mas o backend não retornou a URL do Stripe.",
+               "Pagamento iniciado, mas não foi possível abrir a página de pagamento.",
                 "erro"
             );
 
@@ -2887,7 +2887,7 @@ async function criarCheckoutAssinaturaSaas(empresaId, planoCodigo) {
 
 async function criarCheckoutMercadoPagoSaas(empresaId, planoCodigo) {
     const confirmar = window.confirm(
-        `Deseja gerar checkout Mercado Pago do plano ${planoCodigo.toUpperCase()} para esta empresa?`
+        `Deseja gerar pagamento online do plano ${planoCodigo.toUpperCase()} para esta empresa?`
     );
 
     if (!confirmar) {
@@ -2907,7 +2907,7 @@ async function criarCheckoutMercadoPagoSaas(empresaId, planoCodigo) {
         );
 
         console.log(
-            "Resposta checkout Mercado Pago:",
+            "Resposta pagamento online:",
             resposta
         );
 
@@ -2916,7 +2916,7 @@ async function criarCheckoutMercadoPagoSaas(empresaId, planoCodigo) {
             || !resposta.checkout_url
         ) {
             exibirMensagemSaas(
-                "Checkout criado, mas o Mercado Pago não retornou a URL.",
+               "Pagamento iniciado, mas não foi possível abrir a página de pagamento.",
                 "erro"
             );
 
@@ -2954,7 +2954,7 @@ function tratarRetornoPagamentosSaas() {
 
     if (statusStripe === "sucesso") {
         exibirMensagemSaas(
-            "Pagamento recebido pelo Stripe. Atualizando assinatura..."
+            "Pagamento recebido. Atualizando assinatura..."
         );
 
         localStorage.setItem(
@@ -2965,14 +2965,14 @@ function tratarRetornoPagamentosSaas() {
 
     if (statusStripe === "cancelado") {
         exibirMensagemSaas(
-            "Checkout Stripe cancelado. Nenhuma alteração foi feita.",
+            "Checkout cancelado. Nenhuma alteração foi feita.",
             "erro"
         );
     }
 
     if (statusMercadoPago === "sucesso") {
         exibirMensagemSaas(
-            "Pagamento Mercado Pago recebido. Atualizando assinatura..."
+            "Pagamento recebido. Atualizando assinatura..."
         );
 
         localStorage.setItem(
@@ -2983,7 +2983,7 @@ function tratarRetornoPagamentosSaas() {
 
     if (statusMercadoPago === "pendente") {
         exibirMensagemSaas(
-            "Pagamento Mercado Pago está pendente. Atualize mais tarde para conferir.",
+            "Pagamento está pendente. Atualize mais tarde para conferir.",
             "erro"
         );
 
@@ -2995,7 +2995,7 @@ function tratarRetornoPagamentosSaas() {
 
     if (statusMercadoPago === "falha") {
         exibirMensagemSaas(
-            "Pagamento Mercado Pago não foi concluído.",
+            "Pagamento não foi concluído.",
             "erro"
         );
 

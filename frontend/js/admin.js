@@ -364,7 +364,7 @@ function traduzirStatusAssinaturaAdmin(status) {
         past_due: "Pagamento atrasado",
         unpaid: "Não pago",
         canceled: "Cancelada",
-        mercado_pago_aprovado: "Ativa via Mercado Pago",
+        mercado_pago_aprovado: "Ativa via pagamento online",
         mercado_pago_pendente: "Pagamento pendente",
     };
 
@@ -640,12 +640,12 @@ async function assinarPlanoAdmin(planoCodigo) {
         }
 
         console.log(
-            "Checkout Admin Stripe:",
+            "Resposta pagamento seguro:",
             dados
         );
 
         if (!dados.checkout_url) {
-            exibirMensagemAdmin("Checkout criado, mas o backend não retornou a URL do Stripe.");
+            exibirMensagemAdmin("Pagamento iniciado, mas não foi possível abrir a página de pagamento.");
             return;
         }
 
@@ -655,7 +655,7 @@ async function assinarPlanoAdmin(planoCodigo) {
         console.error("Erro no checkout admin:", erro);
 
         exibirMensagemAdmin(
-            erro.message || "Erro ao iniciar checkout Stripe.",
+            erro.message || "Erro ao iniciar pagamento seguro.",
             "erro"
         );
     }
@@ -668,7 +668,7 @@ async function assinarPlanoMercadoPagoAdmin(planoCodigo) {
     }
 
     const confirmar = window.confirm(
-        `Deseja assinar o plano ${planoCodigo.toUpperCase()} pelo Mercado Pago?`
+        `Deseja assinar o plano ${planoCodigo.toUpperCase()} por pagamento online?`
     );
 
     if (!confirmar) {
@@ -697,13 +697,13 @@ async function assinarPlanoMercadoPagoAdmin(planoCodigo) {
         if (!resposta.ok) {
             throw new Error(
                 dados.detail
-                || "Não foi possível iniciar o checkout Mercado Pago."
+                || "Não foi possível iniciar o pagamento online."
             );
         }
 
         if (!dados.checkout_url) {
             throw new Error(
-                "Checkout criado, mas o backend não retornou a URL do Mercado Pago."
+                "Pagamento iniciado, mas não foi possível abrir a página de pagamento."
             );
         }
 
@@ -711,7 +711,7 @@ async function assinarPlanoMercadoPagoAdmin(planoCodigo) {
 
     } catch (erro) {
         exibirMensagemAdmin(
-            erro.message || "Erro ao iniciar pagamento pelo Mercado Pago.",
+            erro.message || "Erro ao iniciar o pagamento Online.",
             "erro"
         );
     }

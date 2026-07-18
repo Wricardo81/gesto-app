@@ -1,131 +1,126 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <title>Meus Agendamentos | Gesto</title>
+    <link rel="stylesheet" href="./css/meus-agendamentos.css?v=19" />
+    <link rel="stylesheet" href="./css/pwa.css?v=1">
+
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <meta name="theme-color" content="#0A192F" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Gesto App" />
+
     <link
-        rel="stylesheet"
-        href="./css/meus-agendamentos.css?v=19"
-    >
-</head>
+      rel="icon"
+      type="image/png"
+      sizes="192x192"
+      href="./icons/icon-192.png"
+    />
 
-<body>
+    <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  </head>
+
+  <body>
     <main class="pagina">
-        <header class="topo-publico">
-            <div class="marca">
-                <div class="marca-logo" id="marca-logo">
-                    G
-                </div>
+      <header class="topo-publico">
+        <div class="marca">
+          <div class="marca-logo" id="marca-logo">G</div>
 
-                <div>
-                    <h1 id="nome-estabelecimento">
-                        Meus Agendamentos
-                    </h1>
-                    <p>
-                        Consulte seus horários e cancele quando permitido.
-                    </p>
-                </div>
-            </div>
+          <div>
+            <h1 id="nome-estabelecimento">Meus Agendamentos</h1>
+            <p>Consulte seus horários e cancele quando permitido.</p>
+          </div>
+        </div>
 
-            <a
-                href="./agendamento.html"
-                id="link-voltar-agendamento"
-                class="link-voltar"
-            >
-                Fazer novo agendamento
-            </a>
-        </header>
+        <a
+          href="./agendamento.html"
+          id="link-voltar-agendamento"
+          class="link-voltar"
+        >
+          Fazer novo agendamento
+        </a>
+      </header>
 
-        <section class="card">
-            <h2>Consultar meus agendamentos</h2>
+      <section class="card">
+        <h2>Consultar meus agendamentos</h2>
 
-            <p>
-                Digite o telefone usado no agendamento para visualizar seus
-                próximos horários, histórico e opções de cancelamento.
-            </p>
+        <p>
+          Digite o telefone usado no agendamento para visualizar seus próximos
+          horários, histórico e opções de cancelamento.
+        </p>
 
-            <form class="form-busca" id="form-busca-agendamentos">
-                <input
-                    type="tel"
-                    id="telefone-cliente"
-                    placeholder="Digite seu WhatsApp ou telefone"
-                    required
-                >
+        <form class="form-busca" id="form-busca-agendamentos">
+          <input
+            type="tel"
+            id="telefone-cliente"
+            placeholder="Digite seu WhatsApp ou telefone"
+            required
+          />
 
-                <button type="submit" id="btn-buscar">
-                    Buscar
-                </button>
-            </form>
+          <button type="submit" id="btn-buscar">Buscar</button>
+        </form>
 
-            <div id="mensagem" class="mensagem"></div>
+        <div id="mensagem" class="mensagem"></div>
 
-            <div id="resumo-agendamentos" class="resumo"></div>
+        <div id="resumo-agendamentos" class="resumo"></div>
 
-            <div
-                id="lista-agendamentos"
-                class="lista-agendamentos"
-            ></div>
-        </section>
+        <div id="lista-agendamentos" class="lista-agendamentos"></div>
+      </section>
 
-        <footer class="rodape-creditos">
-            <strong>Desenvolvido por Engenharia de Bits</strong>
-        
-            <span>
-                E-mail:
-                <a href="mailto:Engenhariadebits@hotmail.com">
-                    Engenhariadebits@hotmail.com
-                </a>
-            </span>
-        
-            <span>
-                Redes sociais: @engenhariadebits
-            </span>
-        </footer>
+      <footer class="rodape-creditos">
+        <strong>Desenvolvido por Engenharia de Bits</strong>
 
+        <span>
+          E-mail:
+          <a href="mailto:Engenhariadebits@hotmail.com">
+            Engenhariadebits@hotmail.com
+          </a>
+        </span>
+
+        <span> Redes sociais: @engenhariadebits </span>
+      </footer>
     </main>
 
     <div id="modal-cancelamento" class="modal">
-        <div class="modal-overlay" onclick="fecharModalCancelamento()"></div>
+      <div class="modal-overlay" onclick="fecharModalCancelamento()"></div>
 
-        <div class="modal-card">
-            <h3>Cancelar agendamento</h3>
+      <div class="modal-card">
+        <h3>Cancelar agendamento</h3>
 
-            <p id="texto-cancelamento">
-                Informe o motivo do cancelamento.
-            </p>
+        <p id="texto-cancelamento">Informe o motivo do cancelamento.</p>
 
-            <textarea
-                id="motivo-cancelamento"
-                placeholder="Ex: Não poderei comparecer no horário marcado."
-            ></textarea>
+        <textarea
+          id="motivo-cancelamento"
+          placeholder="Ex: Não poderei comparecer no horário marcado."
+        ></textarea>
 
-            <div class="modal-acoes">
-                <button
-                    type="button"
-                    class="btn-secundario"
-                    onclick="fecharModalCancelamento()"
-                >
-                    Voltar
-                </button>
+        <div class="modal-acoes">
+          <button
+            type="button"
+            class="btn-secundario"
+            onclick="fecharModalCancelamento()"
+          >
+            Voltar
+          </button>
 
-                <button
-                    type="button"
-                    class="btn-perigo"
-                    onclick="confirmarCancelamentoCliente()"
-                >
-                    Confirmar cancelamento
-                </button>
-            </div>
+          <button
+            type="button"
+            class="btn-perigo"
+            onclick="confirmarCancelamentoCliente()"
+          >
+            Confirmar cancelamento
+          </button>
         </div>
+      </div>
     </div>
 
     <script src="./js/config.js?v=95"></script>
     <script src="./js/api.js?v=95"></script>
     <script src="./js/meus-agendamentos.js?v=95"></script>
-</body>
+    <script src="./js/pwa.js?v=1"></script>
+  </body>
 </html>

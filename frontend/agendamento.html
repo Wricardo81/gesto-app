@@ -6,8 +6,28 @@
     <title>Agendamento Online</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
+
     <link rel="stylesheet" href="./css/agendamento.css?v=92">
+    <link rel="stylesheet" href="./css/pwa.css?v=1">
+
+    <link rel="manifest" href="./manifest.webmanifest">
+        <meta name="theme-color" content="#0A192F">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-title" content="Gesto App">
+
+        <link
+            rel="icon"
+            type="image/png"
+            sizes="192x192"
+            href="./icons/icon-192.png"
+        >
+
+        <link
+            rel="apple-touch-icon"
+            href="./icons/icon-192.png"
+        >
+
 </head>
 
 <body>
@@ -18,17 +38,17 @@
                 <span class="badge-agendamento-publico">
                     Agendamento online
                 </span>
-        
+
                 <h1 id="titulo-publico-empresa">
                     Agende seu horário em poucos cliques
                 </h1>
-        
+
                 <p id="subtitulo-publico-empresa">
                     Escolha o serviço, profissional, data e horário disponível.
                     A confirmação é rápida e simples.
                 </p>
             </div>
-        
+
             <div class="card-resumo-publico">
                 <strong>Atendimento organizado</strong>
                 <span>Horários atualizados em tempo real.</span>
@@ -57,7 +77,7 @@
 
                 <div id="aviso-assinatura-inativa" class="aviso-assinatura-inativa" style="display: none;">
                     <strong>Agenda temporariamente indisponível</strong>
-                
+
                     <p>
                         No momento, este estabelecimento não está recebendo novos agendamentos online.
                         Tente novamente mais tarde ou entre em contato diretamente com a empresa.
@@ -141,7 +161,7 @@
                 >
                     Voltar
                 </button>
-            
+
                 <button
                     type="button"
                     class="btn-avancar-etapa"
@@ -167,7 +187,7 @@
                 >
                     Voltar
                 </button>
-            
+
                 <button
                     type="button"
                     class="btn-avancar-etapa"
@@ -214,14 +234,14 @@
 
     <footer class="rodape-creditos">
         <strong>Desenvolvido por Engenharia de Bits</strong>
-    
+
         <span>
             E-mail:
             <a href="mailto:Engenhariadebits@hotmail.com">
                 Engenhariadebits@hotmail.com
             </a>
         </span>
-    
+
         <span>
             Redes sociais: @engenhariadebits
         </span>
@@ -230,5 +250,6 @@
     <script src="./js/config.js?v=95"></script>
     <script src="./js/api.js?v=95"></script>
     <script src="./js/agendamento.js?v=95"></script>
+    <script src="./js/pwa.js?v=1"></script>
 </body>
 </html>

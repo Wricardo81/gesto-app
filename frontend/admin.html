@@ -8,6 +8,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="./css/admin.css?v=91">
+    <link rel="stylesheet" href="./css/pwa.css?v=1">
+
+    <link rel="manifest" href="./manifest.webmanifest">
+        <meta name="theme-color" content="#0A192F">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-title" content="Gesto App">
+
+        <link
+            rel="icon"
+            type="image/png"
+            sizes="192x192"
+            href="./icons/icon-192.png"
+        >
+
+        <link
+            rel="apple-touch-icon"
+            href="./icons/icon-192.png"
+        >
+
 </head>
 
 <body>
@@ -76,7 +96,7 @@
         </div>
 
         <div id="mensagem-painel"></div>
-        
+
 
         <button
             type="button"
@@ -85,21 +105,21 @@
         >
             ☰ Menu do painel
         </button>
-        
+
         <div id="banner-funcionalidades-admin" class="banner-funcionalidades-admin">
             <div>
                 <span>Novidade</span>
-        
+
                 <h3>
                     Conheça os recursos que ajudam sua empresa a vender e organizar melhor.
                 </h3>
-        
+
                 <p>
                     Agenda online, clientes organizados, suporte interno, avisos e controle completo
                     do seu atendimento em um só lugar.
                 </p>
             </div>
-        
+
             <div class="banner-funcionalidades-admin-acoes">
                 <a
                     href="./index.html#funcionalidades"
@@ -108,7 +128,7 @@
                 >
                     Ver funcionalidades
                 </a>
-        
+
                 <button
                     type="button"
                     onclick="dispensarBannerFuncionalidadesAdmin()"
@@ -228,7 +248,7 @@
                     <div class="form-grid">
                         <div class="campo">
                             <label>Nome público da marca</label>
-                            <input type="text" id="nome-publico" placeholder="Ex: Barbearia do Marcos">
+                            <input type="text" id="nome-publico" placeholder="Ex: Clínica Vida Leve, Studio Bella ou Espaço Alfa">
                         </div>
 
                         <div class="campo">
@@ -240,17 +260,17 @@
                             <label>Logo URL</label>
                             <input type="url" id="logo-url" placeholder="https://exemplo.com/logo.png">
                         </div>
-                        
+
                         <div class="campo full">
                             <label>Enviar logotipo</label>
                             <input type="file" id="logo-arquivo" accept="image/png,image/jpeg,image/webp">
                         </div>
-                        
+
                         <div class="campo full">
                             <label>Logomarca / banner URL</label>
                             <input type="url" id="logomarca-url" placeholder="https://exemplo.com/banner.png">
                         </div>
-                        
+
                         <div class="campo full">
                             <label>Enviar logomarca / banner</label>
                             <input type="file" id="logomarca-arquivo" accept="image/png,image/jpeg,image/webp">
@@ -272,7 +292,7 @@
                             <label for="limite-cancelamento-horas">
                                 Limite para cancelamento pelo cliente
                             </label>
-                        
+
                             <input
                                 type="number"
                                 id="limite-cancelamento-horas"
@@ -280,7 +300,7 @@
                                 step="1"
                                 placeholder="Ex: 3"
                             >
-                        
+
                             <small>
                                 Quantas horas antes do atendimento o cliente poderá cancelar sozinho.
                                 Use 0 para permitir cancelamento até o horário do atendimento.
@@ -354,7 +374,7 @@
                         </div>
                     </div>
                 </section>
-                
+
 
                 <section class="bloco-config">
                     <h3>WhatsApp e consentimento 💬</h3>
@@ -407,7 +427,7 @@
                     <div class="form-grid">
                         <div class="campo full">
                             <label>Nome do serviço</label>
-                            <input type="text" id="novo-servico-nome" placeholder="Ex: Corte Degradê">
+                            <input type="text" id="novo-servico-nome" placeholder="Ex: Consulta, avaliação, corte, procedimento ou atendimento">
                         </div>
 
                         <div class="campo">
@@ -439,16 +459,16 @@
                     </p>
                 </div>
             </div>
-        
+
             <div id="planos-assinatura-admin" class="planos-assinatura-admin">
                 <article class="plano-admin-card">
                     <h3>Mensal</h3>
                     <strong>R$ 99/mês</strong>
                     <p>Ideal para começar sem compromisso.</p>
-            
+
                     <div class="grupo-pagamento-admin">
                         <h4>Pagamento seguro</h4>
-            
+
                         <button
                             type="button"
                             onclick="assinarPlanoAdmin('mensal')"
@@ -456,19 +476,19 @@
                             Assinar Plano mensal
                         </button>
                     </div>
-            
-                    
+
+
                 </article>
-            
+
                 <article class="plano-admin-card destaque">
                     <span>10% de desconto</span>
                     <h3>Trimestral</h3>
                     <strong>R$ 267</strong>
                     <p>Equivale a R$ 89/mês.</p>
-            
+
                     <div class="grupo-pagamento-admin">
                         <h4>Pagamento seguro</h4>
-            
+
                         <button
                             type="button"
                             onclick="assinarPlanoAdmin('trimestral')"
@@ -476,19 +496,19 @@
                             Assinar Plano trimestral
                         </button>
                     </div>
-            
-                    
+
+
                 </article>
-            
+
                 <article class="plano-admin-card">
                     <span>20% de desconto</span>
                     <h3>Anual</h3>
                     <strong>R$ 948</strong>
                     <p>Equivale a R$ 79/mês.</p>
-            
+
                     <div class="grupo-pagamento-admin">
                         <h4>Pagamento seguro</h4>
-            
+
                         <button
                             type="button"
                             onclick="assinarPlanoAdmin('anual')"
@@ -496,22 +516,22 @@
                             Assinar Plano anual
                         </button>
                     </div>
-            
-                    
+
+
                 </article>
             </div>
         </section>
 
         <section class="bloco-config secao-admin" id="secao-agenda">
             <h3>Agenda e faturamento 📊</h3>
-                        
+
                 </article>
             </div>
         </section>
 
         <section class="bloco-config secao-admin" id="secao-agenda">
             <h3>Agenda e faturamento 📊</h3>
-            
+
                 <p class="descricao-bloco">
                     Consulte os agendamentos recebidos e o faturamento previsto.
                 </p>
@@ -527,7 +547,7 @@
                                 Aguardando atualização.
                             </small>
                         </div>
-                
+
                         <button
                             type="button"
                             class="btn-add"
@@ -536,20 +556,20 @@
                             Atualizar agenda do dia
                         </button>
                     </div>
-                
+
                     <div class="form-grid tres">
                         <div class="campo">
                             <label>Data da agenda</label>
                             <input type="date" id="agenda-visual-data">
                         </div>
-                
+
                         <div class="campo">
                             <label>Profissional</label>
                             <select id="agenda-visual-profissional">
                                 <option value="">Todos os profissionais</option>
                             </select>
                         </div>
-                
+
                         <div class="campo">
                             <label>&nbsp;</label>
                             <button
@@ -561,62 +581,62 @@
                             </button>
                         </div>
                     </div>
-                
+
                     <div class="agenda-resumo-grid">
                         <div class="agenda-resumo-card">
                             <span>Total</span>
                             <strong id="agenda-dia-total">0</strong>
                         </div>
-                
+
                         <div class="agenda-resumo-card">
                             <span>Confirmados</span>
                             <strong id="agenda-dia-confirmados">0</strong>
                         </div>
-                
+
                         <div class="agenda-resumo-card">
                             <span>Concluídos</span>
                             <strong id="agenda-dia-concluidos">0</strong>
                         </div>
-                
+
                         <div class="agenda-resumo-card">
                             <span>Cancelados</span>
                             <strong id="agenda-dia-cancelados">0</strong>
                         </div>
-                
+
                         <div class="agenda-resumo-card">
                             <span>Faltas</span>
                             <strong id="agenda-dia-faltas">0</strong>
                         </div>
-                
+
                         <div class="agenda-resumo-card">
                             <span>Previsto</span>
                             <strong id="agenda-dia-previsto">R$ 0,00</strong>
                         </div>
-                
+
                         <div class="agenda-resumo-card">
                             <span>Concluído</span>
                             <strong id="agenda-dia-faturado">R$ 0,00</strong>
                         </div>
                     </div>
-                
+
                     <div id="agenda-visual-lista" class="agenda-visual-lista">
                         <div class="mensagem-vazia">
                             Selecione uma data para visualizar a agenda do dia.
                         </div>
                     </div>
                 </div>
-            
+
                 <div class="form-grid tres">
                     <div class="campo">
                         <label>Data inicial</label>
                         <input type="date" id="filtro-data-inicio">
                     </div>
-            
+
                     <div class="campo">
                         <label>Data final</label>
                         <input type="date" id="filtro-data-fim">
                     </div>
-            
+
                     <div class="campo">
                         <label>&nbsp;</label>
                         <button class="btn-add" onclick="carregarAgendamentos()">
@@ -624,7 +644,7 @@
                         </button>
                     </div>
                 </div>
-            
+
                 <div class="tabela-container">
                     <table>
                         <thead>
@@ -640,7 +660,7 @@
                                 <th>Ações</th>
                             </tr>
                         </thead>
-            
+
                         <tbody id="lista-agendamentos">
                             <tr>
                                 <td colspan="9" class="mensagem-tabela">
@@ -654,12 +674,12 @@
 
             <section class="bloco-config secao-admin" id="secao-bloqueios-agenda">
                 <h3>Bloqueios de agenda ⛔</h3>
-            
+
                 <p class="descricao-bloco">
                     Bloqueie horários específicos, períodos ou dias inteiros para impedir
                     novos agendamentos na página pública.
                 </p>
-            
+
                 <form id="form-bloqueio-agenda" class="form-grid tres">
                     <div class="campo">
                         <label>Profissional</label>
@@ -667,12 +687,12 @@
                             <option value="">Todos os profissionais</option>
                         </select>
                     </div>
-            
+
                     <div class="campo">
                         <label>Data</label>
                         <input type="date" id="bloqueio-data" required>
                     </div>
-            
+
                     <div class="campo">
                         <label>Dia inteiro</label>
                         <select id="bloqueio-dia-inteiro" class="input-admin">
@@ -680,17 +700,17 @@
                             <option value="true">Sim, bloquear o dia todo</option>
                         </select>
                     </div>
-            
+
                     <div class="campo">
                         <label>Horário inicial</label>
                         <input type="time" id="bloqueio-horario-inicio">
                     </div>
-            
+
                     <div class="campo">
                         <label>Horário final</label>
                         <input type="time" id="bloqueio-horario-fim">
                     </div>
-            
+
                     <div class="campo">
                         <label>Motivo</label>
                         <input
@@ -699,20 +719,20 @@
                             placeholder="Ex: Almoço, folga, consulta médica"
                         >
                     </div>
-            
+
                     <div class="campo full">
                         <button type="submit" class="btn-add">
                             Criar bloqueio
                         </button>
                     </div>
                 </form>
-            
+
                 <div class="form-grid tres" style="margin-top: 16px;">
                     <div class="campo">
                         <label>Filtrar bloqueios por data</label>
                         <input type="date" id="filtro-data-bloqueios">
                     </div>
-            
+
                     <div class="campo">
                         <label>&nbsp;</label>
                         <button
@@ -723,7 +743,7 @@
                             Filtrar bloqueios
                         </button>
                     </div>
-            
+
                     <div class="campo">
                         <label>&nbsp;</label>
                         <button
@@ -735,7 +755,7 @@
                         </button>
                     </div>
                 </div>
-            
+
                 <div class="tabela-container">
                     <table>
                         <thead>
@@ -748,7 +768,7 @@
                                 <th>Ação</th>
                             </tr>
                         </thead>
-            
+
                         <tbody id="lista-bloqueios-agenda">
                             <tr>
                                 <td colspan="6" class="mensagem-tabela">
@@ -759,48 +779,48 @@
                     </table>
                 </div>
             </section>
-            
+
             <section class="bloco-config secao-admin" id="secao-clientes-crm">
                 <h3>Clientes / CRM 👥</h3>
-            
+
                 <p class="descricao-bloco">
                     Acompanhe clientes recorrentes, histórico de consumo,
                     cancelamentos, faltas e faturamento concluído.
                 </p>
-            
+
                 <div class="dashboard-grid crm-metricas">
                     <div class="metric-card">
                         <p>Total de clientes</p>
                         <strong id="visor-total-clientes">0</strong>
                         <small>Clientes únicos por telefone.</small>
                     </div>
-            
+
                     <div class="metric-card">
                         <p>Clientes recorrentes</p>
                         <strong id="visor-clientes-recorrentes">0</strong>
                         <small>Clientes com 2 ou mais agendamentos.</small>
                     </div>
-            
+
                     <div class="metric-card">
                         <p>Faturamento concluído</p>
                         <strong id="visor-faturamento-crm">R$ 0,00</strong>
                         <small>Somente atendimentos concluídos.</small>
                     </div>
-            
+
                     <div class="metric-card">
                         <p>Ticket médio geral</p>
                         <strong id="visor-ticket-medio-crm">R$ 0,00</strong>
                         <small>Média dos serviços concluídos.</small>
                     </div>
                 </div>
-            
+
                 <div class="linha-filtros-crm">
                     <input
                         type="text"
                         id="busca-clientes-crm"
                         placeholder="Buscar cliente por nome ou telefone"
                     >
-            
+
                     <button
                         type="button"
                         id="btn-buscar-clientes-crm"
@@ -808,7 +828,7 @@
                     >
                         Buscar
                     </button>
-            
+
                     <button
                         type="button"
                         id="btn-limpar-busca-clientes-crm"
@@ -817,7 +837,7 @@
                         Limpar
                     </button>
                 </div>
-            
+
                 <div class="tabela-container">
                     <table>
                         <thead>
@@ -835,7 +855,7 @@
                                 <th>Ações</th>
                             </tr>
                         </thead>
-            
+
                         <tbody id="lista-clientes-crm">
                             <tr>
                                 <td colspan="11" class="mensagem-tabela">
@@ -881,7 +901,7 @@
                         >
                             Abrir chamado interno
                         </button>
-                    
+
                         <button
                             type="button"
                             class="btn-suporte-admin-acao"
@@ -889,19 +909,19 @@
                         >
                             Ver meus chamados
                         </button>
-                    
+
                         <button type="button" onclick="abrirSuporteWhatsAppAdmin('erro')">
                             Reportar erro pelo WhatsApp
                         </button>
-                    
+
                         <button type="button" onclick="abrirSuporteWhatsAppAdmin('bug')">
                             Reportar bug pelo WhatsApp
                         </button>
-                    
+
                         <button type="button" onclick="abrirSuporteWhatsAppAdmin('sugestao')">
                             Enviar sugestão pelo WhatsApp
                         </button>
-                    
+
                         <button type="button" onclick="abrirSuporteWhatsAppAdmin('elogio')">
                             Enviar elogio pelo WhatsApp
                         </button>
@@ -941,18 +961,18 @@
         <div id="avisos-admin-lista" class="avisos-admin-lista"></div>
     </div>
 </div>
-            
-            
+
+
             <footer class="rodape-creditos">
                 <strong>Desenvolvido por Engenharia de Bits</strong>
-                
+
                 <span>
                     E-mail:
                     <a href="mailto:Engenhariadebits@hotmail.com">
                         Engenhariadebits@hotmail.com
                     </a>
                 </span>
-            
+
                 <span>
                     Redes sociais: @engenhariadebits
                 </span>
@@ -961,19 +981,19 @@
 
         <div id="modal-chamado-admin" class="modal-admin-suporte" style="display: none;">
             <div class="modal-admin-suporte-overlay" onclick="fecharModalChamadoAdmin()"></div>
-        
+
             <div class="modal-admin-suporte-card">
                 <div class="modal-admin-suporte-topo">
                     <div>
                         <h2>Abrir chamado</h2>
                         <p>Envie um erro, bug, sugestão ou elogio para a Engenharia de Bits.</p>
                     </div>
-        
+
                     <button type="button" onclick="fecharModalChamadoAdmin()">
                         ×
                     </button>
                 </div>
-        
+
                 <form id="form-chamado-admin" onsubmit="criarChamadoAdmin(event)">
                     <div class="form-group">
                         <label for="chamado-tipo">Tipo</label>
@@ -985,7 +1005,7 @@
                             <option value="outro">Outro</option>
                         </select>
                     </div>
-        
+
                     <div class="form-group">
                         <label for="chamado-titulo">Título</label>
                         <input
@@ -996,7 +1016,7 @@
                             required
                         >
                     </div>
-        
+
                     <div class="form-group">
                         <label for="chamado-descricao">Descrição</label>
                         <textarea
@@ -1007,7 +1027,7 @@
                             required
                         ></textarea>
                     </div>
-        
+
                     <div class="grid-admin-suporte">
                         <div class="form-group">
                             <label for="chamado-contato-nome">Nome para contato</label>
@@ -1017,7 +1037,7 @@
                                 placeholder="Opcional"
                             >
                         </div>
-        
+
                         <div class="form-group">
                             <label for="chamado-contato-email">E-mail para contato</label>
                             <input
@@ -1027,7 +1047,7 @@
                             >
                         </div>
                     </div>
-        
+
                     <div class="modal-admin-suporte-acoes">
                         <button
                             type="button"
@@ -1036,7 +1056,7 @@
                         >
                             Cancelar
                         </button>
-        
+
                         <button
                             type="submit"
                             class="btn-primario"
@@ -1048,17 +1068,17 @@
                 </form>
             </div>
         </div>
-        
+
         <div id="modal-historico-chamados-admin" class="modal-admin-suporte" style="display: none;">
             <div class="modal-admin-suporte-overlay" onclick="fecharModalHistoricoChamadosAdmin()"></div>
-        
+
             <div class="modal-admin-suporte-card modal-admin-suporte-card-grande">
                 <div class="modal-admin-suporte-topo">
                     <div>
                         <h2>Meus chamados</h2>
                         <p>Acompanhe o histórico de suporte enviado para a Engenharia de Bits.</p>
                     </div>
-        
+
                     <div class="modal-admin-suporte-topo-acoes">
                         <button
                             type="button"
@@ -1067,7 +1087,7 @@
                         >
                             Atualizar
                         </button>
-        
+
                         <button
                             type="button"
                             onclick="fecharModalHistoricoChamadosAdmin()"
@@ -1076,17 +1096,18 @@
                         </button>
                     </div>
                 </div>
-        
+
                 <div id="lista-chamados-admin" class="lista-chamados-admin">
                     Carregando chamados...
                 </div>
             </div>
         </div>
-    
+
 
         <script src="./js/config.js?v=94"></script>
         <script src="./js/api.js?v=95"></script>
         <script src="./js/auth.js?v=95"></script>
         <script src="./js/admin.js?v=95"></script>
+        <script src="./js/pwa.js?v=1"></script>
 </body>
 </html>

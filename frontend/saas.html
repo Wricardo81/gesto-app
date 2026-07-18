@@ -17,6 +17,26 @@
     <link
         rel="stylesheet"
         href="./css/saas.css?v=85">
+    <link rel="stylesheet" href="./css/pwa.css?v=1">
+
+    <link rel="manifest" href="./manifest.webmanifest">
+        <meta name="theme-color" content="#0A192F">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-title" content="Gesto App">
+
+        <link
+            rel="icon"
+            type="image/png"
+            sizes="192x192"
+            href="./icons/icon-192.png"
+        >
+
+        <link
+            rel="apple-touch-icon"
+            href="./icons/icon-192.png"
+        >
+
 </head>
 
 <body>
@@ -86,7 +106,7 @@
                 >
                     Atualizar
                 </button>
-            
+
                 <button
                     id="btn-sair-saas"
                     class="btn-sair"
@@ -159,17 +179,17 @@
         <div id="banner-comercial-saas" class="banner-comercial-saas">
             <div>
                 <span>Comercial</span>
-        
+
                 <h3>
                     Página comercial do Gesto App está pronta para apresentação.
                 </h3>
-        
+
                 <p>
                     Use a landing page para demonstrar funcionalidades, planos e diferenciais
                     para potenciais clientes.
                 </p>
             </div>
-        
+
             <div class="banner-comercial-saas-acoes">
                 <a
                     href="./index.html"
@@ -178,7 +198,7 @@
                 >
                     Abrir landing page
                 </a>
-        
+
                 <a
                     href="./index.html#planos"
                     target="_blank"
@@ -186,7 +206,7 @@
                 >
                     Ver planos
                 </a>
-        
+
                 <button
                     type="button"
                     onclick="dispensarBannerComercialSaas()"
@@ -232,21 +252,21 @@
                     >
                         Exportar empresas CSV
                     </button>
-                
+
                     <button
                         type="button"
                         onclick="exportarMetricasSaasCsv()"
                     >
                         Exportar métricas CSV
                     </button>
-                
+
                     <button
                         type="button"
                         onclick="exportarRankingSaasCsv()"
                     >
                         Exportar ranking CSV
                     </button>
-                
+
                     <button
                         type="button"
                         onclick="exportarAlertasSaasCsv()"
@@ -322,7 +342,7 @@
                             <h3>Atenção necessária</h3>
                             <p>Empresas com pendências, bloqueios ou ausência de plano.</p>
                         </div>
-                
+
                         <div
                             id="alertas-operacionais-saas"
                             class="lista-alertas-operacionais-saas"
@@ -332,13 +352,13 @@
                             </p>
                         </div>
                     </section>
-                
+
                     <section class="painel-operacional-saas">
                         <div class="painel-tabela-topo-saas">
                             <h3>Ranking por agendamentos</h3>
                             <p>Empresas com maior volume operacional.</p>
                         </div>
-                
+
                         <div
                             id="ranking-agendamentos-saas"
                             class="ranking-agendamentos-saas"
@@ -361,7 +381,7 @@
                         Gerencie planos mensais, trimestrais e anuais das empresas.
                     </p>
                 </div>
-        
+
                 <button
                     type="button"
                     class="btn-secundario-saas"
@@ -370,11 +390,11 @@
                     Atualizar
                 </button>
             </div>
-        
+
             <div class="planos-saas-grid" id="planos-saas-grid">
                 Carregando planos...
             </div>
-        
+
             <div class="card-saas" style="margin-top: 18px;">
                 <div class="lista-topo-saas">
                     <div>
@@ -390,19 +410,19 @@
                         <label for="filtro-busca-empresa-saas">
                             Buscar empresa
                         </label>
-                
+
                         <input
                             id="filtro-busca-empresa-saas"
                             type="search"
                             placeholder="Nome, slug ou e-mail..."
                         >
                     </div>
-                
+
                     <div class="campo-filtro-saas">
                         <label for="filtro-status-empresa-saas">
                             Status
                         </label>
-                
+
                         <select id="filtro-status-empresa-saas">
                             <option value="">Todos</option>
                             <option value="ativa">Ativas</option>
@@ -413,12 +433,12 @@
                             <option value="trial">Trial</option>
                         </select>
                     </div>
-                
+
                     <div class="campo-filtro-saas">
                         <label for="filtro-plano-empresa-saas">
                             Plano
                         </label>
-                
+
                         <select id="filtro-plano-empresa-saas">
                             <option value="">Todos</option>
                             <option value="mensal">Mensal</option>
@@ -427,7 +447,7 @@
                             <option value="sem_plano">Sem plano</option>
                         </select>
                     </div>
-                
+
                     <div class="acoes-filtro-saas">
                         <button
                             type="button"
@@ -437,7 +457,7 @@
                         </button>
                     </div>
                 </div>
-        
+
                 <div id="lista-assinaturas-empresas-saas" class="lista-assinaturas-empresas-saas">
                     Carregando empresas...
                 </div>
@@ -549,7 +569,7 @@
                     Acompanhe pedidos de erro, bug, sugestão e elogio enviados pelas empresas.
                 </p>
             </div>
-    
+
             <button
                 type="button"
                 class="btn-secundario-saas"
@@ -558,16 +578,16 @@
                 Atualizar
             </button>
         </div>
-    
+
         <div id="lista-chamados-saas" class="lista-chamados-saas">
             Carregando chamados...
         </div>
     </section>
 
-    
+
     <div id="modal-financeiro-saas" class="modal-saas" style="display: none;">
         <div class="modal-saas-overlay" onclick="fecharModalFinanceiroSaas()"></div>
-        
+
         <div class="modal-saas-card">
             <div class="modal-saas-header">
                 <div>
@@ -576,7 +596,7 @@
                         Atualize plano, mensalidade e vencimento.
                     </p>
                 </div>
-    
+
                 <button
                     type="button"
                     class="btn-fechar-modal-saas"
@@ -585,10 +605,10 @@
                     ×
                 </button>
             </div>
-    
+
             <form id="form-financeiro-saas" class="form-financeiro-saas">
                 <input type="hidden" id="financeiro-empresa-id">
-    
+
                 <div class="form-group">
                     <label for="financeiro-plano-nome">Plano</label>
                     <input
@@ -598,7 +618,7 @@
                         required
                     >
                 </div>
-    
+
                 <div class="form-group">
                     <label for="financeiro-valor-mensal">Valor mensal</label>
                     <input
@@ -610,7 +630,7 @@
                         required
                     >
                 </div>
-    
+
                 <div class="form-group">
                     <label for="financeiro-vencimento">Vencimento</label>
                     <input
@@ -618,7 +638,7 @@
                         type="date"
                     >
                 </div>
-                
+
                 <div class="form-group">
                     <label for="financeiro-status">Status</label>
                     <select id="financeiro-status" required>
@@ -629,7 +649,7 @@
                         <option value="teste">Teste</option>
                     </select>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="financeiro-dias-tolerancia">Dias de tolerância</label>
                     <input
@@ -641,7 +661,7 @@
                         required
                     >
                 </div>
-    
+
                 <div class="modal-saas-acoes">
                     <button
                         type="button"
@@ -650,7 +670,7 @@
                     >
                         Cancelar
                     </button>
-    
+
                     <button
                         type="submit"
                         class="btn-criar"
@@ -665,7 +685,7 @@
 
     <div id="modal-configuracao-empresa" class="modal-saas" style="display: none;">
         <div class="modal-saas-overlay" onclick="fecharModalConfiguracaoEmpresa()"></div>
-    
+
         <div class="modal-saas-card modal-saas-card-grande">
             <div class="modal-saas-header">
                 <div>
@@ -674,7 +694,7 @@
                         Edite dados de acesso, tenant e diagnóstico da empresa.
                     </p>
                 </div>
-    
+
                 <button
                     type="button"
                     class="btn-fechar-modal-saas"
@@ -683,14 +703,14 @@
                     ×
                 </button>
             </div>
-    
+
             <form
                 id="form-configuracao-empresa"
                 class="form-financeiro-saas"
                 onsubmit="salvarConfiguracaoEmpresa(event)"
             >
                 <input type="hidden" id="config-empresa-id">
-    
+
                 <div class="grid-modal-saas">
                     <div class="form-group">
                         <label for="config-empresa-nome">Nome da empresa</label>
@@ -700,7 +720,7 @@
                             required
                         >
                     </div>
-    
+
                     <div class="form-group">
                         <label for="config-empresa-email">E-mail/login</label>
                         <input
@@ -709,7 +729,7 @@
                             required
                         >
                     </div>
-    
+
                     <div class="form-group">
                         <label for="config-empresa-slug">Slug/Tenant</label>
                         <input
@@ -721,7 +741,7 @@
                             Alterar o slug muda o link público da empresa.
                         </small>
                     </div>
-    
+
                     <div class="form-group">
                         <label for="config-empresa-plano-ativo">Status manual</label>
                         <select id="config-empresa-plano-ativo">
@@ -730,7 +750,7 @@
                         </select>
                     </div>
                 </div>
-    
+
                 <div class="links-configuracao-empresa">
                     <button
                         type="button"
@@ -738,14 +758,14 @@
                     >
                         Copiar link público
                     </button>
-    
+
                     <button
                         type="button"
                         onclick="copiarLinkAdminEmpresa()"
                     >
                         Copiar link admin
                     </button>
-    
+
                     <button
                         type="button"
                         onclick="carregarDiagnosticoEmpresa()"
@@ -753,16 +773,16 @@
                         Ver diagnóstico
                     </button>
                 </div>
-    
+
                 <div id="diagnostico-empresa" class="diagnostico-empresa" style="display: none;"></div>
-    
+
                 <div class="bloco-redefinir-senha">
                     <h3>Redefinir senha</h3>
-    
+
                     <p>
                         Use esta opção quando o administrador da empresa perder o acesso.
                     </p>
-    
+
                     <div class="form-group">
                         <label for="config-empresa-nova-senha">Nova senha</label>
                         <input
@@ -771,7 +791,7 @@
                             placeholder="Mínimo 8 caracteres"
                         >
                     </div>
-    
+
                     <button
                         type="button"
                         class="btn-financeiro"
@@ -780,7 +800,7 @@
                         Redefinir senha
                     </button>
                 </div>
-    
+
                 <div class="modal-saas-acoes">
                     <button
                         type="button"
@@ -789,7 +809,7 @@
                     >
                         Cancelar
                     </button>
-    
+
                     <button
                         type="submit"
                         class="btn-criar"
@@ -811,11 +831,11 @@
                 </p>
             </div>
         </div>
-    
+
         <div class="grid-saas-avisos">
             <form id="form-aviso-saas" class="card-saas form-aviso-saas">
                 <h3>Novo aviso</h3>
-    
+
                 <div class="form-group">
                     <label for="aviso-titulo">Título</label>
                     <input
@@ -826,7 +846,7 @@
                         placeholder="Ex: Nova atualização disponível"
                     >
                 </div>
-    
+
                 <div class="form-group">
                     <label for="aviso-mensagem">Mensagem</label>
                     <textarea
@@ -837,7 +857,7 @@
                         placeholder="Digite a mensagem que será exibida no painel admin."
                     ></textarea>
                 </div>
-    
+
                 <div class="grid-modal-saas">
                     <div class="form-group">
                         <label for="aviso-tipo">Tipo</label>
@@ -851,7 +871,7 @@
                             <option value="urgente">Urgente</option>
                         </select>
                     </div>
-    
+
                     <div class="form-group">
                         <label for="aviso-escopo">Escopo</label>
                         <select id="aviso-escopo">
@@ -859,7 +879,7 @@
                             <option value="tenant">Empresa específica</option>
                         </select>
                     </div>
-    
+
                     <div class="form-group">
                         <label for="aviso-tenant-slug">Tenant específico</label>
                         <input
@@ -869,7 +889,7 @@
                         >
                         <small>Preencha somente se o escopo for empresa específica.</small>
                     </div>
-    
+
                     <div class="form-group">
                         <label for="aviso-fixado">Exibição</label>
                         <select id="aviso-fixado">
@@ -877,23 +897,23 @@
                             <option value="true">Fixado como banner</option>
                         </select>
                     </div>
-    
+
                     <div class="form-group">
                         <label for="aviso-data-inicio">Data início</label>
                         <input id="aviso-data-inicio" type="date">
                     </div>
-    
+
                     <div class="form-group">
                         <label for="aviso-data-fim">Data fim</label>
                         <input id="aviso-data-fim" type="date">
                     </div>
                 </div>
-    
+
                 <label class="checkbox-saas">
                     <input id="aviso-dispensavel" type="checkbox" checked>
                     Admin pode dispensar/fechar o aviso
                 </label>
-    
+
                 <button
                     type="submit"
                     class="btn-criar"
@@ -902,14 +922,14 @@
                     Criar aviso
                 </button>
             </form>
-    
+
             <div class="card-saas">
                 <div class="lista-topo-saas">
                     <div>
                         <h3>Avisos cadastrados</h3>
                         <p>Gerencie comunicados ativos e inativos.</p>
                     </div>
-    
+
                     <button
                         type="button"
                         class="btn-secundario-saas"
@@ -918,7 +938,7 @@
                         Atualizar
                     </button>
                 </div>
-    
+
                 <div id="lista-avisos-saas" class="lista-avisos-saas">
                     Carregando avisos...
                 </div>
@@ -928,14 +948,14 @@
 
     <footer class="rodape-creditos">
         <strong>Desenvolvido por Engenharia de Bits</strong>
-    
+
         <span>
             E-mail:
             <a href="mailto:Engenhariadebits@hotmail.com">
                 Engenhariadebits@hotmail.com
             </a>
         </span>
-        
+
         <span>
             Redes sociais: @engenhariadebits
         </span>
@@ -946,5 +966,6 @@
     <script src="./js/api.js?v=95"></script>
     <script src="./js/auth.js?v=95"></script>
     <script src="./js/saas.js?v=95"></script>
+    <script src="./js/pwa.js?v=1"></script>
 </body>
 </html>

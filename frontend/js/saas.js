@@ -2192,7 +2192,7 @@ function renderizarAssinaturasEmpresasSaasSemAtualizarCache(empresas) {
 
                     <div class="assinatura-empresa-acoes">
                         <div class="grupo-gateway-assinatura">
-                            <strong>Stripe</strong>
+                            <strong>PAGAMENTO SEGURO</strong>
 
                             <button
                                 type="button"
@@ -2217,31 +2217,6 @@ function renderizarAssinaturasEmpresasSaasSemAtualizarCache(empresas) {
                             </button>
                         </div>
 
-                        <div class="grupo-gateway-assinatura mercado-pago">
-                            <strong>Mercado Pago</strong>
-
-                            <button
-                                type="button"
-                                onclick="criarCheckoutMercadoPagoSaas(${empresa.id}, 'mensal')"
-                            >
-                                Mensal
-                            </button>
-
-                            <button
-                                type="button"
-                                onclick="criarCheckoutMercadoPagoSaas(${empresa.id}, 'trimestral')"
-                            >
-                                Trimestral
-                            </button>
-
-                            <button
-                                type="button"
-                                class="destaque"
-                                onclick="criarCheckoutMercadoPagoSaas(${empresa.id}, 'anual')"
-                            >
-                                Anual
-                            </button>
-                        </div>
 
                         <div class="grupo-gateway-assinatura">
                             <strong>Status da empresa</strong>

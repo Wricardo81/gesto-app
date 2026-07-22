@@ -479,25 +479,27 @@ function renderizarAssinaturaAdmin(config) {
         }
     }
 
-    let titulo = "Sua empresa ainda não possui assinatura ativa";
-    let descricao = "Assine um plano para manter a agenda online, clientes, profissionais e recursos comerciais ativos.";
+    let titulo = "Teste grátis ativo";
+    let descricao =
+      "Você pode usar o sistema gratuitamente por 7 dias ou até 30 agendamentos. Depois disso, será necessário ativar uma assinatura para continuar recebendo novos agendamentos.";
 
     if (ativa) {
-        titulo = "Sua assinatura está ativa";
-        descricao = "Seu acesso está liberado. Os banners de assinatura não serão exibidos enquanto o pagamento estiver em dia.";
+      titulo = "Sua assinatura está ativa";
+      descricao =
+        "Seu acesso está liberado. Os banners de assinatura não serão exibidos enquanto o pagamento estiver em dia.";
     } else if (trialExpirado) {
-        titulo = "Seu teste gratuito terminou";
+      titulo = "Seu teste gratuito terminou";
 
-        if (config?.trial_expirado_por_agendamentos) {
-            descricao = "Você atingiu o limite de agendamentos gratuitos. Escolha um plano para continuar recebendo reservas.";
-        } else if (config?.trial_expirado_por_dias) {
-            descricao = "Seu período gratuito de 7 dias terminou. Escolha um plano para manter sua agenda online.";
-        } else {
-            descricao = "Seu teste gratuito terminou. Escolha um plano para manter o sistema ativo.";
-        }
+      if (config?.trial_expirado_por_agendamentos) {
+        descricao =
+          "O limite de 30 agendamentos gratuitos foi atingido. Para continuar recebendo novos agendamentos, escolha um plano.";
+      } else {
+        descricao =
+          "O período gratuito de 7 dias terminou. Para continuar recebendo novos agendamentos, escolha um plano.";
+      }
     } else {
-        titulo = "Você está no teste gratuito";
-        descricao = `Restam ${trialDiasRestantes} dia(s) ou ${trialAgendamentosRestantes} agendamento(s) grátis.`;
+      titulo = "Você está no teste gratuito";
+      descricao = `Restam ${trialDiasRestantes} dia(s) ou ${trialAgendamentosRestantes} agendamento(s) grátis.`;
     }
 
     card.innerHTML = `
@@ -712,6 +714,34 @@ async function assinarPlanoMercadoPagoAdmin(planoCodigo) {
           ),
         );
     }
+}
+
+
+function tratarRetornoCadastroAdmin() {
+  const parametros = new URLSearchParams(window.location.search);
+
+  const cadastroStatus = parametros.get("cadastro");
+  const pagamentoStatus = parametros.get("pagamento");
+
+  if (cadastroStatus === "sucesso") {
+    exibirMensagemAdmin(
+      "Conta criada com sucesso. Seu teste grátis de 7 dias ou 30 agendamentos já começou. Configure seus serviços, profissionais e horários para começar a receber agendamentos.",
+    );
+  }
+
+  if (pagamentoStatus === "pendente") {
+    exibirMensagemAdmin(
+      "Sua conta foi criada, mas o pagamento ainda não foi concluído. Você pode continuar usando o teste grátis por 7 dias ou até 30 agendamentos.",
+    );
+  }
+
+  if (!cadastroStatus && !pagamentoStatus) {
+    return;
+  }
+
+  const urlLimpa = `${window.location.origin}${window.location.pathname}?tenant=${tenantSlugLogado}`;
+
+  window.history.replaceState({}, document.title, urlLimpa);
 }
 
 
@@ -1882,6 +1912,7 @@ function iniciarPainel() {
         registrarListenersAgendaVisual();
         inicializarNavegacaoAdmin();
         carregarAvisosAdmin();
+        tratarRetornoCadastroAdmin();
         tratarRetornoPagamentoAdmin();
         carregarAssinaturaAdmin();
         iniciarMonitorNovosAgendamentos();

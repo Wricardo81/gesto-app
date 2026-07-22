@@ -4,6 +4,7 @@
     const botao = document.getElementById("btn-cadastro-publico");
     const campoPlano = document.getElementById("cadastro-plano-codigo");
     const textoPlano = document.getElementById("cadastro-plano-selecionado");
+    let checkoutCadastroEmAndamento = false;
 
   if (!form) {
     return;
@@ -72,12 +73,18 @@
     }
 
     async function iniciarCheckoutAposCadastro(respostaCadastro) {
+      if (checkoutCadastroEmAndamento) {
+        return;
+      }
+
+      checkoutCadastroEmAndamento = true;
+
       const plano = respostaCadastro?.plano_codigo || "teste";
       const tenantSlug = respostaCadastro?.tenant_slug;
       const empresaId = respostaCadastro?.empresa_id;
 
       if (!planoEhPago(plano)) {
-        window.location.href = `./admin.html?tenant=${encodeURIComponent(tenantSlug)}`;
+        window.location.href = `./admin.html?tenant=${encodeURIComponent(tenantSlug)}&cadastro=sucesso`;
 
         return;
       }
@@ -87,6 +94,16 @@
 
         return;
       }
+
+      const chaveCheckout = `bitsagenda_checkout_iniciado_${tenantSlug}_${plano}`;
+
+      if (sessionStorage.getItem(chaveCheckout) === "sim") {
+        window.location.href = `./admin.html?tenant=${encodeURIComponent(tenantSlug)}&pagamento=pendente`;
+
+        return;
+      }
+
+      sessionStorage.setItem(chaveCheckout, "sim");
 
       const respostaCheckout = await apiRequest(
         `/api/${tenantSlug}/admin/assinaturas/stripe/checkout`,
@@ -144,6 +161,7 @@
       botao.textContent = "Criando sua conta...";
     }
 
+    let cadastroConcluido = false;
     try {
       const resposta = await apiRequest("/api/saas/public/cadastro", {
         method: "POST",
@@ -155,12 +173,13 @@
 
       exibirMensagemCadastro(
         planoEhPago(resposta.plano_codigo)
-          ? "Conta criada com sucesso. Abrindo pagamento seguro..."
-          : "Conta criada com sucesso. Redirecionando para o painel...",
+          ? "Conta criada com sucesso. Abrindo pagamento seguro. Seu teste grátis de 7 dias ou 30 agendamentos já está reservado."
+          : "Conta criada com sucesso. Seu teste grátis de 7 dias ou 30 agendamentos começou agora.",
         "sucesso",
-      );
+        );
+        cadastroConcluido = true;
 
-      setTimeout(async function () {
+        setTimeout(async function () {
         try {
           await iniciarCheckoutAposCadastro(resposta);
         } catch (erroCheckout) {
@@ -193,7 +212,7 @@
         "erro",
       );
     } finally {
-      if (botao) {
+      if (!cadastroConcluido && botao) {
         const plano = valorCampo("cadastro-plano-codigo") || "teste";
 
         botao.disabled = false;

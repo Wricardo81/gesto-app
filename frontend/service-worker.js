@@ -1,4 +1,4 @@
-const CACHE_NAME = "gesto-app-pwa-v3";
+const CACHE_NAME = "gesto-app-pwa-v4";
 
 const APP_SHELL = [
   "./",
@@ -18,6 +18,7 @@ const APP_SHELL = [
   "./css/saas.css",
   "./css/landing.css",
   "./css/pwa.css",
+  "./offline.html",
   "./icons/bitsagenda-icon-192.png",
   "./icons/bitsagenda-icon-512.png",
   "./icons/bitsagenda-maskable-512.png",
@@ -61,64 +62,49 @@ self.addEventListener("activate", function (evento) {
   );
 });
 
-self.addEventListener("fetch", function (evento) {
-  const requisicao = evento.request;
+self.addEventListener("fetch", function (event) {
+  const request = event.request;
 
-  if (requisicao.method !== "GET") {
+  if (request.method !== "GET") {
     return;
   }
 
-  const url = new URL(requisicao.url);
-
-  if (url.origin !== self.location.origin) {
-    return;
-  }
+  const url = new URL(request.url);
 
   if (url.pathname.includes("/api/")) {
-    return;
-  }
-
-  if (requisicao.mode === "navigate") {
-    evento.respondWith(
-      fetch(requisicao)
-        .then(function (resposta) {
-          const copiaResposta = resposta.clone();
-
-          caches.open(CACHE_NAME).then(function (cache) {
-            cache.put(requisicao, copiaResposta);
-          });
-
-          return resposta;
-        })
-        .catch(function () {
-          return caches.match(requisicao).then(function (respostaCache) {
-            return respostaCache || caches.match(montarUrl("./index.html"));
-          });
-        }),
+    event.respondWith(
+      fetch(request).catch(function () {
+        return new Response(
+          JSON.stringify({
+            offline: true,
+            message: "Sem conexão com o servidor no momento.",
+          }),
+          {
+            status: 503,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          },
+        );
+      }),
     );
 
     return;
   }
 
-  evento.respondWith(
-    caches.match(requisicao).then(function (respostaCache) {
-      const buscaRede = fetch(requisicao)
-        .then(function (respostaRede) {
-          if (respostaRede && respostaRede.status === 200) {
-            const copiaResposta = respostaRede.clone();
+  event.respondWith(
+    caches.match(request).then(function (cachedResponse) {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
 
-            caches.open(CACHE_NAME).then(function (cache) {
-              cache.put(requisicao, copiaResposta);
-            });
-          }
+      return fetch(request).catch(function () {
+        if (request.mode === "navigate") {
+          return caches.match("./offline.html");
+        }
 
-          return respostaRede;
-        })
-        .catch(function () {
-          return respostaCache;
-        });
-
-      return respostaCache || buscaRede;
+        return caches.match("./offline.html");
+      });
     }),
   );
 });

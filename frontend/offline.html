@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Offline | BitsAgenda OS</title>
+
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./css/landing.css" />
+    <link rel="stylesheet" href="./css/ui-clean.css?v=1" />
+
+    <meta name="theme-color" content="#0A192F" />
+    <meta name="apple-mobile-web-app-title" content="BitsAgenda" />
+    <link rel="icon" href="./icons/bitsagenda-icon-192.png" />
+    <link rel="apple-touch-icon" href="./icons/bitsagenda-icon-192.png" />
+  </head>
+  <body>
+    <main class="offline-page">
+      <section class="offline-card">
+        <div class="offline-badge">Offline</div>
+
+        <h1>Você está sem conexão</h1>
+
+        <p>
+          O BitsAgenda OS continua instalado, mas precisa de internet para
+          carregar dados atualizados, agendamentos e informações da empresa.
+        </p>
+
+        <p>Verifique sua conexão e tente novamente.</p>
+
+        <button type="button" onclick="window.location.reload()">
+          Tentar novamente
+        </button>
+
+        <a href="./index.html"> Voltar para a página inicial </a>
+      </section>
+    </main>
+  </body>
+</html>

@@ -41,16 +41,25 @@ async function apiRequest(
             `Bearer ${token}`;
     }
 
-    const resposta = await fetch(
-        `${API_BASE_URL}${endpoint}`,
-        {
-            method,
-            headers: finalHeaders,
-            body: body !== null
-                ? JSON.stringify(body)
-                : null
-        }
-    );
+    let resposta = null;
+
+    try {
+      resposta = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method,
+        headers: finalHeaders,
+        body: body !== null ? JSON.stringify(body) : null,
+      });
+    } catch (erroRede) {
+      const erro = new Error("Sem conexão com o servidor no momento.");
+
+      erro.status = 0;
+      erro.data = {
+        offline: true,
+        originalError: erroRede?.message || null,
+      };
+
+      throw erro;
+    }
 
     const contentType =
         resposta.headers.get("content-type") || "";

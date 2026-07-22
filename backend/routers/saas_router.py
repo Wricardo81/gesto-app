@@ -1,6 +1,6 @@
 import secrets
 from datetime import date, datetime, timedelta
-
+import unicodedata
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import or_
@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 import re
-
+from services.trial_service import garantir_periodo_trial
 import models
 from database import SessaoLocal
 from security import (
@@ -26,6 +26,37 @@ router = APIRouter(
     tags=["Painel Mestre SaaS"],
 )
 
+
+def normalizar_slug_publico(texto: str) -> str:
+    texto = texto.strip().lower()
+
+    texto = unicodedata.normalize("NFD", texto)
+    texto = "".join(
+        caractere
+        for caractere in texto
+        if unicodedata.category(caractere) != "Mn"
+    )
+
+    texto = re.sub(r"[^a-z0-9]+", "-", texto)
+    texto = texto.strip("-")
+
+    return texto or "empresa"
+
+
+def gerar_slug_unico_empresa(db: Session, nome: str) -> str:
+    slug_base = normalizar_slug_publico(nome)
+    slug = slug_base
+    contador = 2
+
+    while (
+        db.query(models.Barbearia)
+        .filter(models.Barbearia.slug == slug)
+        .first()
+    ):
+        slug = f"{slug_base}-{contador}"
+        contador += 1
+
+    return slug
 
 
 def get_db():
@@ -106,6 +137,15 @@ class RedefinicaoSenhaBarbearia(BaseModel):
 
 class ExcluirEmpresaTesteSaas(BaseModel):
     confirmacao: str
+
+
+class CadastroPublicoEmpresa(BaseModel):
+    nome: str = Field(min_length=3, max_length=120)
+    responsavel: str = Field(min_length=3, max_length=120)
+    email: EmailStr
+    telefone: str = Field(min_length=8, max_length=30)
+    senha: str = Field(min_length=6, max_length=72)
+    tipo_negocio: str | None = Field(default=None, max_length=80)
 
 
 STATUS_PAGAMENTO_VALIDOS = {
@@ -415,6 +455,80 @@ def contar_agendamentos_empresa_saas(
             return int(total or 0)
 
     return 0
+
+
+@router.post("/public/cadastro")
+def cadastrar_empresa_publica(
+    dados: CadastroPublicoEmpresa,
+    db: Session = Depends(get_db),
+):
+    email_normalizado = dados.email.strip().lower()
+    slug = gerar_slug_unico_empresa(db, dados.nome)
+
+    empresa_existente = (
+        db.query(models.Barbearia)
+        .filter(models.Barbearia.email == email_normalizado)
+        .first()
+    )
+
+    if empresa_existente:
+        raise HTTPException(
+            status_code=409,
+            detail="Já existe uma empresa cadastrada com este e-mail.",
+        )
+
+    senha_hash = gerar_hash_senha(dados.senha)
+
+    colunas_barbearia = {
+        coluna.name
+        for coluna in models.Barbearia.__table__.columns
+    }
+
+    dados_barbearia = {
+        "nome": dados.nome.strip(),
+        "slug": slug,
+        "email": email_normalizado,
+        "senha_hash": senha_hash,
+        "status_assinatura": "trial",
+        "status_pagamento": "trial",
+        "plano": "teste",
+        "responsavel": dados.responsavel.strip(),
+        "telefone": dados.telefone.strip(),
+        "tipo_negocio": dados.tipo_negocio.strip()
+        if dados.tipo_negocio
+        else None,
+    }
+
+    dados_filtrados = {
+        chave: valor
+        for chave, valor in dados_barbearia.items()
+        if chave in colunas_barbearia
+    }
+
+    barbearia = models.Barbearia(**dados_filtrados)
+
+    db.add(barbearia)
+    db.commit()
+    db.refresh(barbearia)
+
+    garantir_periodo_trial(db, barbearia)
+
+    access_token = criar_token_acesso(
+        {
+            "sub": barbearia.email,
+            "tenant_slug": barbearia.slug,
+            "role": "tenant_admin",
+        }
+    )
+
+    return {
+        "mensagem": "Empresa cadastrada com sucesso.",
+        "tenant_slug": barbearia.slug,
+        "nome": barbearia.nome,
+        "access_token": access_token,
+        "token_type": "bearer",
+        "admin_url": f"/frontend/admin.html?tenant={barbearia.slug}",
+    }
 
 
 @router.post("/login")

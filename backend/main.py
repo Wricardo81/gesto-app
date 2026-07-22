@@ -5,10 +5,12 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 import stripe
 from settings import settings
-from fastapi import FastAPI
+
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from routers import aviso_router
+from logging_config import configurar_logging
+from middleware.observability import ObservabilityMiddleware
 
 # Importando os roteadores refatorados
 from routers import profissional_router
@@ -25,7 +27,14 @@ from routers import suporte_router
 from routers import assinatura_stripe_router
 from routers import mercado_pago_router
 
-app = FastAPI()
+configurar_logging()
+
+app = FastAPI(
+    title="BitsAgenda OS API",
+    version="1.0.0",
+)
+
+app.add_middleware(ObservabilityMiddleware)
 
 
 origins_permitidas = [
@@ -59,8 +68,9 @@ app.mount(
 def health_check():
     return {
         "status": "ok",
-        "app": "Gesto App",
+        "app": "BitsAgenda OS",
         "environment": settings.app_env,
+        "version": "1.0.0",
     }
 
 
@@ -98,18 +108,18 @@ def criar_checkout_stripe(tenant_slug: str):
                     'product_data': {
                         'name': f'Assinatura Mensal Gesto — Sistema de Agendamento',
                     },
-                    'unit_amount': 9900, 
+                    'unit_amount': 9900,
                 },
                 'quantity': 1,
             }],
-            mode='payment', 
+            mode='payment',
             success_url=f"https://gesto-app.netlify.app/admin.html?tenant={tenant_slug}",
             cancel_url=f"https://gesto-app.netlify.app/admin.html?tenant={tenant_slug}",
             metadata={"tenant_slug": tenant_slug}
         )
         return {"checkout_url": session.url}
     except Exception as e:
-        print(f"Erro no Stripe: {str(e)}") 
+        print(f"Erro no Stripe: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -121,11 +131,11 @@ def verificar_status_inquilino(tenant_slug: str):
     db = SessaoLocal()
     cliente = db.query(models.Barbearia).filter(models.Barbearia.slug == tenant_slug).first()
     db.close()
-    
-    if not cliente: 
+
+    if not cliente:
         raise HTTPException(status_code=404, detail="Barbearia não encontrada")
-        
-    if not cliente.plano_ativo: 
+
+    if not cliente.plano_ativo:
         raise HTTPException(status_code=403, detail="Assinatura suspensa")
-        
+
     return {"status": "Liberado"}

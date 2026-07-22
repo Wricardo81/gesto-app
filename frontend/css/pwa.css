@@ -216,3 +216,132 @@ table {
 .diagnostico-erro-card button:hover {
     background: rgba(248, 250, 252, 0.14);
 }
+
+.cadastro-publico-page {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 28px;
+    background:
+        radial-gradient(circle at top left, rgba(100, 255, 218, 0.12), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.10), transparent 34%),
+        #0A192F;
+    color: #f8fafc;
+}
+
+.cadastro-publico-card {
+    width: min(100%, 760px);
+    padding: 34px;
+    border: 1px solid rgba(100, 255, 218, 0.24);
+    border-radius: 30px;
+    background: rgba(15, 23, 42, 0.90);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.36);
+}
+
+.cadastro-voltar {
+    display: inline-flex;
+    margin-bottom: 18px;
+    color: #cbd5e1;
+    text-decoration: none;
+    font-weight: 800;
+}
+
+.cadastro-publico-card h1 {
+    margin: 0 0 12px;
+    font-size: clamp(2.2rem, 6vw, 4rem);
+    line-height: 0.96;
+    letter-spacing: -0.06em;
+}
+
+.cadastro-publico-card > p {
+    max-width: 620px;
+    margin: 0 0 24px;
+    color: #cbd5e1;
+    line-height: 1.65;
+}
+
+.cadastro-publico-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.cadastro-publico-form label {
+    display: grid;
+    gap: 8px;
+    color: #e2e8f0;
+    font-size: 0.92rem;
+    font-weight: 800;
+}
+
+.cadastro-publico-form input,
+.cadastro-publico-form select {
+    width: 100%;
+    min-height: 46px;
+    padding: 11px 13px;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.78);
+    color: #f8fafc;
+    outline: none;
+}
+
+.cadastro-publico-form input:focus,
+.cadastro-publico-form select:focus {
+    border-color: rgba(100, 255, 218, 0.75);
+    box-shadow: 0 0 0 3px rgba(100, 255, 218, 0.12);
+}
+
+.cadastro-publico-form button {
+    grid-column: 1 / -1;
+    min-height: 48px;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #64FFDA, #38bdf8);
+    color: #0A192F;
+    font-weight: 950;
+    cursor: pointer;
+}
+
+.cadastro-publico-form button:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
+
+.cadastro-publico-mensagem {
+    grid-column: 1 / -1;
+    display: none;
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: 14px;
+    font-weight: 800;
+    line-height: 1.45;
+    white-space: pre-line;
+}
+
+.cadastro-publico-mensagem.erro {
+    border: 1px solid rgba(248, 113, 113, 0.38);
+    background: rgba(127, 29, 29, 0.28);
+    color: #fecaca;
+}
+
+.cadastro-publico-mensagem.sucesso {
+    border: 1px solid rgba(34, 197, 94, 0.38);
+    background: rgba(20, 83, 45, 0.30);
+    color: #bbf7d0;
+}
+
+@media (max-width: 720px) {
+    .cadastro-publico-page {
+        padding: 18px;
+    }
+
+    .cadastro-publico-card {
+        padding: 24px;
+        border-radius: 24px;
+    }
+
+    .cadastro-publico-form {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,4 +1,4 @@
-const CACHE_NAME = "gesto-app-pwa-v5";
+const CACHE_NAME = "gesto-app-pwa-v7";
 
 const APP_SHELL = [
   "./",
@@ -20,6 +20,8 @@ const APP_SHELL = [
   "./css/landing.css",
   "./css/pwa.css",
   "./offline.html",
+  "./cadastro.html",
+  "./js/cadastro.js",
   "./icons/bitsagenda-icon-192.png",
   "./icons/bitsagenda-icon-512.png",
   "./icons/bitsagenda-maskable-512.png",

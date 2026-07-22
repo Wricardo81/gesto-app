@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Criar conta grátis | BitsAgenda OS</title>
+
+    <meta
+      name="description"
+      content="Crie sua conta grátis no BitsAgenda OS e comece a organizar agendamentos, clientes e atendimentos."
+    />
+
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./css/landing.css?v=1" />
+    <link rel="stylesheet" href="./css/ui-clean.css?v=1" />
+    <link rel="stylesheet" href="./css/pwa.css?v=1" />
+
+    <meta name="theme-color" content="#0A192F" />
+    <meta name="apple-mobile-web-app-title" content="BitsAgenda" />
+
+    <link rel="icon" href="./icons/bitsagenda-icon-192.png" />
+    <link rel="apple-touch-icon" href="./icons/bitsagenda-icon-192.png" />
+  </head>
+  <body>
+    <main class="cadastro-publico-page">
+      <section class="cadastro-publico-card">
+        <a class="cadastro-voltar" href="./index.html">
+          ← Voltar para o site
+        </a>
+
+        <div class="offline-badge">Teste grátis</div>
+
+        <h1>Crie sua conta no BitsAgenda OS</h1>
+
+        <p>
+          Cadastre seu negócio e acesse o painel administrativo para configurar
+          serviços, equipe e começar a receber agendamentos.
+        </p>
+
+        <form id="form-cadastro-publico" class="cadastro-publico-form">
+          <label>
+            Nome do negócio
+            <input
+              type="text"
+              id="cadastro-nome"
+              placeholder="Ex: Clínica Vida Leve"
+              minlength="3"
+              required
+            />
+          </label>
+
+          <label>
+            Responsável
+            <input
+              type="text"
+              id="cadastro-responsavel"
+              placeholder="Ex: Ana Souza"
+              minlength="3"
+              required
+            />
+          </label>
+
+          <label>
+            E-mail de acesso
+            <input
+              type="email"
+              id="cadastro-email"
+              placeholder="exemplo@email.com"
+              required
+            />
+          </label>
+
+          <label>
+            WhatsApp
+            <input
+              type="tel"
+              id="cadastro-telefone"
+              placeholder="Ex: 81999999999"
+              minlength="8"
+              required
+            />
+          </label>
+
+          <label>
+            Tipo de negócio
+            <select id="cadastro-tipo-negocio">
+              <option value="">Selecione</option>
+              <option value="Clínica">Clínica</option>
+              <option value="Salão de beleza">Salão de beleza</option>
+              <option value="Barbearia">Barbearia</option>
+              <option value="Studio de estética">Studio de estética</option>
+              <option value="Consultório">Consultório</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </label>
+
+          <label>
+            Senha
+            <input
+              type="password"
+              id="cadastro-senha"
+              placeholder="Crie uma senha"
+              minlength="6"
+              required
+            />
+          </label>
+
+          <button type="submit" id="btn-cadastro-publico">
+            Criar minha conta grátis
+          </button>
+
+          <p
+            id="mensagem-cadastro-publico"
+            class="cadastro-publico-mensagem"
+          ></p>
+        </form>
+      </section>
+    </main>
+
+    <script src="./js/config.js?v=94"></script>
+    <script src="./js/api.js?v=95"></script>
+    <script src="./js/diagnostico.js?v=1"></script>
+    <script src="./js/cadastro.js?v=1"></script>
+    <script src="./js/pwa.js?v=1"></script>
+  </body>
+</html>

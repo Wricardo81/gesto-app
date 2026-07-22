@@ -1,13 +1,59 @@
 (function () {
   const form = document.getElementById("form-cadastro-publico");
   const mensagem = document.getElementById("mensagem-cadastro-publico");
-  const botao = document.getElementById("btn-cadastro-publico");
+    const botao = document.getElementById("btn-cadastro-publico");
+    const campoPlano = document.getElementById("cadastro-plano-codigo");
+    const textoPlano = document.getElementById("cadastro-plano-selecionado");
 
   if (!form) {
     return;
-  }
+    }
 
-  function valorCampo(id) {
+    function obterPlanoDaUrl() {
+      const parametros = new URLSearchParams(window.location.search);
+      const plano = parametros.get("plano") || "teste";
+
+      const planosPermitidos = ["teste", "mensal", "trimestral", "anual"];
+
+      if (!planosPermitidos.includes(plano)) {
+        return "teste";
+      }
+
+      return plano;
+    }
+
+    function nomePlano(plano) {
+      const nomes = {
+        teste: "Teste grátis",
+        mensal: "Plano mensal",
+        trimestral: "Plano trimestral",
+        anual: "Plano anual",
+      };
+
+      return nomes[plano] || "Teste grátis";
+    }
+
+    function aplicarPlanoSelecionado() {
+      const plano = obterPlanoDaUrl();
+
+      if (campoPlano) {
+        campoPlano.value = plano;
+      }
+
+      if (textoPlano) {
+        textoPlano.textContent = `Plano selecionado: ${nomePlano(plano)}`;
+      }
+
+      if (botao) {
+        botao.textContent =
+          plano === "teste"
+            ? "Criar minha conta grátis"
+            : `Criar conta e continuar com ${nomePlano(plano)}`;
+      }
+    }
+
+
+    function valorCampo(id) {
     return document.getElementById(id)?.value?.trim() || "";
   }
 
@@ -31,6 +77,7 @@
       telefone: valorCampo("cadastro-telefone"),
       senha: valorCampo("cadastro-senha"),
       tipo_negocio: valorCampo("cadastro-tipo-negocio") || null,
+      plano_codigo: valorCampo("cadastro-plano-codigo") || "teste",
     };
 
     if (
@@ -83,8 +130,13 @@
       );
     } finally {
       if (botao) {
+        const plano = valorCampo("cadastro-plano-codigo") || "teste";
+
         botao.disabled = false;
-        botao.textContent = "Criar minha conta grátis";
+        botao.textContent =
+          plano === "teste"
+            ? "Criar minha conta grátis"
+            : `Criar conta e continuar com ${nomePlano(plano)}`;
       }
     }
   });

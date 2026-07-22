@@ -146,6 +146,7 @@ class CadastroPublicoEmpresa(BaseModel):
     telefone: str = Field(min_length=8, max_length=30)
     senha: str = Field(min_length=6, max_length=72)
     tipo_negocio: str | None = Field(default=None, max_length=80)
+    plano_codigo: str | None = Field(default="teste", max_length=30)
 
 
 STATUS_PAGAMENTO_VALIDOS = {
@@ -457,6 +458,22 @@ def contar_agendamentos_empresa_saas(
     return 0
 
 
+def normalizar_plano_publico(plano_codigo: str | None) -> str:
+    plano = (plano_codigo or "teste").strip().lower()
+
+    planos_permitidos = {
+        "teste",
+        "mensal",
+        "trimestral",
+        "anual",
+    }
+
+    if plano not in planos_permitidos:
+        return "teste"
+
+    return plano
+
+
 @router.post("/public/cadastro")
 def cadastrar_empresa_publica(
     dados: CadastroPublicoEmpresa,
@@ -464,6 +481,7 @@ def cadastrar_empresa_publica(
 ):
     email_normalizado = dados.email.strip().lower()
     slug = gerar_slug_unico_empresa(db, dados.nome)
+    plano_codigo = normalizar_plano_publico(dados.plano_codigo)
 
     empresa_existente = (
         db.query(models.Barbearia)
@@ -491,7 +509,9 @@ def cadastrar_empresa_publica(
         "senha_hash": senha_hash,
         "status_assinatura": "trial",
         "status_pagamento": "trial",
-        "plano": "teste",
+        "plano_codigo": plano_codigo,
+        "plano_nome": plano_codigo.capitalize(),
+        "plano_periodicidade": plano_codigo,
         "responsavel": dados.responsavel.strip(),
         "telefone": dados.telefone.strip(),
         "tipo_negocio": dados.tipo_negocio.strip()
@@ -516,7 +536,11 @@ def cadastrar_empresa_publica(
     access_token = criar_token_acesso(
         {
             "sub": barbearia.email,
+            "email": barbearia.email,
+            "tenant": barbearia.slug,
             "tenant_slug": barbearia.slug,
+            "barbearia_slug": barbearia.slug,
+            "slug": barbearia.slug,
             "role": "tenant_admin",
         }
     )
@@ -525,11 +549,11 @@ def cadastrar_empresa_publica(
         "mensagem": "Empresa cadastrada com sucesso.",
         "tenant_slug": barbearia.slug,
         "nome": barbearia.nome,
+        "plano_codigo": plano_codigo,
         "access_token": access_token,
         "token_type": "bearer",
         "admin_url": f"/frontend/admin.html?tenant={barbearia.slug}",
     }
-
 
 @router.post("/login")
 def login_saas(

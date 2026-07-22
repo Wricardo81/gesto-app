@@ -1,4 +1,4 @@
-const CACHE_NAME = "gesto-app-pwa-v7";
+const CACHE_NAME = "gesto-app-pwa-v8";
 
 const APP_SHELL = [
   "./",

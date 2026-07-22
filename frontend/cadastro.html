@@ -31,6 +31,11 @@
 
         <div class="offline-badge">Teste grátis</div>
 
+        <div id="cadastro-plano-selecionado" class="cadastro-plano-selecionado">
+
+            Plano selecionado: Teste grátis
+        </div>
+
         <h1>Crie sua conta no BitsAgenda OS</h1>
 
         <p>
@@ -106,9 +111,11 @@
             />
           </label>
 
-          <button type="submit" id="btn-cadastro-publico">
+          <input type="hidden" id="cadastro-plano-codigo" value="teste" />
+
+        <button type="submit" id="btn-cadastro-publico">
             Criar minha conta grátis
-          </button>
+        </button>
 
           <p
             id="mensagem-cadastro-publico"

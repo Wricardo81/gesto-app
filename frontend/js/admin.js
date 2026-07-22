@@ -79,17 +79,7 @@ function exibirMensagemAdmin(mensagem, tipo = "sucesso") {
 
 
 function tratarErroAdmin(erro) {
-    console.error(erro);
-
-    const mensagem =
-        erro?.message
-        || erro?.detail
-        || "Não foi possível concluir a operação.";
-
-    exibirMensagemAdmin(
-        mensagem,
-        "erro"
-    );
+  tratarErro(erro);
 }
 
 
@@ -497,7 +487,7 @@ function renderizarAssinaturaAdmin(config) {
         descricao = "Seu acesso está liberado. Os banners de assinatura não serão exibidos enquanto o pagamento estiver em dia.";
     } else if (trialExpirado) {
         titulo = "Seu teste gratuito terminou";
-    
+
         if (config?.trial_expirado_por_agendamentos) {
             descricao = "Você atingiu o limite de agendamentos gratuitos. Escolha um plano para continuar recebendo reservas.";
         } else if (config?.trial_expirado_por_dias) {
@@ -585,7 +575,10 @@ async function carregarAssinaturaAdmin() {
         if (card) {
             card.innerHTML = `
                 <h3>Não foi possível carregar a assinatura</h3>
-                <p>${erro.message || "Erro ao buscar dados do plano."}</p>
+                <p>${montarMensagemErroComDiagnostico(
+                  erro.message || "Erro ao buscar dados do plano.",
+                  erro,
+                ).replace(/\n/g, "<br>")}</p>
             `;
         }
     }
@@ -654,10 +647,12 @@ async function assinarPlanoAdmin(planoCodigo) {
     } catch (erro) {
         console.error("Erro no checkout admin:", erro);
 
-        exibirMensagemAdmin(
-            erro.message || "Erro ao iniciar pagamento seguro.",
-            "erro"
-        );
+       exibirMensagemAdmin(
+         montarMensagemErroComDiagnostico(
+           erro.message || "Erro ao carregar dados.",
+           erro,
+         ),
+       );
     }
 }
 
@@ -711,8 +706,10 @@ async function assinarPlanoMercadoPagoAdmin(planoCodigo) {
 
     } catch (erro) {
         exibirMensagemAdmin(
-            erro.message || "Erro ao iniciar o pagamento Online.",
-            "erro"
+          montarMensagemErroComDiagnostico(
+            erro.message || "Erro ao carregar dados.",
+            erro,
+          ),
         );
     }
 }
@@ -769,11 +766,11 @@ const BANNER_FUNCIONALIDADES_ADMIN_KEY =
         const banner = document.getElementById(
             "banner-funcionalidades-admin"
         );
-    
+
         if (!banner) {
             return;
         }
-    
+
         if (
             config
             && assinaturaAdminEstaAtiva(config)
@@ -781,16 +778,16 @@ const BANNER_FUNCIONALIDADES_ADMIN_KEY =
             banner.classList.remove("visivel");
             return;
         }
-    
+
         const dispensado = localStorage.getItem(
             BANNER_FUNCIONALIDADES_ADMIN_KEY
         );
-    
+
         if (dispensado === "true") {
             banner.classList.remove("visivel");
             return;
         }
-    
+
         banner.classList.add("visivel");
     }
 
@@ -1040,8 +1037,10 @@ async function uploadImagemMarca(
     } catch (erro) {
         console.error(erro);
         exibirMensagemAdmin(
-            erro.message
-            || "Erro ao enviar imagem."
+          montarMensagemErroComDiagnostico(
+            erro.message || "Erro ao carregar dados.",
+            erro,
+          ),
         );
 
     } finally {
@@ -1070,23 +1069,40 @@ function adminProntoParaRequisicao() {
 ========================================================= */
 
 function tratarErro(erro) {
-    console.error(erro);
+  console.error(erro);
 
-    if (erro.status === 401) {
-        exibirMensagemAdmin("Sua sessão expirou ou é inválida. Faça login novamente.");
-        fazerLogout();
-        return;
-    }
-
-    if (erro.status === 403) {
-        exibirMensagemAdmin("Você não possui permissão para executar esta ação.");
-        return;
-    }
-
+  if (erro.status === 401) {
     exibirMensagemAdmin(
-        erro.message
-        || "Não foi possível concluir a operação."
+      montarMensagemErroComDiagnostico(
+        "Sua sessão expirou ou é inválida. Faça login novamente.",
+        erro,
+      ),
+      "erro",
     );
+
+    fazerLogout();
+    return;
+  }
+
+  if (erro.status === 403) {
+    exibirMensagemAdmin(
+      montarMensagemErroComDiagnostico(
+        "Você não possui permissão para executar esta ação.",
+        erro,
+      ),
+      "erro",
+    );
+
+    return;
+  }
+
+  exibirMensagemAdmin(
+    montarMensagemErroComDiagnostico(
+      erro.message || "Erro ao carregar dados.",
+      erro,
+    ),
+    "erro",
+  );
 }
 
 
@@ -1120,7 +1136,10 @@ async function realizarLogin(event) {
     } catch (erro) {
         console.error(erro);
 
-        mensagem.innerText = erro.message;
+        mensagem.innerText = montarMensagemErroComDiagnostico(
+          erro.message || "Erro ao fazer login.",
+          erro,
+        );
         mensagem.style.display = "block";
 
     } finally {
@@ -1175,7 +1194,7 @@ function mostrarSecaoAdmin(secaoId) {
     });
 
     carregarDadosDaSecaoAdmin(secaoId);
-    
+
 }
 
 
@@ -1620,8 +1639,10 @@ async function criarChamadoAdmin(event) {
         console.error(erro);
 
         exibirMensagemAdmin(
-            erro.message
-            || "Não foi possível abrir o chamado."
+          montarMensagemErroComDiagnostico(
+            erro.message || "Erro ao carregar dados.",
+            erro,
+          ),
         );
 
     } finally {
@@ -1870,11 +1891,11 @@ function iniciarPainel() {
         const confirmarAlteracao = confirm(
             `Deseja marcar este agendamento como "${traduzirStatusAgendamento(status)}"?`
         );
-    
+
         if (!confirmarAlteracao) {
             return;
         }
-    
+
         try {
             await apiRequest(
                 `/api/${tenantSlugLogado}/admin/agendamentos/${id}/status`,
@@ -1886,11 +1907,11 @@ function iniciarPainel() {
                     },
                 }
             );
-    
+
             exibirMensagemPainel(
                 "Status do agendamento atualizado com sucesso."
             );
-    
+
             await carregarAgendamentos();
             await carregarAgendaVisualDia({
                 forcar: true,
@@ -1901,7 +1922,7 @@ function iniciarPainel() {
                 "secao-agenda",
                 "secao-clientes-crm",
             ]);
-    
+
         } catch (erro) {
             tratarErro(erro);
         }
@@ -2102,9 +2123,9 @@ async function carregarConfiguracaoAtual() {
                 auth: true
             }
         );
-        
+
         configuracoesAdminCache = config || {};
-        
+
         atualizarAvisoBloqueioAdmin(configuracoesAdminCache);
 
         const campoAbertura = document.getElementById("hora-abertura");
@@ -2219,7 +2240,7 @@ async function salvarConfiguracao(opcoes = {}) {
                 configuracaoAtual.instrucoes || ""
             ),
             telefone,
-        
+
             nome_publico: valorCampo(
                 "nome-publico",
                 configuracaoAtual.nome_publico || ""
@@ -2228,7 +2249,7 @@ async function salvarConfiguracao(opcoes = {}) {
                 "logomarca-url",
                 configuracaoAtual.logomarca_url || ""
             ),
-        
+
             whatsapp_comercial: whatsappComercial,
             instagram_url: valorCampo(
                 "instagram-url",
@@ -2250,7 +2271,7 @@ async function salvarConfiguracao(opcoes = {}) {
                 "google-maps-url",
                 configuracaoAtual.google_maps_url || ""
             ),
-        
+
             mensagem_publica: valorCampo(
                 "mensagem-publica",
                 configuracaoAtual.mensagem_publica || ""
@@ -2262,7 +2283,7 @@ async function salvarConfiguracao(opcoes = {}) {
                 "captar-whatsapp-promocoes"
             ),
         };
-        
+
         await apiRequest(
             `/api/${tenantSlugLogado}/configuracoes`,
             {
@@ -2271,7 +2292,7 @@ async function salvarConfiguracao(opcoes = {}) {
                 body: payload,
             }
         );
-        
+
         configuracaoAtual = {
             ...configuracaoAtual,
             ...payload,
@@ -2679,15 +2700,15 @@ async function carregarAgendamentos() {
                 agendamento.profissional,
                 formatarMoeda(agendamento.valor),
             ];
-            
+
             for (const valor of colunas) {
                 const td = document.createElement("td");
                 td.textContent = valor || "-";
                 tr.appendChild(td);
             }
-            
+
             const status = agendamento.status || "confirmado";
-            
+
             const tdStatus = document.createElement("td");
             tdStatus.innerHTML = `
                 <span class="badge-status ${classeStatusAgendamento(status)}">
@@ -2695,12 +2716,12 @@ async function carregarAgendamentos() {
                 </span>
             `;
             tr.appendChild(tdStatus);
-            
+
             const tdAcoes = document.createElement("td");
             const observacaoEscapada = String(
                 agendamento.observacao_interna || ""
             ).replace(/'/g, "\\'");
-            
+
             tdAcoes.innerHTML = `
                 <div class="acoes-agendamento">
                     <button type="button" onclick="atualizarStatusAgendamento(${agendamento.id}, 'confirmado')">
@@ -2754,14 +2775,14 @@ async function carregarAgendamentos() {
                     </div>
                 </div>
             `;
-            
+
             tr.appendChild(tdAcoes);
-            
+
             tbody.appendChild(tr);
 
             if (agendamento.motivo_cancelamento || agendamento.observacao_interna) {
                 const trDetalhes = document.createElement("tr");
-            
+
                 trDetalhes.innerHTML = `
                     <td colspan="9" class="linha-detalhes-agendamento">
                         ${
@@ -2769,7 +2790,7 @@ async function carregarAgendamentos() {
                                 ? `<strong>Cancelamento:</strong> ${agendamento.motivo_cancelamento}`
                                 : ""
                         }
-            
+
                         ${
                             agendamento.observacao_interna
                                 ? `<br><strong>Observação interna:</strong> ${agendamento.observacao_interna}`
@@ -2777,17 +2798,17 @@ async function carregarAgendamentos() {
                         }
                     </td>
                 `;
-            
+
                 tbody.appendChild(trDetalhes);
-            }    
-        
+            }
+
 
             const ticketMedio = total > 0
             ? faturamento / total
             : 0;
 
             agendamentosAdminCache = dados.agendamentos || [];
-            
+
 
             atualizarIndicadorNovosAgendamentos(agendamentosAdminCache);
 
@@ -3906,7 +3927,7 @@ function renderizarAgendaVisualDia(dados) {
     const horariosDaGrade = new Set(
         linhaDoTempo.map((slot) => slot.horario)
     );
-    
+
     for (const slot of linhaDoTempo) {
         const eventosDoHorario = eventos.filter((evento) => {
             return eventoPertenceAoHorario(
@@ -3914,23 +3935,23 @@ function renderizarAgendaVisualDia(dados) {
                 slot.horario
             );
         });
-    
+
         const horarioAtual = slotEstaNoPeriodoAtual(
             slot.horario,
             dados.data
         );
-    
+
         const linha = document.createElement("div");
-    
+
         linha.className = horarioAtual
             ? "agenda-linha-horario horario-atual"
             : "agenda-linha-horario";
-    
+
         linha.innerHTML = `
             <div class="agenda-horario-label ${horarioAtual ? "agora" : ""}">
                 ${slot.horario}
             </div>
-    
+
             <div class="agenda-eventos-slot">
                 ${
                     eventosDoHorario.length
@@ -3941,41 +3962,41 @@ function renderizarAgendaVisualDia(dados) {
                 }
             </div>
         `;
-    
+
         container.appendChild(linha);
     }
-    
+
     const eventosForaDaGrade = eventos.filter((evento) => {
         const horarioEvento = String(
             evento.horario
             || evento.horario_inicio
             || ""
         );
-    
+
         return (
             horarioEvento
             && !horariosDaGrade.has(horarioEvento)
         );
     });
-    
+
     if (eventosForaDaGrade.length) {
         const blocoForaDaGrade = document.createElement("div");
-    
+
         blocoForaDaGrade.className = "agenda-eventos-fora-grade";
-    
+
         blocoForaDaGrade.innerHTML = `
             <h4>Eventos fora da grade de horários</h4>
-    
+
             ${
                 eventosForaDaGrade
                     .map(renderizarEventoAgendaVisual)
                     .join("")
             }
         `;
-    
+
         container.appendChild(blocoForaDaGrade);
     }
-    
+
     atualizarTextoUltimaAtualizacaoAgenda();
 }
 
@@ -3991,7 +4012,7 @@ async function carregarAgendaVisualDia(opcoes = {}) {
     }
 
     agendaVisualEmCarregamento = true;
-    
+
     const container = document.getElementById("agenda-visual-lista");
 
     if (!container) {

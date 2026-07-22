@@ -1,4 +1,4 @@
-const CACHE_NAME = "gesto-app-pwa-v4";
+const CACHE_NAME = "gesto-app-pwa-v5";
 
 const APP_SHELL = [
   "./",
@@ -13,6 +13,7 @@ const APP_SHELL = [
   "./js/auth.js",
   "./js/admin.js",
   "./js/saas.js",
+  "./js/diagnostico.js",
   "./js/agendamento.js",
   "./css/admin.css",
   "./css/saas.css",

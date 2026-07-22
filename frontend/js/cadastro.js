@@ -65,7 +65,50 @@
     mensagem.textContent = texto;
     mensagem.className = `cadastro-publico-mensagem ${tipo}`;
     mensagem.style.display = "block";
-  }
+    }
+
+    function planoEhPago(plano) {
+      return ["mensal", "trimestral", "anual"].includes(plano);
+    }
+
+    async function iniciarCheckoutAposCadastro(respostaCadastro) {
+      const plano = respostaCadastro?.plano_codigo || "teste";
+      const tenantSlug = respostaCadastro?.tenant_slug;
+      const empresaId = respostaCadastro?.empresa_id;
+
+      if (!planoEhPago(plano)) {
+        window.location.href = `./admin.html?tenant=${encodeURIComponent(tenantSlug)}`;
+
+        return;
+      }
+
+      if (!tenantSlug || !empresaId) {
+        window.location.href = `./admin.html?tenant=${encodeURIComponent(tenantSlug)}&pagamento=pendente`;
+
+        return;
+      }
+
+      const respostaCheckout = await apiRequest(
+        `/api/${tenantSlug}/admin/assinaturas/stripe/checkout`,
+        {
+          method: "POST",
+          auth: true,
+          body: {
+            barbearia_id: empresaId,
+            plano_codigo: plano,
+          },
+        },
+      );
+
+      if (!respostaCheckout?.checkout_url) {
+        window.location.href = `./admin.html?tenant=${encodeURIComponent(tenantSlug)}&pagamento=pendente`;
+
+        return;
+      }
+
+      window.location.href = respostaCheckout.checkout_url;
+    }
+
 
   form.addEventListener("submit", async function (evento) {
     evento.preventDefault();
@@ -111,12 +154,33 @@
       localStorage.setItem("gesto_tenant", resposta.tenant_slug);
 
       exibirMensagemCadastro(
-        "Conta criada com sucesso. Redirecionando para o painel...",
+        planoEhPago(resposta.plano_codigo)
+          ? "Conta criada com sucesso. Abrindo pagamento seguro..."
+          : "Conta criada com sucesso. Redirecionando para o painel...",
         "sucesso",
       );
 
-      setTimeout(function () {
-        window.location.href = `./admin.html?tenant=${encodeURIComponent(resposta.tenant_slug)}`;
+      setTimeout(async function () {
+        try {
+          await iniciarCheckoutAposCadastro(resposta);
+        } catch (erroCheckout) {
+          console.error(
+            "Erro ao iniciar checkout após cadastro:",
+            erroCheckout,
+          );
+
+          exibirMensagemCadastro(
+            montarMensagemErroComDiagnostico(
+              "Conta criada, mas não foi possível abrir o pagamento. Você será redirecionado para o painel.",
+              erroCheckout,
+            ),
+            "erro",
+          );
+
+          setTimeout(function () {
+            window.location.href = `./admin.html?tenant=${encodeURIComponent(resposta.tenant_slug)}&pagamento=pendente`;
+          }, 1800);
+        }
       }, 900);
     } catch (erro) {
       console.error("Erro no cadastro público:", erro);

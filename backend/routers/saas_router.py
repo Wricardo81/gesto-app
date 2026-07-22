@@ -535,21 +535,33 @@ def cadastrar_empresa_publica(
 
     access_token = criar_token_acesso(
         {
-            "sub": barbearia.email,
+            "sub": barbearia.slug,
             "email": barbearia.email,
+
             "tenant": barbearia.slug,
             "tenant_slug": barbearia.slug,
             "barbearia_slug": barbearia.slug,
             "slug": barbearia.slug,
+
+            "tenant_id": barbearia.id,
+            "barbearia_id": barbearia.id,
+            "empresa_id": barbearia.id,
+
             "role": "tenant_admin",
+            "tipo": "tenant_admin",
+            "tipo_usuario": "tenant_admin",
+            "perfil": "tenant_admin",
         }
     )
 
     return {
         "mensagem": "Empresa cadastrada com sucesso.",
+        "empresa_id": barbearia.id,
         "tenant_slug": barbearia.slug,
         "nome": barbearia.nome,
         "plano_codigo": plano_codigo,
+        "trial_dias": settings.trial_dias_padrao,
+        "trial_limite_agendamentos": settings.trial_limite_agendamentos,
         "access_token": access_token,
         "token_type": "bearer",
         "admin_url": f"/frontend/admin.html?tenant={barbearia.slug}",

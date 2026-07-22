@@ -20,13 +20,15 @@
   window.addEventListener("beforeinstallprompt", function (evento) {
     evento.preventDefault();
 
-    window.gestoAppInstallPrompt = evento;
+    window.bitsAgendaInstallPrompt = evento;
 
-    document.dispatchEvent(new CustomEvent("gesto:pwa-instalacao-disponivel"));
+    document.dispatchEvent(
+      new CustomEvent("bitsagenda:pwa-instalacao-disponivel"),
+    );
   });
 
-  window.instalarGestoApp = async function () {
-    const promptInstalacao = window.gestoAppInstallPrompt;
+  window.instalarBitsAgenda = async function () {
+    const promptInstalacao = window.bitsAgendaInstallPrompt;
 
     if (!promptInstalacao) {
       return {
@@ -39,11 +41,13 @@
 
     const escolha = await promptInstalacao.userChoice;
 
-    window.gestoAppInstallPrompt = null;
+    window.bitsAgendaInstallPrompt = null;
 
     return {
       disponivel: true,
       resultado: escolha.outcome,
     };
   };
+
+  window.instalarGestoApp = window.instalarBitsAgenda;
 })();

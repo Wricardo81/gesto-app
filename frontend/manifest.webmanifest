@@ -1,8 +1,8 @@
 {
   "id": "/frontend/",
-  "name": "Gesto App - Gestão de Agendamentos",
-  "short_name": "Gesto App",
-  "description": "Sistema de agendamento online para negócios que trabalham com horário marcado.",
+  "name": "BitsAgenda OS - Gestão de Agendamentos",
+"short_name": "BitsAgenda",
+"description": "Agenda, atendimento e gestão para negócios com horário marcado.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -37,14 +37,14 @@
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Painel do Gesto App em desktop"
+      "label": "Painel do BitsAgenda OS em desktop"
     },
     {
       "src": "./screenshots/mobile-narrow.png",
       "sizes": "540x720",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Gesto App em celular"
+      "label": "BitsAgenda OS em celular"
     }
   ]
 }

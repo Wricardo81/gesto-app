@@ -1673,3 +1673,291 @@ small {
         content: "...";
     }
 }
+
+/* HOTFIX DESKTOP - SaaS */
+@media (min-width: 1100px) {
+  /* evita estouro horizontal geral */
+  html, body {
+    overflow-x: hidden;
+  }
+
+  /* containers principais */
+  .conteudo-principal,
+  .conteudo-saas,
+  .painel-saas,
+  .dashboard-saas,
+  .aba-conteudo,
+  .secao-dashboard,
+  .secao-visao-geral {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  /* grids de cards/resumos */
+  .grid,
+  .grid-cards,
+  .grid-metricas,
+  .cards-metricas,
+  .cards-resumo,
+  .resumo-grid,
+  .blocos-dashboard,
+  .metricas-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+    gap: 16px !important;
+    align-items: start !important;
+  }
+
+  /* filhos dos grids */
+  .grid > *,
+  .grid-cards > *,
+  .grid-metricas > *,
+  .cards-metricas > *,
+  .cards-resumo > *,
+  .resumo-grid > *,
+  .blocos-dashboard > *,
+  .metricas-grid > * {
+    min-width: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  /* painéis com listas/resumos */
+  .resumo-empresa,
+  .lista-resumo,
+  .painel-resumo,
+  .painel-alertas,
+  .painel-ranking,
+  .ranking-agendamentos,
+  .atencao-necessaria {
+    overflow-x: hidden !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  /* cards grandes de exportação */
+  .acoes-exportacao button,
+  .bloco-exportacao,
+  .card-exportacao {
+    width: 100% !important;
+    min-height: 110px !important;
+    border-radius: 28px !important;
+  }
+}
+
+@media (min-width: 1100px) {
+  .dashboard-saas,
+  .painel-saas,
+  .conteudo-saas,
+  .secao-saas,
+  .aba-conteudo {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .cards-resumo,
+  .metricas-grid,
+  .grid-metricas,
+  .grid-resumo,
+  .resumo-grid,
+  .lista-resumo,
+  .blocos-dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  .card,
+  .card-metrica,
+  .bloco-metrica,
+  .bloco-resumo,
+  .resumo-card {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .tabela-wrapper,
+  .lista-wrapper,
+  .painel-lista {
+    overflow-x: auto;
+  }
+}
+
+/* =========================================================
+   Sprint 3.48 - Correção real do Dashboard SaaS Master
+   ========================================================= */
+
+#secao-saas-dashboard .dashboard-saas {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 18px;
+    align-items: start;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* Cards principais do topo */
+#secao-saas-dashboard .dashboard-saas > .card-metrica-saas {
+    grid-column: span 3;
+    min-width: 0;
+    min-height: 132px;
+    padding: 22px;
+    border-radius: 22px;
+}
+
+/* Botões CSV: deixam de virar cards gigantes/círculos */
+#secao-saas-dashboard .acoes-relatorios-saas {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    min-width: 0;
+}
+
+#secao-saas-dashboard .acoes-relatorios-saas button {
+    width: auto;
+    min-width: 190px;
+    max-width: 260px;
+    min-height: 42px;
+    padding: 10px 16px;
+    border-radius: 999px;
+}
+
+/* Métricas secundárias */
+#secao-saas-dashboard .metricas-dashboard-saas {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
+    gap: 14px;
+    width: 100%;
+    min-width: 0;
+    overflow: visible;
+}
+
+#secao-saas-dashboard .metrica-saas-card {
+    width: 100%;
+    min-width: 0;
+    min-height: 118px;
+    padding: 18px;
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+#secao-saas-dashboard .metrica-saas-card span {
+    display: block;
+    max-width: 100%;
+    font-size: 0.9rem;
+    line-height: 1.25;
+    word-break: normal;
+}
+
+#secao-saas-dashboard .metrica-saas-card strong {
+    display: block;
+    margin-top: 8px;
+    font-size: clamp(1.75rem, 3vw, 2.45rem);
+    line-height: 1.05;
+    word-break: normal;
+}
+
+/* Resumo por empresa */
+#secao-saas-dashboard .painel-tabela-saas {
+    grid-column: span 5;
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* Evita barra horizontal dentro do resumo */
+#tabela-resumo-empresas-dashboard-saas {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+#tabela-resumo-empresas-dashboard-saas * {
+    max-width: 100%;
+    word-break: break-word;
+}
+
+/* Painéis operacionais: alertas + ranking */
+#secao-saas-dashboard .grid-operacional-saas {
+    grid-column: span 7;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+}
+
+#secao-saas-dashboard .painel-operacional-saas {
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* Cards internos dos alertas/ranking */
+#alertas-operacionais-saas,
+#ranking-agendamentos-saas {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+#alertas-operacionais-saas *,
+#ranking-agendamentos-saas * {
+    max-width: 100%;
+    word-break: break-word;
+}
+
+/* Tablet */
+@media (max-width: 1180px) {
+    #secao-saas-dashboard .dashboard-saas {
+        grid-template-columns: repeat(8, minmax(0, 1fr));
+    }
+
+    #secao-saas-dashboard .dashboard-saas > .card-metrica-saas {
+        grid-column: span 4;
+    }
+
+    #secao-saas-dashboard .metricas-dashboard-saas {
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+    }
+
+    #secao-saas-dashboard .painel-tabela-saas,
+    #secao-saas-dashboard .grid-operacional-saas {
+        grid-column: 1 / -1;
+    }
+}
+
+/* Celular */
+@media (max-width: 720px) {
+    #secao-saas-dashboard .dashboard-saas {
+        grid-template-columns: 1fr;
+    }
+
+    #secao-saas-dashboard .dashboard-saas > .card-metrica-saas,
+    #secao-saas-dashboard .acoes-relatorios-saas,
+    #secao-saas-dashboard .metricas-dashboard-saas,
+    #secao-saas-dashboard .painel-tabela-saas,
+    #secao-saas-dashboard .grid-operacional-saas {
+        grid-column: 1 / -1;
+    }
+
+    #secao-saas-dashboard .metricas-dashboard-saas,
+    #secao-saas-dashboard .grid-operacional-saas {
+        grid-template-columns: 1fr;
+    }
+
+    #secao-saas-dashboard .acoes-relatorios-saas button {
+        width: 100%;
+        max-width: 100%;
+    }
+}

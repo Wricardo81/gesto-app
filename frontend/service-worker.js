@@ -1,4 +1,4 @@
-const CACHE_NAME = "gesto-app-pwa-v1";
+const CACHE_NAME = "gesto-app-pwa-v3";
 
 const APP_SHELL = [
   "./",
@@ -18,9 +18,9 @@ const APP_SHELL = [
   "./css/saas.css",
   "./css/landing.css",
   "./css/pwa.css",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
-  "./icons/icon-maskable-512.png",
+  "./icons/bitsagenda-icon-192.png",
+  "./icons/bitsagenda-icon-512.png",
+  "./icons/bitsagenda-maskable-512.png",
 ];
 
 function montarUrl(caminho) {

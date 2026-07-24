@@ -2287,3 +2287,287 @@
         min-width: 0;
     }
 }
+
+/* =========================================================
+   ESTADOS VAZIOS INTELIGENTES
+========================================================= */
+
+.estado-vazio-inteligente-admin {
+    display: grid;
+    grid-template-columns: 54px minmax(0, 1fr);
+    gap: 16px;
+    align-items: center;
+    width: 100%;
+    padding: 22px;
+    border-radius: 24px;
+    border: 1px dashed rgba(100, 255, 218, 0.28);
+    background:
+        radial-gradient(circle at top left, rgba(100, 255, 218, 0.10), transparent 34%),
+        rgba(15, 23, 42, 0.66);
+    text-align: left;
+}
+
+.estado-vazio-inteligente-icone {
+    display: grid;
+    place-items: center;
+    width: 54px;
+    height: 54px;
+    border-radius: 18px;
+    border: 1px solid rgba(100, 255, 218, 0.22);
+    background: rgba(100, 255, 218, 0.10);
+    color: #64FFDA;
+    font-size: 1.35rem;
+    font-weight: 900;
+}
+
+.estado-vazio-inteligente-admin h3 {
+    margin: 0 0 6px;
+    color: #ffffff;
+    font-size: 1rem;
+}
+
+.estado-vazio-inteligente-admin p {
+    max-width: 620px;
+    margin: 0 0 14px;
+    color: rgba(226, 232, 240, 0.70);
+    line-height: 1.5;
+}
+
+.estado-vazio-admin-botao {
+    width: fit-content;
+}
+
+@media (max-width: 760px) {
+    .estado-vazio-inteligente-admin {
+        grid-template-columns: 1fr;
+        text-align: center;
+        justify-items: center;
+    }
+
+    .estado-vazio-inteligente-admin p {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .estado-vazio-admin-botao {
+        width: 100%;
+    }
+}
+
+/* =========================================================
+   BOTÃO FLUTUANTE DE AVISOS — CORREÇÃO FINAL
+========================================================= */
+
+#avisos-admin-flutuante {
+    position: fixed !important;
+    right: 22px !important;
+    bottom: 92px !important;
+    z-index: 120 !important;
+}
+
+#avisos-admin-flutuante[style*="display: block"],
+#avisos-admin-flutuante.ativo,
+#avisos-admin-flutuante.visivel {
+    display: block !important;
+}
+
+#avisos-admin-flutuante .avisos-admin-botao {
+    position: relative !important;
+    display: grid !important;
+    place-items: center !important;
+
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    max-width: 46px !important;
+    min-height: 46px !important;
+    max-height: 46px !important;
+
+    padding: 0 !important;
+    margin: 0 !important;
+
+    border-radius: 999px !important;
+    border: 1px solid rgba(100, 255, 218, 0.28) !important;
+
+    background:
+        radial-gradient(circle at 35% 25%, rgba(100, 255, 218, 0.26), transparent 42%),
+        rgba(10, 25, 47, 0.96) !important;
+
+    color: #64FFDA !important;
+
+    box-shadow:
+        0 14px 34px rgba(0, 0, 0, 0.36),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.04) !important;
+
+    cursor: pointer !important;
+    overflow: visible !important;
+
+    font-size: 0 !important;
+    line-height: 1 !important;
+}
+
+#avisos-admin-flutuante .avisos-admin-botao > span[aria-hidden="true"] {
+    display: grid !important;
+    place-items: center !important;
+
+    width: 18px !important;
+    height: 18px !important;
+
+    color: #64FFDA !important;
+    font-size: 0.95rem !important;
+    font-weight: 950 !important;
+    font-family: Arial, sans-serif !important;
+    line-height: 1 !important;
+}
+
+#avisos-admin-contador {
+    position: absolute !important;
+    top: -7px !important;
+    right: -7px !important;
+
+    display: grid !important;
+    place-items: center !important;
+
+    min-width: 19px !important;
+    width: auto !important;
+    height: 19px !important;
+
+    padding: 0 5px !important;
+
+    border-radius: 999px !important;
+    border: 2px solid #0A192F !important;
+
+    background: #64FFDA !important;
+    color: #0A192F !important;
+
+    font-size: 0.67rem !important;
+    font-weight: 950 !important;
+    line-height: 1 !important;
+}
+
+#avisos-admin-caixa {
+    position: absolute !important;
+    right: 0 !important;
+    bottom: 58px !important;
+
+    width: min(360px, calc(100vw - 32px)) !important;
+
+    border-radius: 22px !important;
+    border: 1px solid rgba(100, 255, 218, 0.20) !important;
+
+    background: rgba(10, 25, 47, 0.98) !important;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42) !important;
+
+    overflow: hidden !important;
+}
+
+@media (max-width: 760px) {
+    #avisos-admin-flutuante {
+        right: 16px !important;
+        bottom: 78px !important;
+    }
+
+    #avisos-admin-flutuante .avisos-admin-botao {
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        max-width: 44px !important;
+        min-height: 44px !important;
+        max-height: 44px !important;
+    }
+
+    #avisos-admin-caixa {
+        right: 0 !important;
+        bottom: 56px !important;
+        width: min(340px, calc(100vw - 32px)) !important;
+    }
+}
+
+/* =========================================================
+   ONBOARDING ADMIN — MODO COMPACTO
+========================================================= */
+
+.onboarding-admin-card {
+    padding: 18px !important;
+}
+
+.onboarding-admin-header {
+    margin-bottom: 14px !important;
+}
+
+.onboarding-admin-header h3 {
+    font-size: 1.05rem !important;
+    margin-bottom: 4px !important;
+}
+
+.onboarding-admin-header p {
+    font-size: 0.84rem !important;
+}
+
+.onboarding-admin-compacto {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: center;
+    padding: 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(100, 255, 218, 0.18);
+    background: rgba(15, 23, 42, 0.68);
+}
+
+.onboarding-admin-compacto-info {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.onboarding-admin-compacto-info strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #ffffff;
+    font-size: 0.94rem;
+}
+
+.onboarding-admin-compacto-info p {
+    margin: 0;
+    color: rgba(226, 232, 240, 0.68);
+    font-size: 0.84rem;
+    line-height: 1.45;
+}
+
+.onboarding-admin-compacto-acoes {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.btn-link-admin {
+    border: none;
+    background: transparent;
+    color: rgba(226, 232, 240, 0.68);
+    font-size: 0.82rem;
+    font-weight: 800;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.btn-link-admin:hover {
+    color: #64FFDA;
+}
+
+@media (max-width: 760px) {
+    .onboarding-admin-compacto {
+        grid-template-columns: 1fr;
+    }
+
+    .onboarding-admin-compacto-acoes {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .onboarding-admin-compacto-acoes .btn-onboarding-admin {
+        width: 100%;
+    }
+}

@@ -1,4 +1,4 @@
-const CACHE_NAME = "gesto-app-pwa-v21";
+const CACHE_NAME = "bitsagenda-os-pwa-v31";
 
 const APP_SHELL = [
   "./",

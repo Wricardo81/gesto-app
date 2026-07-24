@@ -507,10 +507,11 @@ def cadastrar_empresa_publica(
         "slug": slug,
         "email": email_normalizado,
         "senha_hash": senha_hash,
+        "plano_ativo": True,
         "status_assinatura": "trial",
         "status_pagamento": "trial",
         "plano_codigo": plano_codigo,
-        "plano_nome": plano_codigo.capitalize(),
+        "plano_nome": "Teste" if plano_codigo == "teste" else plano_codigo.capitalize(),
         "plano_periodicidade": plano_codigo,
         "responsavel": dados.responsavel.strip(),
         "telefone": dados.telefone.strip(),
@@ -532,6 +533,7 @@ def cadastrar_empresa_publica(
     db.refresh(barbearia)
 
     garantir_periodo_trial(db, barbearia)
+    db.refresh(barbearia)
 
     access_token = criar_token_acesso(
         {
@@ -728,16 +730,23 @@ def registrar_nova_barbearia(
             dados.senha
         ),
         plano_ativo=True,
-        plano_nome="Profissional",
+        plano_nome="Teste",
         valor_mensal=99.0,
-        status_pagamento="teste",
+        status_pagamento="trial",
         vencimento_plano=date.today() + timedelta(days=7),
         dias_tolerancia=3,
-        )
+        status_assinatura="trial",
+        plano_codigo="teste",
+        plano_periodicidade="teste",
+        gateway_pagamento=None,
+    )
 
     try:
         db.add(nova_barbearia)
         db.commit()
+        db.refresh(nova_barbearia)
+
+        garantir_periodo_trial(db, nova_barbearia)
         db.refresh(nova_barbearia)
 
     except IntegrityError:
@@ -746,7 +755,7 @@ def registrar_nova_barbearia(
         raise HTTPException(
             status_code=409,
             detail="Esse link ou e-mail já estão em uso.",
-        )
+    )
 
     return serializar_barbearia_saas(
         nova_barbearia

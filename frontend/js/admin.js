@@ -45,6 +45,94 @@ const TEMPO_CACHE_ONBOARDING_ADMIN_MS = 12000;
    UTILITÁRIOS
 ========================================================= */
 
+function renderizarEstadoVazioEmElementoAdmin(elementoId, htmlEstadoVazio) {
+  const elemento = document.getElementById(elementoId);
+
+  if (!elemento) {
+    console.warn(`Elemento não encontrado para estado vazio: ${elementoId}`);
+    return;
+  }
+
+  elemento.innerHTML = htmlEstadoVazio;
+}
+
+function renderizarEstadoVazioEmTabelaAdmin(
+  tabelaId,
+  htmlEstadoVazio,
+  colspan = 8,
+) {
+  const tabela = document.getElementById(tabelaId);
+
+  if (!tabela) {
+    console.warn(`Tabela não encontrada para estado vazio: ${tabelaId}`);
+    return;
+  }
+
+  tabela.innerHTML = `
+        <tr>
+            <td colspan="${colspan}">
+                ${htmlEstadoVazio}
+            </td>
+        </tr>
+    `;
+}
+
+function criarEstadoVazioAgendamentosAdmin() {
+  return `
+        <div class="estado-vazio-inteligente-admin">
+            <div class="estado-vazio-inteligente-icone">◴</div>
+
+            <div>
+                <h3>Nenhum agendamento recebido ainda</h3>
+                <p>Copie o link público e envie para seus clientes pelo WhatsApp, Instagram ou site.</p>
+
+                <button
+                    type="button"
+                    class="btn-primary estado-vazio-admin-botao"
+                    onclick="copiarLinkPublicoAdmin()"
+                >
+                    Copiar link público
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+
+function criarEstadoVazioAdmin({
+  icone = "◇",
+  titulo = "Nenhum registro encontrado",
+  descricao = "Cadastre o primeiro item para começar.",
+  textoBotao = "",
+  secaoDestino = "",
+}) {
+  const botao =
+    textoBotao && secaoDestino
+      ? `
+            <button
+                type="button"
+                class="btn-primary estado-vazio-admin-botao"
+                onclick="mostrarSecaoAdmin('${secaoDestino}')"
+            >
+                ${textoBotao}
+            </button>
+        `
+      : "";
+
+  return `
+        <div class="estado-vazio-inteligente-admin">
+            <div class="estado-vazio-inteligente-icone">${icone}</div>
+
+            <div>
+                <h3>${titulo}</h3>
+                <p>${descricao}</p>
+                ${botao}
+            </div>
+        </div>
+    `;
+}
+
+
 function limparCachesAdminEmMemoria() {
     avisosAdminCache = [];
     chamadosAdminCache = [];
@@ -1427,18 +1515,40 @@ function montarMensagemWhatsAppAgendamento(agendamento, tipo = "confirmacao") {
 }
 
 
+function montarMensagemSuporteAdmin(tipo = "erro") {
+  const tipoTexto = {
+    erro: "erro",
+    bug: "bug",
+    sugestao: "sugestão",
+    elogio: "elogio",
+    outro: "mensagem",
+  };
+
+  const tenant =
+    tenantSlugLogado ||
+    localStorage.getItem("gesto_tenant") ||
+    "não identificado";
+  const pagina = window.location.href;
+  const tipoFormatado = tipoTexto[tipo] || tipoTexto.outro;
+
+  return (
+    `Olá, Engenharia de Bits!\n\n` +
+    `Quero enviar um(a) ${tipoFormatado} sobre o BitsAgenda OS.\n\n` +
+    `Tenant: ${tenant}\n` +
+    `Página: ${pagina}\n\n` +
+    `Descrição:\n`
+  );
+}
+
+
 function abrirSuporteWhatsAppAdmin(tipo) {
-    const mensagem = montarMensagemSuporteAdmin(tipo);
+  const mensagem = montarMensagemSuporteAdmin(tipo);
 
-    const url =
-        `https://wa.me/${WHATSAPP_SUPORTE_ADMIN}`
-        + `?text=${encodeURIComponent(mensagem)}`;
+  const url =
+    `https://wa.me/${WHATSAPP_SUPORTE_ADMIN}` +
+    `?text=${encodeURIComponent(mensagem)}`;
 
-    window.open(
-        url,
-        "_blank",
-        "noopener,noreferrer"
-    );
+  window.open(url, "_blank", "noopener,noreferrer");
 }
 
 
@@ -1825,11 +1935,15 @@ function renderizarChamadosAdmin(chamados) {
         : [];
 
     if (!chamadosAdminCache.length) {
-        container.innerHTML = `
-            <p class="horarios-vazios">
-                Nenhum chamado aberto ainda.
-            </p>
-        `;
+
+        container.innerHTML = criarEstadoVazioAdmin({
+          icone: "◇",
+          titulo: "Nenhum chamado aberto ainda",
+          descricao:
+            "Quando você abrir um chamado de suporte, ele aparecerá aqui.",
+          textoBotao: "",
+          secaoDestino: "",
+        });
 
         return;
     }
@@ -1912,7 +2026,11 @@ async function carregarChamadosAdmin() {
     const container = document.getElementById("lista-chamados-admin");
 
     if (container) {
-        container.innerHTML = "Carregando chamados...";
+        container.innerHTML = `
+            <p class="horarios-vazios">
+                Carregando chamados...
+            </p>
+        `;
     }
 
     try {
@@ -1932,11 +2050,13 @@ async function carregarChamadosAdmin() {
         );
 
         if (container) {
-            container.innerHTML = `
-                <p class="horarios-vazios">
-                    Não foi possível carregar os chamados.
-                </p>
-            `;
+            container.innerHTML = criarEstadoVazioAdmin({
+              icone: "!",
+              titulo: "Não foi possível carregar os chamados",
+              descricao: "Tente novamente em alguns instantes.",
+              textoBotao: "",
+              secaoDestino: "",
+            });
         }
     }
 }
@@ -1994,9 +2114,17 @@ function copiarLinkPublicoAdmin() {
     });
 }
 
+window.copiarLinkPublicoAdmin = copiarLinkPublicoAdmin;
+
 function irParaSecaoAdminOnboarding(secaoId) {
   if (typeof mostrarSecaoAdmin === "function") {
     mostrarSecaoAdmin(secaoId);
+
+    setTimeout(function () {
+      ultimoCarregamentoOnboardingAdmin = 0;
+      carregarOnboardingAdmin();
+    }, 700);
+
     return;
   }
 
@@ -2008,6 +2136,11 @@ function irParaSecaoAdminOnboarding(secaoId) {
       block: "start",
     });
   }
+
+  setTimeout(function () {
+    ultimoCarregamentoOnboardingAdmin = 0;
+    carregarOnboardingAdmin();
+  }, 700);
 }
 
 
@@ -2081,28 +2214,33 @@ function montarChecklistOnboardingAdmin(resumo) {
   const config = resumo?.config || {};
 
   const possuiDadosBasicos = Boolean(
-    config?.nome ||
-    config?.nome_estabelecimento ||
-    config?.telefone ||
-    config?.whatsapp ||
-    config?.endereco ||
-    config?.mensagem_boas_vindas,
+    String(
+      config?.nome_publico ||
+        config?.nome_empresa ||
+        config?.nome ||
+        config?.nome_estabelecimento ||
+        "",
+    ).trim(),
   );
 
   const possuiServicos = Number(resumo?.totalServicos || 0) > 0;
   const possuiProfissionais = Number(resumo?.totalProfissionais || 0) > 0;
   const possuiAgendamentos = Number(resumo?.totalAgendamentos || 0) > 0;
 
-  const possuiConfiguracoes = Boolean(config);
+  const possuiConfiguracoes = Boolean(
+        config &&
+        Number(config?.abertura || 0) >= 0 &&
+        Number(config?.fechamento || 0) > 0,
+    );
 
   return [
     {
-      id: "dados",
-      titulo: "Conferir dados do estabelecimento",
+      id: "horarios",
+      titulo: "Conferir horários de atendimento",
       descricao:
-        "Revise nome, telefone, endereço, mensagem e informações básicas.",
-      concluido: possuiDadosBasicos,
-      acaoTexto: "Abrir configurações",
+        "Garanta que os horários estão corretos antes de divulgar o link.",
+      concluido: possuiDadosBasicos && possuiConfiguracoes,
+      acaoTexto: "Conferir horários",
       acao: function () {
         irParaSecaoAdminOnboarding("secao-configuracoes");
       },
@@ -2143,7 +2281,7 @@ function montarChecklistOnboardingAdmin(resumo) {
       id: "link",
       titulo: "Copiar link público de agendamento",
       descricao: "Envie o link para clientes pelo WhatsApp, Instagram ou site.",
-      concluido: false,
+      concluido: Boolean(tenantSlugLogado && tenantSlugLogado.trim()),
       acaoTexto: "Copiar link",
       acao: copiarLinkPublicoAdmin,
     },
@@ -2161,6 +2299,22 @@ function montarChecklistOnboardingAdmin(resumo) {
   ];
 }
 
+function obterChaveOnboardingDispensadoAdmin() {
+  return `bitsagenda_onboarding_dispensado_${tenantSlugLogado || "sem_tenant"}`;
+}
+
+function dispensarOnboardingAdmin() {
+  localStorage.setItem(obterChaveOnboardingDispensadoAdmin(), "sim");
+
+  const card = document.getElementById("card-onboarding-admin");
+
+  if (card) {
+    card.style.display = "none";
+  }
+
+  exibirMensagemAdmin("Checklist de primeiros passos dispensado.");
+}
+
 function renderizarOnboardingAdminComResumo(resumo) {
   const card = document.getElementById("card-onboarding-admin");
   const lista = document.getElementById("onboarding-admin-lista");
@@ -2170,44 +2324,63 @@ function renderizarOnboardingAdminComResumo(resumo) {
     return;
   }
 
+//   const dispensado = localStorage.getItem(
+//     obterChaveOnboardingDispensadoAdmin(),
+//   );
+
+//   if (dispensado === "sim") {
+//     card.style.display = "none";
+//     return;
+//   }
+
   const itens = montarChecklistOnboardingAdmin(resumo);
 
   const totalConcluido = itens.filter(function (item) {
     return item.concluido;
   }).length;
 
+  const itensPendentes = itens.filter(function (item) {
+    return !item.concluido;
+  });
+
+  if (!itensPendentes.length) {
+    card.style.display = "none";
+    return;
+  }
+
+  card.style.display = "block";
+
   progresso.textContent =
     totalConcluido === 1
       ? `${totalConcluido}/${itens.length} concluído`
       : `${totalConcluido}/${itens.length} concluídos`;
 
-  lista.innerHTML = itens
-    .map(function (item, index) {
-      const status = item.concluido ? "✓" : index + 1;
-      const classe = item.concluido ? "concluido" : "";
+  const proximoItem = itensPendentes[0];
 
-      return `
-            <div class="onboarding-admin-item ${classe}">
-                <div class="onboarding-admin-item-info">
-                    <span class="onboarding-admin-status">${status}</span>
+  lista.innerHTML = `
+        <div class="onboarding-admin-compacto">
+            <div class="onboarding-admin-compacto-info">
+                <span class="onboarding-admin-status">${totalConcluido + 1}</span>
 
-                    <div>
-                        <h4>${item.titulo}</h4>
-                        <p>${item.descricao}</p>
-                    </div>
+                <div>
+                    <strong>Próximo passo: ${proximoItem.titulo}</strong>
+                    <p>${proximoItem.descricao}</p>
                 </div>
+            </div>
 
+            <div class="onboarding-admin-compacto-acoes">
                 <button
                     type="button"
                     class="btn-secondary btn-onboarding-admin"
-                    data-onboarding-id="${item.id}"
+                    data-onboarding-id="${proximoItem.id}"
                 >
-                    ${item.acaoTexto}
+                    ${proximoItem.acaoTexto}
                 </button>
+
+
             </div>
-        `;
-    })
-    .join("");
+        </div>
+    `;
 
   document.querySelectorAll("[data-onboarding-id]").forEach(function (botao) {
     botao.addEventListener("click", function () {
@@ -2229,12 +2402,12 @@ async function carregarOnboardingAdmin() {
     return;
   }
 
-  if (
-    Date.now() - ultimoCarregamentoOnboardingAdmin <
-    TEMPO_CACHE_ONBOARDING_ADMIN_MS
-  ) {
-    return;
-  }
+//   if (
+//     Date.now() - ultimoCarregamentoOnboardingAdmin <
+//     TEMPO_CACHE_ONBOARDING_ADMIN_MS
+//   ) {
+//     return;
+//   }
 
   onboardingAdminCarregando = true;
 
@@ -2736,9 +2909,10 @@ async function salvarConfiguracao(opcoes = {}) {
         atualizarPreviewMarca();
 
         if (!opcoes.silencioso) {
-            exibirMensagemPainel(
-                "Configurações salvas com sucesso."
-            );
+            exibirMensagemPainel("Configurações salvas com sucesso.");
+
+            ultimoCarregamentoOnboardingAdmin = 0;
+            await carregarOnboardingAdmin();
         }
 
     } catch (erro) {
@@ -2766,11 +2940,14 @@ async function carregarEquipe() {
         area.innerHTML = "";
 
         if (!equipe.length) {
-            area.innerHTML = `
-                <p class="mensagem-vazia">
-                    Nenhum profissional cadastrado.
-                </p>
-            `;
+            area.innerHTML = criarEstadoVazioAdmin({
+              icone: "◎",
+              titulo: "Nenhum profissional cadastrado ainda",
+              descricao:
+                "Adicione pelo menos um profissional para que os clientes possam escolher quem irá atender.",
+              textoBotao: "Cadastrar profissional",
+              secaoDestino: "secao-profissionais",
+            });
 
             return;
         }
@@ -2822,6 +2999,7 @@ async function salvarProfissional() {
         input.value = "";
 
         await carregarEquipe();
+        ultimoCarregamentoOnboardingAdmin = 0;
         await carregarOnboardingAdmin();
 
         invalidarSecoesAdmin([
@@ -2886,11 +3064,14 @@ async function carregarServicos() {
         area.innerHTML = "";
 
         if (!servicos.length) {
-            area.innerHTML = `
-                <p class="mensagem-vazia">
-                    Nenhum serviço cadastrado.
-                </p>
-            `;
+            area.innerHTML = criarEstadoVazioAdmin({
+              icone: "✦",
+              titulo: "Nenhum serviço cadastrado ainda",
+              descricao:
+                "Cadastre serviços com preço e duração para liberar sua agenda pública.",
+              textoBotao: "Cadastrar primeiro serviço",
+              secaoDestino: "secao-servicos",
+            });
 
             return;
         }
@@ -2984,6 +3165,7 @@ async function salvarServico() {
         inputDuracao.value = "";
 
         await carregarServicos();
+        ultimoCarregamentoOnboardingAdmin = 0;
         await carregarOnboardingAdmin();
 
         invalidarSecoesAdmin([
@@ -3110,11 +3292,26 @@ async function carregarAgendamentos() {
         if (!dados.agendamentos || !dados.agendamentos.length) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="7" class="mensagem-tabela">
-                        Nenhum agendamento encontrado.
+                    <td colspan="8">
+                        ${criarEstadoVazioAdmin({
+                        icone: "◴",
+                        titulo: "Nenhum agendamento recebido ainda",
+                        descricao:
+                            "Copie o link público e envie para seus clientes começarem a agendar.",
+                        textoBotao: "Copiar link público",
+                        secaoDestino: "secao-dashboard",
+                        })}
                     </td>
                 </tr>
             `;
+
+            // tbody.innerHTML = `
+            //     <tr>
+            //         <td colspan="7" class="mensagem-tabela">
+            //             Nenhum agendamento encontrado.
+            //         </td>
+            //     </tr>
+            // `;
 
             return;
         }
@@ -4349,14 +4546,27 @@ function renderizarAgendaVisualDia(dados) {
     const linhaDoTempo = dados.linha_do_tempo || [];
     const eventos = dados.eventos || [];
 
-    container.innerHTML = "";
+    container.innerHTML = `
+        <div class="mensagem-vazia">
+            Carregando agenda visual...
+        </div>
+    `;
 
     if (!linhaDoTempo.length) {
         container.innerHTML = `
-            <div class="mensagem-vazia">
-                Nenhum horário configurado para esta data.
-            </div>
-        `;
+            <tr>
+                <td colspan="8">
+                    ${criarEstadoVazioAdmin({
+                        icone: "◴",
+                        titulo: "Nenhum agendamento recebido ainda",
+                        descricao:
+                            "Copie o link público e envie para seus clientes começarem a agendar.",
+                        textoBotao: "Copiar link público",
+                        secaoDestino: "secao-dashboard",
+                        })}
+                    </td>
+                </tr>
+            `;
 
         return;
     }
@@ -4474,11 +4684,20 @@ async function carregarAgendaVisualDia(opcoes = {}) {
         params.set("profissional", profissional);
     }
 
-    container.innerHTML = `
-        <div class="mensagem-vazia">
-            Carregando agenda visual...
-        </div>
-    `;
+    const containerAgendaVisual = document.getElementById(
+      "agenda-visual-lista",
+    );
+
+    if (containerAgendaVisual) {
+      containerAgendaVisual.innerHTML = criarEstadoVazioAdmin({
+        icone: "◴",
+        titulo: "Nenhum horário encontrado",
+        descricao:
+          "Não existem horários configurados para esta data ou profissional.",
+        textoBotao: "Conferir horários",
+        secaoDestino: "secao-configuracoes",
+      });
+    }
 
     try {
         const dados = await apiRequest(
@@ -4551,6 +4770,18 @@ async function carregarDadosDaSecaoAdmin(secaoId, opcoes = {}) {
                 carregarEquipe(),
                 carregarServicos(),
             ]);
+        }
+
+        if (secaoId === "secao-servicos") {
+          await carregarServicos({
+            forcar,
+          });
+        }
+
+        if (secaoId === "secao-profissionais") {
+          await carregarEquipe({
+            forcar,
+          });
         }
 
         if (secaoId === "secao-admin-assinatura") {

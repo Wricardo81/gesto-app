@@ -38,7 +38,29 @@ def criar_novo_agendamento(
             detail="Estabelecimento não encontrado.",
         )
 
-    if not empresa.plano_ativo:
+    status_assinatura = str(
+        getattr(empresa, "status_assinatura", "") or ""
+    ).strip().lower()
+
+    status_pagamento = str(
+        getattr(empresa, "status_pagamento", "") or ""
+    ).strip().lower()
+
+    status_liberados = {
+        "trial",
+        "teste",
+        "trialing",
+        "active",
+        "em_dia",
+        "checkout_concluido",
+        "mercado_pago_aprovado",
+    }
+
+    if (
+        not empresa.plano_ativo
+        and status_assinatura not in status_liberados
+        and status_pagamento not in status_liberados
+    ):
         raise HTTPException(
             status_code=403,
             detail="Agenda temporariamente indisponível. Assinatura pendente.",
@@ -86,7 +108,7 @@ def criar_novo_agendamento(
             status_code=404,
             detail="Serviço não encontrado neste estabelecimento.",
         )
-    
+
         validar_acesso_operacional_tenant(
             db,
             tenant_slug,

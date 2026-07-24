@@ -81,6 +81,7 @@
                 </p>
             </div>
 
+
             <div class="header-botoes">
                 <a id="link-pagina-publica" class="btn-secundario" href="#" target="_blank">
                     Ver página pública
@@ -106,6 +107,7 @@
         >
             ☰ Menu do painel
         </button>
+
 
         <div id="banner-funcionalidades-admin" class="banner-funcionalidades-admin">
             <div>
@@ -200,6 +202,28 @@
             </p>
         </div>
 
+        <section id="card-onboarding-admin" class="admin-card onboarding-admin-card">
+            <div class="onboarding-admin-header">
+                <div>
+                    <span class="admin-card-kicker">Primeiros passos</span>
+
+                    <h3>Configure sua agenda para começar a vender</h3>
+
+                    <p>
+                        Siga este checklist para deixar seu estabelecimento pronto para receber agendamentos.
+                    </p>
+                </div>
+
+                <span id="onboarding-admin-progresso" class="onboarding-admin-progresso">
+                    0/6 concluído
+                </span>
+            </div>
+
+            <div id="onboarding-admin-lista" class="onboarding-admin-lista">
+                Carregando checklist...
+            </div>
+        </section>
+
         <section class="dashboard-grid secao-admin ativa" id="secao-dashboard">
             <div class="metric-card">
                 <p>Faturamento previsto</p>
@@ -225,6 +249,9 @@
                 <small>Empresa liberada para receber reservas.</small>
             </div>
         </section>
+
+
+
 
         <section class="layout-grid secao-admin" id="secao-configuracoes">
             <div>
@@ -523,12 +550,7 @@
             </div>
         </section>
 
-        <section class="bloco-config secao-admin" id="secao-agenda">
-            <h3>Agenda e faturamento 📊</h3>
-
-                </article>
-            </div>
-        </section>
+        
 
         <section class="bloco-config secao-admin" id="secao-agenda">
             <h3>Agenda e faturamento 📊</h3>
@@ -932,16 +954,16 @@
 
             <div id="avisos-admin-banner" class="avisos-admin-banner" style="display: none;"></div>
 
-<div id="avisos-admin-flutuante" class="avisos-admin-flutuante" style="display: none;">
-    <button
-        type="button"
-        class="avisos-admin-botao"
-        onclick="alternarCaixaAvisosAdmin()"
-        aria-label="Abrir avisos"
-    >
-        🔔
-        <span id="avisos-admin-contador">0</span>
-    </button>
+            <div id="avisos-admin-flutuante" class="avisos-admin-flutuante" style="display: none;">
+                <button
+                    type="button"
+                    class="avisos-admin-botao"
+                    onclick="alternarCaixaAvisosAdmin()"
+                    aria-label="Abrir avisos"
+                >
+                    <span aria-hidden="true">i</span>
+                    <span id="avisos-admin-contador">0</span>
+                </button>
 
     <div id="avisos-admin-caixa" class="avisos-admin-caixa" style="display: none;">
         <div class="avisos-admin-topo">

@@ -35,11 +35,85 @@ let carregandoAgendamentosAdmin = false;
 let carregandoServicosAdmin = false;
 let carregandoProfissionaisAdmin = false;
 
+let onboardingAdminCarregando = false;
+let ultimoCarregamentoOnboardingAdmin = 0;
+const TEMPO_CACHE_ONBOARDING_ADMIN_MS = 12000;
+
 
 
 /* =========================================================
    UTILITÁRIOS
 ========================================================= */
+
+function decodificarTokenAdmin(token) {
+  if (!token || !token.includes(".")) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(
+      atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")),
+    );
+  } catch (erro) {
+    console.warn("Não foi possível decodificar token admin:", erro);
+    return null;
+  }
+}
+
+
+function obterTenantDoTokenAdmin() {
+  const token = localStorage.getItem("gesto_token");
+  const payload = decodificarTokenAdmin(token);
+
+  return (
+    payload?.sub ||
+    payload?.tenant_slug ||
+    payload?.barbearia_slug ||
+    payload?.tenant ||
+    payload?.slug ||
+    ""
+  );
+}
+
+
+function atualizarUrlTenantAdmin() {
+  if (!tenantSlugLogado) {
+    return;
+  }
+
+  const parametros = new URLSearchParams(window.location.search);
+  const tenantUrl = parametros.get("tenant");
+
+  if (tenantUrl === tenantSlugLogado) {
+    return;
+  }
+
+  const novaUrl = `${window.location.origin}${window.location.pathname}?tenant=${encodeURIComponent(tenantSlugLogado)}`;
+
+  window.history.replaceState({}, document.title, novaUrl);
+}
+
+
+function sincronizarTenantAdminComToken() {
+  const tenantToken = obterTenantDoTokenAdmin();
+
+  if (!tenantToken) {
+    return "";
+  }
+
+  localStorage.setItem("gesto_tenant", tenantToken);
+
+  const parametros = new URLSearchParams(window.location.search);
+  const tenantUrl = parametros.get("tenant");
+
+  if (tenantUrl !== tenantToken) {
+    const novaUrl = `${window.location.origin}${window.location.pathname}?tenant=${encodeURIComponent(tenantToken)}`;
+
+    window.history.replaceState({}, document.title, novaUrl);
+  }
+
+  return tenantToken;
+}
 
 function cacheAdminAindaValido(ultimoCarregamento, tempoMaximo) {
     if (!ultimoCarregamento) {
@@ -568,7 +642,6 @@ async function carregarAssinaturaAdmin() {
         );
 
         renderizarAssinaturaAdmin(config);
-
         exibirBannerFuncionalidadesAdmin(config);
 
     } catch (erro) {
@@ -774,6 +847,8 @@ async function tratarRetornoPagamentoAdmin() {
     }
 
     await carregarAssinaturaAdmin();
+    carregarAssinaturaAdmin();
+    iniciarMonitorNovosAgendamentos();
 
     const urlLimpa =
         `${window.location.origin}${window.location.pathname}?tenant=${tenantSlugLogado}`;
@@ -1161,6 +1236,14 @@ async function realizarLogin(event) {
 
     try {
         await autenticar(email, senha);
+
+        tenantSlugLogado = sincronizarTenantAdminComToken();
+
+        if (tenantSlugLogado) {
+          localStorage.setItem("gesto_tenant", tenantSlugLogado);
+          atualizarUrlTenantAdmin();
+        }
+
         iniciarPainel();
 
     } catch (erro) {
@@ -1866,56 +1949,354 @@ window.abrirModalHistoricoChamadosAdmin = abrirModalHistoricoChamadosAdmin;
 window.fecharModalHistoricoChamadosAdmin = fecharModalHistoricoChamadosAdmin;
 
 
+function obterUrlPublicaTenantAdmin() {
+  const origem = window.location.origin;
+  const caminhoBase = window.location.pathname.replace("admin.html", "");
+
+  return `${origem}${caminhoBase}agendamento.html?tenant=${encodeURIComponent(tenantSlugLogado)}`;
+}
+
+function copiarLinkPublicoAdmin() {
+  const link = obterUrlPublicaTenantAdmin();
+
+  navigator.clipboard
+    .writeText(link)
+    .then(function () {
+      exibirMensagemAdmin(
+        "Link público copiado. Agora você pode enviar para seus clientes.",
+      );
+    })
+    .catch(function () {
+      exibirMensagemAdmin(`Seu link público é: ${link}`);
+    });
+}
+
+function irParaSecaoAdminOnboarding(secaoId) {
+  if (typeof mostrarSecaoAdmin === "function") {
+    mostrarSecaoAdmin(secaoId);
+    return;
+  }
+
+  const elemento = document.getElementById(secaoId);
+
+  if (elemento) {
+    elemento.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
+}
+
+
+
+async function carregarResumoOnboardingAdmin() {
+  if (!tenantSlugLogado) {
+    return null;
+  }
+
+  const [
+    resultadoConfig,
+    resultadoServicos,
+    resultadoProfissionais,
+    resultadoAgendamentos,
+  ] = await Promise.allSettled([
+    apiRequest(`/api/${tenantSlugLogado}/configuracoes`, {
+      method: "GET",
+      auth: true,
+    }),
+    apiRequest(`/api/${tenantSlugLogado}/servicos`, {
+      method: "GET",
+      auth: true,
+    }),
+    apiRequest(`/api/${tenantSlugLogado}/profissionais`, {
+      method: "GET",
+      auth: true,
+    }),
+    apiRequest(`/api/${tenantSlugLogado}/admin/agendamentos`, {
+      method: "GET",
+      auth: true,
+    }),
+  ]);
+
+  const config =
+    resultadoConfig.status === "fulfilled" ? resultadoConfig.value : null;
+
+  const servicosResposta =
+    resultadoServicos.status === "fulfilled" ? resultadoServicos.value : [];
+
+  const profissionaisResposta =
+    resultadoProfissionais.status === "fulfilled"
+      ? resultadoProfissionais.value
+      : [];
+
+  const agendamentosResposta =
+    resultadoAgendamentos.status === "fulfilled"
+      ? resultadoAgendamentos.value
+      : [];
+
+  const servicos = Array.isArray(servicosResposta)
+    ? servicosResposta
+    : servicosResposta?.servicos || [];
+
+  const profissionais = Array.isArray(profissionaisResposta)
+    ? profissionaisResposta
+    : profissionaisResposta?.profissionais || [];
+
+  const agendamentos = Array.isArray(agendamentosResposta)
+    ? agendamentosResposta
+    : agendamentosResposta?.agendamentos || [];
+
+  return {
+    config,
+    totalServicos: servicos.length,
+    totalProfissionais: profissionais.length,
+    totalAgendamentos: agendamentos.length,
+  };
+}
+
+function montarChecklistOnboardingAdmin(resumo) {
+  const config = resumo?.config || {};
+
+  const possuiDadosBasicos = Boolean(
+    config?.nome ||
+    config?.nome_estabelecimento ||
+    config?.telefone ||
+    config?.whatsapp ||
+    config?.endereco ||
+    config?.mensagem_boas_vindas,
+  );
+
+  const possuiServicos = Number(resumo?.totalServicos || 0) > 0;
+  const possuiProfissionais = Number(resumo?.totalProfissionais || 0) > 0;
+  const possuiAgendamentos = Number(resumo?.totalAgendamentos || 0) > 0;
+
+  const possuiConfiguracoes = Boolean(config);
+
+  return [
+    {
+      id: "dados",
+      titulo: "Conferir dados do estabelecimento",
+      descricao:
+        "Revise nome, telefone, endereço, mensagem e informações básicas.",
+      concluido: possuiDadosBasicos,
+      acaoTexto: "Abrir configurações",
+      acao: function () {
+        irParaSecaoAdminOnboarding("secao-configuracoes");
+      },
+    },
+    {
+      id: "servicos",
+      titulo: "Cadastrar serviços",
+      descricao:
+        "Adicione serviços com duração e preço para liberar a agenda pública.",
+      concluido: possuiServicos,
+      acaoTexto: "Cadastrar serviços",
+      acao: function () {
+        irParaSecaoAdminOnboarding("secao-servicos");
+      },
+    },
+    {
+      id: "profissionais",
+      titulo: "Cadastrar profissionais",
+      descricao: "Inclua os profissionais que atenderão os clientes.",
+      concluido: possuiProfissionais,
+      acaoTexto: "Cadastrar profissionais",
+      acao: function () {
+        irParaSecaoAdminOnboarding("secao-profissionais");
+      },
+    },
+    {
+      id: "horarios",
+      titulo: "Conferir horários de atendimento",
+      descricao:
+        "Garanta que os horários estão corretos antes de divulgar o link.",
+      concluido: possuiConfiguracoes,
+      acaoTexto: "Conferir horários",
+      acao: function () {
+        irParaSecaoAdminOnboarding("secao-configuracoes");
+      },
+    },
+    {
+      id: "link",
+      titulo: "Copiar link público de agendamento",
+      descricao: "Envie o link para clientes pelo WhatsApp, Instagram ou site.",
+      concluido: false,
+      acaoTexto: "Copiar link",
+      acao: copiarLinkPublicoAdmin,
+    },
+    {
+      id: "primeiro-agendamento",
+      titulo: "Receber o primeiro agendamento",
+      descricao:
+        "Quando o primeiro cliente agendar, este passo será concluído automaticamente.",
+      concluido: possuiAgendamentos,
+      acaoTexto: "Abrir agenda pública",
+      acao: function () {
+        window.open(obterUrlPublicaTenantAdmin(), "_blank");
+      },
+    },
+  ];
+}
+
+function renderizarOnboardingAdminComResumo(resumo) {
+  const card = document.getElementById("card-onboarding-admin");
+  const lista = document.getElementById("onboarding-admin-lista");
+  const progresso = document.getElementById("onboarding-admin-progresso");
+
+  if (!card || !lista || !progresso || !tenantSlugLogado) {
+    return;
+  }
+
+  const itens = montarChecklistOnboardingAdmin(resumo);
+
+  const totalConcluido = itens.filter(function (item) {
+    return item.concluido;
+  }).length;
+
+  progresso.textContent =
+    totalConcluido === 1
+      ? `${totalConcluido}/${itens.length} concluído`
+      : `${totalConcluido}/${itens.length} concluídos`;
+
+  lista.innerHTML = itens
+    .map(function (item, index) {
+      const status = item.concluido ? "✓" : index + 1;
+      const classe = item.concluido ? "concluido" : "";
+
+      return `
+            <div class="onboarding-admin-item ${classe}">
+                <div class="onboarding-admin-item-info">
+                    <span class="onboarding-admin-status">${status}</span>
+
+                    <div>
+                        <h4>${item.titulo}</h4>
+                        <p>${item.descricao}</p>
+                    </div>
+                </div>
+
+                <button
+                    type="button"
+                    class="btn-secondary btn-onboarding-admin"
+                    data-onboarding-id="${item.id}"
+                >
+                    ${item.acaoTexto}
+                </button>
+            </div>
+        `;
+    })
+    .join("");
+
+  document.querySelectorAll("[data-onboarding-id]").forEach(function (botao) {
+    botao.addEventListener("click", function () {
+      const id = botao.getAttribute("data-onboarding-id");
+
+      const item = itens.find(function (checklistItem) {
+        return checklistItem.id === id;
+      });
+
+      if (item && typeof item.acao === "function") {
+        item.acao();
+      }
+    });
+  });
+}
+
+async function carregarOnboardingAdmin() {
+  if (onboardingAdminCarregando || !tenantSlugLogado) {
+    return;
+  }
+
+  if (
+    Date.now() - ultimoCarregamentoOnboardingAdmin <
+    TEMPO_CACHE_ONBOARDING_ADMIN_MS
+  ) {
+    return;
+  }
+
+  onboardingAdminCarregando = true;
+
+  const lista = document.getElementById("onboarding-admin-lista");
+
+  if (lista) {
+    lista.innerHTML = "Carregando checklist...";
+  }
+
+  try {
+    const resumo = await carregarResumoOnboardingAdmin();
+
+    renderizarOnboardingAdminComResumo(resumo);
+
+    ultimoCarregamentoOnboardingAdmin = Date.now();
+  } catch (erro) {
+    console.error("Erro ao carregar onboarding admin:", erro);
+
+    if (lista) {
+      lista.innerHTML = `
+                <div class="onboarding-admin-item">
+                    <div class="onboarding-admin-item-info">
+                        <span class="onboarding-admin-status">!</span>
+                        <div>
+                            <h4>Não foi possível carregar o checklist</h4>
+                            <p>Atualize a página ou tente novamente em alguns instantes.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+    }
+  } finally {
+    onboardingAdminCarregando = false;
+  }
+}
+
+window.carregarOnboardingAdmin = carregarOnboardingAdmin;
+
+
 function iniciarPainel() {
-    if (!existeSessaoLocal()) {
-        document
-            .getElementById("tela-login")
-            .style
-            .display = "flex";
+  if (!existeSessaoLocal()) {
+    document.getElementById("tela-login").style.display = "flex";
 
-        document
-            .getElementById("painel-principal")
-            .style
-            .display = "none";
+    document.getElementById("painel-principal").style.display = "none";
 
-        return;
-    }
+    return;
+  }
 
+  tenantSlugLogado = sincronizarTenantAdminComToken();
+
+  if (!tenantSlugLogado) {
     tenantSlugLogado = obterTenantLogado();
+  }
 
-    if (!tenantSlugLogado) {
-        exibirMensagemAdmin("Sessão inválida. Faça login novamente.");
+  if (tenantSlugLogado) {
+    localStorage.setItem("gesto_tenant", tenantSlugLogado);
+  }
 
-        fazerLogout();
+  atualizarUrlTenantAdmin();
 
-        return;
-    }
+  if (!tenantSlugLogado) {
+    exibirMensagemAdmin("Sessão inválida. Faça login novamente.");
+    fazerLogout();
+    return;
+  }
 
-    document
-        .getElementById("tela-login")
-        .style
-        .display = "none";
+  document.getElementById("tela-login").style.display = "none";
 
-    document
-        .getElementById("painel-principal")
-        .style
-        .display = "block";
+  document.getElementById("painel-principal").style.display = "block";
 
-    document
-        .getElementById("tag-tenant")
-        .innerText = `@${tenantSlugLogado}`;
+  document.getElementById("tag-tenant").innerText = `@${tenantSlugLogado}`;
 
-        atualizarLinkPublico();
-        registrarListenersDePreview();
-        registrarListenersCRM();
-        registrarListenersBloqueiosAgenda();
-        registrarListenersAgendaVisual();
-        inicializarNavegacaoAdmin();
-        carregarAvisosAdmin();
-        tratarRetornoCadastroAdmin();
-        tratarRetornoPagamentoAdmin();
-        carregarAssinaturaAdmin();
-        iniciarMonitorNovosAgendamentos();
+  atualizarLinkPublico();
+  registrarListenersDePreview();
+  registrarListenersCRM();
+  registrarListenersBloqueiosAgenda();
+  registrarListenersAgendaVisual();
+  inicializarNavegacaoAdmin();
+
+  carregarAvisosAdmin();
+  tratarRetornoCadastroAdmin();
+  tratarRetornoPagamentoAdmin();
+  carregarAssinaturaAdmin();
+  carregarOnboardingAdmin();
+  iniciarMonitorNovosAgendamentos();
 }
 
     async function atualizarStatusAgendamento(id, status) {
@@ -2418,6 +2799,7 @@ async function salvarProfissional() {
         input.value = "";
 
         await carregarEquipe();
+        await carregarOnboardingAdmin();
 
         invalidarSecoesAdmin([
             "secao-dashboard",
@@ -2579,6 +2961,7 @@ async function salvarServico() {
         inputDuracao.value = "";
 
         await carregarServicos();
+        await carregarOnboardingAdmin();
 
         invalidarSecoesAdmin([
             "secao-dashboard",

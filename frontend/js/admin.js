@@ -617,7 +617,6 @@ function assinaturaAdminEstaAtiva(config) {
 }
 
 function renderizarCardTrialAdmin(config = {}) {
-    renderizarCardTrialAdmin(config);
   const card = document.getElementById("card-trial-admin");
   const titulo = document.getElementById("trial-admin-titulo");
   const descricao = document.getElementById("trial-admin-descricao");
@@ -636,7 +635,6 @@ function renderizarCardTrialAdmin(config = {}) {
     statusAssinatura === "trial" || statusPagamento === "trial";
 
   const trialExpirado = Boolean(config.trial_expirado);
-
   const acessoLiberado = Boolean(config.acesso_liberado);
 
   if (!trialAtivo && !trialExpirado) {
@@ -691,6 +689,7 @@ function renderizarCardTrialAdmin(config = {}) {
 
 
 function renderizarAssinaturaAdmin(config) {
+    renderizarCardTrialAdmin(config);
     const card = document.getElementById("card-assinatura-admin");
     const planos = document.getElementById("planos-assinatura-admin");
 

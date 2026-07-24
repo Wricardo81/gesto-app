@@ -45,6 +45,27 @@ const TEMPO_CACHE_ONBOARDING_ADMIN_MS = 12000;
    UTILITÁRIOS
 ========================================================= */
 
+function limparCachesAdminEmMemoria() {
+    avisosAdminCache = [];
+    chamadosAdminCache = [];
+    agendamentosAdminCache = [];
+    configuracoesAdminCache = {};
+
+    ultimoCarregamentoConfiguracaoAdmin = 0;
+    ultimoCarregamentoAvisosAdmin = 0;
+    ultimoCarregamentoAgendamentosAdmin = 0;
+    ultimoCarregamentoServicosAdmin = 0;
+    ultimoCarregamentoProfissionaisAdmin = 0;
+
+    if (typeof ultimoCarregamentoOnboardingAdmin !== "undefined") {
+        ultimoCarregamentoOnboardingAdmin = 0;
+    }
+
+    secoesAdminCarregadas.clear();
+    secoesAdminCarregando.clear();
+}
+
+
 function decodificarTokenAdmin(token) {
   if (!token || !token.includes(".")) {
     return null;
@@ -1236,6 +1257,8 @@ async function realizarLogin(event) {
 
     try {
         await autenticar(email, senha);
+
+        limparCachesAdminEmMemoria();
 
         tenantSlugLogado = sincronizarTenantAdminComToken();
 

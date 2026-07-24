@@ -202,6 +202,48 @@
             </p>
         </div>
 
+        <section
+            id="card-trial-admin"
+            class="admin-card trial-admin-card"
+            style="display: none;"
+        >
+            <div class="trial-admin-info">
+                <span class="trial-admin-kicker">
+                    Teste grátis
+                </span>
+
+                <h3 id="trial-admin-titulo">
+                    Teste grátis ativo
+                </h3>
+
+                <p id="trial-admin-descricao">
+                    Você está usando o BitsAgenda OS no período gratuito.
+                </p>
+            </div>
+
+            <div class="trial-admin-metricas">
+                <div>
+                    <small>Dias restantes</small>
+                    <strong id="trial-admin-dias">--</strong>
+                </div>
+
+                <div>
+                    <small>Agendamentos restantes</small>
+                    <strong id="trial-admin-agendamentos">--</strong>
+                </div>
+            </div>
+
+            <div class="trial-admin-acoes">
+                <button
+                    type="button"
+                    class="btn-add"
+                    onclick="mostrarSecaoAdmin('secao-admin-assinatura')"
+                >
+                    Ver planos
+                </button>
+            </div>
+        </section>
+
         <section id="card-onboarding-admin" class="admin-card onboarding-admin-card">
             <div class="onboarding-admin-header">
                 <div>
@@ -550,7 +592,7 @@
             </div>
         </section>
 
-        
+
 
         <section class="bloco-config secao-admin" id="secao-agenda">
             <h3>Agenda e faturamento 📊</h3>

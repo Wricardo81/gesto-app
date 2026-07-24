@@ -616,6 +616,79 @@ function assinaturaAdminEstaAtiva(config) {
     return false;
 }
 
+function renderizarCardTrialAdmin(config = {}) {
+    renderizarCardTrialAdmin(config);
+  const card = document.getElementById("card-trial-admin");
+  const titulo = document.getElementById("trial-admin-titulo");
+  const descricao = document.getElementById("trial-admin-descricao");
+  const dias = document.getElementById("trial-admin-dias");
+  const agendamentos = document.getElementById("trial-admin-agendamentos");
+
+  if (!card || !titulo || !descricao || !dias || !agendamentos) {
+    return;
+  }
+
+  const statusAssinatura = String(config.status_assinatura || "").toLowerCase();
+
+  const statusPagamento = String(config.status_pagamento || "").toLowerCase();
+
+  const trialAtivo =
+    statusAssinatura === "trial" || statusPagamento === "trial";
+
+  const trialExpirado = Boolean(config.trial_expirado);
+
+  const acessoLiberado = Boolean(config.acesso_liberado);
+
+  if (!trialAtivo && !trialExpirado) {
+    card.style.display = "none";
+    return;
+  }
+
+  card.style.display = "grid";
+
+  const diasRestantes = Number(config.trial_dias_restantes || 0);
+  const agendamentosRestantes = Number(
+    config.trial_agendamentos_restantes || 0,
+  );
+
+  dias.textContent = diasRestantes;
+  agendamentos.textContent = agendamentosRestantes;
+
+  card.classList.remove("trial-admin-card-alerta", "trial-admin-card-expirado");
+
+  if (trialExpirado || !acessoLiberado) {
+    card.classList.add("trial-admin-card-expirado");
+
+    titulo.textContent = "Teste grátis encerrado";
+
+    descricao.textContent =
+      "Seu período gratuito terminou. Ative uma assinatura para continuar recebendo agendamentos.";
+
+    dias.textContent = "0";
+    agendamentos.textContent = "0";
+
+    return;
+  }
+
+  if (diasRestantes <= 2 || agendamentosRestantes <= 5) {
+    card.classList.add("trial-admin-card-alerta");
+
+    titulo.textContent = "Seu teste grátis está quase acabando";
+
+    descricao.textContent =
+      `Restam ${diasRestantes} dia(s) ou ${agendamentosRestantes} agendamento(s). ` +
+      "Quando um dos limites acabar, será necessário ativar uma assinatura.";
+
+    return;
+  }
+
+  titulo.textContent = "Teste grátis ativo";
+
+  descricao.textContent =
+    `Você ainda tem ${diasRestantes} dia(s) ou ${agendamentosRestantes} ` +
+    "agendamento(s) disponíveis no teste grátis.";
+}
+
 
 function renderizarAssinaturaAdmin(config) {
     const card = document.getElementById("card-assinatura-admin");

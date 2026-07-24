@@ -3,6 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from services.trial_service import tenant_pode_receber_agendamento
 
+from services.acesso_empresa_service import validar_empresa_pode_operar
 from sqlalchemy.orm import Session
 import models
 from database import SessaoLocal
@@ -57,6 +58,23 @@ def consultar_horarios_livres(
     profissional: str,
     db: Session = Depends(get_db),
 ):
+    empresa = (
+        db.query(models.Barbearia)
+        .filter(models.Barbearia.slug == tenant_slug)
+        .first()
+    )
+
+    if not empresa:
+        raise HTTPException(
+            status_code=404,
+            detail="Estabelecimento não encontrado.",
+        )
+
+    validar_empresa_pode_operar(
+        db=db,
+        empresa=empresa,
+    )
+
     return agendamento_service.obter_horarios_disponiveis(
         db=db,
         tenant_slug=tenant_slug,
@@ -64,7 +82,6 @@ def consultar_horarios_livres(
         duracao_minutos=duracao_minutos,
         profissional_nome=profissional,
     )
-
 
 # ==========================================
 # 2. ROTA PÚBLICA: CRIAR AGENDAMENTO
@@ -76,35 +93,22 @@ def confirmar_agendamento(
     dados: agendamento_service.FichaAgendamento,
     db: Session = Depends(get_db),
 ):
-    pode_agendar, resumo_trial = tenant_pode_receber_agendamento(
-        db,
-        tenant_slug,
+    empresa = (
+        db.query(models.Barbearia)
+        .filter(models.Barbearia.slug == tenant_slug)
+        .first()
     )
 
-    if not pode_agendar:
-        motivo = "O período gratuito desta empresa terminou."
-
-        if resumo_trial:
-            if resumo_trial.get("trial_expirado_por_agendamentos"):
-                motivo = (
-                    "O limite de agendamentos gratuitos desta empresa foi atingido."
-                )
-
-            elif resumo_trial.get("trial_expirado_por_dias"):
-                motivo = (
-                    "O período gratuito desta empresa expirou."
-                )
-
+    if not empresa:
         raise HTTPException(
-            status_code=402,
-            detail={
-                "codigo": "ASSINATURA_INATIVA",
-                "mensagem": (
-                    f"{motivo} Para continuar recebendo agendamentos, "
-                    "é necessário ativar uma assinatura."
-                ),
-            },
+            status_code=404,
+            detail="Estabelecimento não encontrado.",
         )
+
+    validar_empresa_pode_operar(
+        db=db,
+        empresa=empresa,
+    )
 
     return agendamento_service.criar_novo_agendamento(
         db=db,
@@ -523,8 +527,8 @@ def listar_agendamentos_cliente_publico(
     telefone: str = Query(...),
     db: Session = Depends(get_db),
 ):
-    
-    
+
+
 
     telefone_normalizado = normalizar_telefone_cliente(telefone)
 

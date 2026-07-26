@@ -1,10 +1,16 @@
-function salvarSessao({ access_token, tenant_slug }) {
-  localStorage.removeItem("gesto_token");
-  localStorage.removeItem("gesto_tenant");
-  localStorage.removeItem("gesto_saas_token");
+function salvarSessao(dados) {
+    localStorage.removeItem("gesto_token");
+    localStorage.removeItem("gesto_tenant");
+    localStorage.removeItem("gesto_saas_token");
+    sessionStorage.removeItem("bitsagenda_ultimo_request_id_erro");
 
-  localStorage.setItem("gesto_token", access_token);
-  localStorage.setItem("gesto_tenant", tenant_slug);
+    if (dados.access_token) {
+        localStorage.setItem("gesto_token", dados.access_token);
+    }
+
+    if (dados.tenant_slug) {
+        localStorage.setItem("gesto_tenant", dados.tenant_slug);
+    }
 }
 
 function obterToken() {
@@ -25,23 +31,31 @@ function limparSessao() {
 }
 
 async function autenticar(email, senha) {
-  localStorage.removeItem("gesto_token");
-  localStorage.removeItem("gesto_tenant");
-  localStorage.removeItem("gesto_saas_token");
-  localStorage.removeItem("gesto_admin_secao_ativa");
+    localStorage.removeItem("gesto_token");
+    localStorage.removeItem("gesto_tenant");
+    localStorage.removeItem("gesto_saas_token");
+    sessionStorage.removeItem("bitsagenda_ultimo_request_id_erro");
 
-  sessionStorage.removeItem("bitsagenda_ultimo_request_id_erro");
-  const dados = await apiRequest("/api/auth/login", {
-    method: "POST",
-    body: {
-      email,
-      senha,
-    },
-  });
+    const resposta = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            email,
+            senha,
+        }),
+    });
 
-  salvarSessao(dados);
+    const dados = await resposta.json();
 
-  return dados;
+    if (!resposta.ok) {
+        throw new Error(dados.detail || "Erro ao fazer login.");
+    }
+
+    salvarSessao(dados);
+
+    return dados;
 }
 
 function fazerLogout() {
@@ -49,7 +63,6 @@ function fazerLogout() {
   localStorage.removeItem("gesto_tenant");
   localStorage.removeItem("gesto_saas_token");
   localStorage.removeItem("gesto_admin_secao_ativa");
-
   sessionStorage.removeItem("bitsagenda_ultimo_request_id_erro");
 
   window.location.href = "./admin.html";

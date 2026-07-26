@@ -1396,6 +1396,78 @@ function tratarErro(erro) {
    LOGIN E INICIALIZAÇÃO
 ========================================================= */
 
+function decodificarTokenAdmin(token) {
+  if (!token || typeof token !== "string") {
+    return null;
+  }
+
+  try {
+    const partes = token.split(".");
+
+    if (partes.length < 2) {
+      return null;
+    }
+
+    const payloadBase64 = partes[1].replace(/-/g, "+").replace(/_/g, "/");
+
+    const payloadJson = decodeURIComponent(
+      atob(payloadBase64)
+        .split("")
+        .map((caractere) => {
+          return "%" + ("00" + caractere.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join(""),
+    );
+
+    return JSON.parse(payloadJson);
+  } catch (erro) {
+    console.warn("Não foi possível decodificar token do Admin.", erro);
+    return null;
+  }
+}
+
+function obterTenantDoTokenAdmin() {
+  const token = localStorage.getItem("gesto_token");
+  const payload = decodificarTokenAdmin(token);
+
+  return (
+    payload?.sub ||
+    payload?.tenant_slug ||
+    payload?.barbearia_slug ||
+    payload?.tenant ||
+    payload?.slug ||
+    ""
+  );
+}
+
+function obterTenantDaUrlAdmin() {
+  const parametros = new URLSearchParams(window.location.search);
+
+  return parametros.get("tenant") || "";
+}
+
+function sincronizarTenantAdminComToken() {
+  const tenantToken = obterTenantDoTokenAdmin();
+  const tenantUrl = obterTenantDaUrlAdmin();
+
+  if (!tenantToken) {
+    return "";
+  }
+
+  localStorage.setItem("gesto_tenant", tenantToken);
+
+  if (tenantUrl !== tenantToken) {
+    const novaUrl =
+      `${window.location.origin}${window.location.pathname}` +
+      `?tenant=${encodeURIComponent(tenantToken)}`;
+
+    window.history.replaceState({}, document.title, novaUrl);
+  }
+
+  return tenantToken;
+}
+
+
 async function realizarLogin(event) {
     event.preventDefault();
 
@@ -2536,6 +2608,14 @@ function iniciarPainel() {
 
   if (tenantSlugLogado) {
     localStorage.setItem("gesto_tenant", tenantSlugLogado);
+  }
+
+  if (!tenantSlugLogado) {
+    alert(
+      "Não foi possível identificar a empresa logada. Faça login novamente.",
+    );
+    fazerLogout();
+    return;
   }
 
   atualizarUrlTenantAdmin();

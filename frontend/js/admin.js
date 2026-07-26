@@ -2260,6 +2260,60 @@ function copiarLinkPublicoAdmin() {
 
 window.copiarLinkPublicoAdmin = copiarLinkPublicoAdmin;
 
+
+function obterUrlPublicaTenantAdmin() {
+  if (!tenantSlugLogado) {
+    return "";
+  }
+
+  const baseUrl = window.location.origin + "/frontend";
+
+  return `${baseUrl}/agendamento.html?tenant=${encodeURIComponent(tenantSlugLogado)}`;
+}
+
+function renderizarLinkPublicoAdmin() {
+  const elemento = document.getElementById("link-publico-admin-url");
+
+  if (!elemento) {
+    return;
+  }
+
+  const urlPublica = obterUrlPublicaTenantAdmin();
+
+  elemento.textContent = urlPublica || "Link indisponível no momento.";
+}
+
+async function copiarLinkPublicoAdmin() {
+  const urlPublica = obterUrlPublicaTenantAdmin();
+
+  if (!urlPublica) {
+    alert("Não foi possível gerar o link público agora.");
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(urlPublica);
+    alert("Link público copiado com sucesso.");
+  } catch (erro) {
+    console.warn("Erro ao copiar link público.", erro);
+    prompt("Copie o link público:", urlPublica);
+  }
+}
+
+function abrirLinkPublicoAdmin() {
+  const urlPublica = obterUrlPublicaTenantAdmin();
+
+  if (!urlPublica) {
+    alert("Não foi possível abrir o link público agora.");
+    return;
+  }
+
+  window.open(urlPublica, "_blank", "noopener,noreferrer");
+}
+
+window.copiarLinkPublicoAdmin = copiarLinkPublicoAdmin;
+window.abrirLinkPublicoAdmin = abrirLinkPublicoAdmin;
+
 function irParaSecaoAdminOnboarding(secaoId) {
   if (typeof mostrarSecaoAdmin === "function") {
     mostrarSecaoAdmin(secaoId);
@@ -2600,7 +2654,8 @@ function iniciarPainel() {
     return;
   }
 
-  tenantSlugLogado = sincronizarTenantAdminComToken();
+    tenantSlugLogado = sincronizarTenantAdminComToken();
+
 
   if (!tenantSlugLogado) {
     tenantSlugLogado = obterTenantLogado();
@@ -2637,7 +2692,8 @@ function iniciarPainel() {
   registrarListenersCRM();
   registrarListenersBloqueiosAgenda();
   registrarListenersAgendaVisual();
-  inicializarNavegacaoAdmin();
+    inicializarNavegacaoAdmin();
+    renderizarLinkPublicoAdmin();
 
   carregarAvisosAdmin();
   tratarRetornoCadastroAdmin();

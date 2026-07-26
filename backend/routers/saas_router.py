@@ -504,6 +504,7 @@ def cadastrar_empresa_publica(
 
     dados_barbearia = {
         "nome": dados.nome.strip(),
+        "nome_publico": dados.nome.strip(),
         "slug": slug,
         "email": email_normalizado,
         "senha_hash": senha_hash,
@@ -513,8 +514,9 @@ def cadastrar_empresa_publica(
         "plano_codigo": plano_codigo,
         "plano_nome": "Teste" if plano_codigo == "teste" else plano_codigo.capitalize(),
         "plano_periodicidade": plano_codigo,
-        "responsavel": dados.responsavel.strip(),
         "telefone": dados.telefone.strip(),
+        "whatsapp_comercial": dados.telefone.strip(),
+        "responsavel": dados.responsavel.strip(),
         "tipo_negocio": dados.tipo_negocio.strip()
         if dados.tipo_negocio
         else None,

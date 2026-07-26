@@ -25,6 +25,8 @@ let ultimoCarregamentoAvisosAdmin = 0;
 let ultimoCarregamentoAgendamentosAdmin = 0;
 let ultimoCarregamentoServicosAdmin = 0;
 let ultimoCarregamentoProfissionaisAdmin = 0;
+let proximoPassoOnboardingAdmin = null;
+let atualizandoResumoAdmin = false;
 
 const TEMPO_CACHE_CURTO_ADMIN_MS = 10000;
 const TEMPO_CACHE_AGENDAMENTOS_ADMIN_MS = 15000;
@@ -1795,49 +1797,41 @@ function renderizarAvisosAdmin(avisos) {
 
 
 async function carregarAvisosAdmin() {
-    if (!adminProntoParaRequisicao()) {
-        return;
-    }
+  if (!adminProntoParaRequisicao()) {
+    return;
+  }
 
-    const forcar = arguments[0]?.forcar === true;
+  const forcar = arguments[0]?.forcar === true;
 
-    if (
-        !forcar
-        && cacheAdminAindaValido(
-            ultimoCarregamentoAvisosAdmin,
-            TEMPO_CACHE_CURTO_ADMIN_MS
-        )
-    ) {
-        return;
-    }
+  if (
+    !forcar &&
+    cacheAdminAindaValido(
+      ultimoCarregamentoAvisosAdmin,
+      TEMPO_CACHE_CURTO_ADMIN_MS,
+    )
+  ) {
+    return;
+  }
 
-    if (carregandoAvisosAdmin) {
-        return;
-    }
+  if (carregandoAvisosAdmin) {
+    return;
+  }
 
-    carregandoAvisosAdmin = true;
+  carregandoAvisosAdmin = true;
 
-    try {
-        const avisos = await apiRequest(
-            `/api/${tenantSlugLogado}/admin/avisos`,
-            {
-                auth: true,
-            }
-        );
+  try {
+    const avisos = await apiRequest(`/api/${tenantSlugLogado}/admin/avisos`, {
+      auth: true,
+    });
 
-        renderizarAvisosAdmin(avisos);
+    renderizarAvisosAdmin(avisos);
 
-        ultimoCarregamentoAvisosAdmin = Date.now();
-
-    } catch (erro) {
-        console.error(
-            "Erro ao carregar avisos da plataforma:",
-            erro
-        );
-
-    } finally {
-        carregandoAvisosAdmin = false;
-    }
+    ultimoCarregamentoAvisosAdmin = Date.now();
+  } catch (erro) {
+    console.error("Erro ao carregar avisos da plataforma:", erro);
+  } finally {
+    carregandoAvisosAdmin = false;
+  }
 }
 
 
@@ -2408,6 +2402,123 @@ async function carregarResumoOnboardingAdmin() {
   };
 }
 
+
+function definirProximoPassoOnboardingAdmin(resumo = {}) {
+  const config = resumo?.config || {};
+
+  const possuiPerfil = Boolean(
+    String(
+      config?.nome_publico ||
+        config?.nome_empresa ||
+        config?.nome ||
+        config?.nome_estabelecimento ||
+        "",
+    ).trim(),
+  );
+
+  const possuiServico = Number(resumo?.totalServicos || 0) > 0;
+  const possuiProfissional = Number(resumo?.totalProfissionais || 0) > 0;
+  const possuiAgendamento = Number(resumo?.totalAgendamentos || 0) > 0;
+
+
+  if (!possuiPerfil) {
+    return {
+      chave: "perfil",
+      titulo: "Configure o perfil da sua empresa",
+      descricao:
+        "Adicione nome público, telefone, WhatsApp, cores e informações principais para sua agenda ficar pronta para os clientes.",
+      textoBotao: "Configurar perfil",
+      secao: "secao-admin-configuracoes",
+    };
+  }
+
+  if (!possuiServico) {
+    return {
+      chave: "servico",
+      titulo: "Crie seu primeiro serviço",
+      descricao:
+        "Cadastre o serviço que seus clientes poderão escolher na página pública de agendamento.",
+      textoBotao: "Criar serviço",
+      secao: "secao-servicos",
+    };
+  }
+
+  if (!possuiProfissional) {
+    return {
+      chave: "profissional",
+      titulo: "Cadastre um profissional",
+      descricao:
+        "Adicione quem irá atender os clientes. Depois disso, sua agenda pública já fica pronta para receber horários.",
+      textoBotao: "Criar profissional",
+      secao: "secao-profissionais",
+    };
+  }
+
+  if (!possuiAgendamento) {
+    return {
+      chave: "divulgar",
+      titulo: "Divulgue sua agenda pública",
+      descricao:
+        "Sua configuração inicial está pronta. Compartilhe o link público com seus clientes para receber o primeiro agendamento.",
+      textoBotao: "Copiar link público",
+      acao: "copiar-link",
+    };
+  }
+
+  return {
+    chave: "concluido",
+    titulo: "Sua agenda já está funcionando",
+    descricao:
+      "Você já configurou a empresa, cadastrou serviço, profissional e recebeu agendamento. Agora acompanhe sua agenda pelo painel.",
+    textoBotao: "Ver agenda",
+    secao: "secao-agenda",
+  };
+}
+
+function renderizarProximoPassoOnboardingAdmin(resumo = {}) {
+  const card = document.getElementById("onboarding-proximo-passo");
+  const titulo = document.getElementById("onboarding-proximo-titulo");
+  const descricao = document.getElementById("onboarding-proximo-descricao");
+  const botao = document.getElementById("onboarding-proximo-botao");
+
+  if (!card || !titulo || !descricao || !botao) {
+    return;
+  }
+
+  const proximoPasso = definirProximoPassoOnboardingAdmin(resumo);
+
+  proximoPassoOnboardingAdmin = proximoPasso;
+
+  titulo.textContent = proximoPasso.titulo;
+  descricao.textContent = proximoPasso.descricao;
+  botao.textContent = proximoPasso.textoBotao;
+
+  card.classList.remove("onboarding-proximo-concluido");
+
+  if (proximoPasso.chave === "concluido") {
+    card.classList.add("onboarding-proximo-concluido");
+  }
+}
+
+function executarProximoPassoOnboardingAdmin() {
+  if (!proximoPassoOnboardingAdmin) {
+    return;
+  }
+
+  if (proximoPassoOnboardingAdmin.acao === "copiar-link") {
+    copiarLinkPublicoAdmin();
+    return;
+  }
+
+  if (proximoPassoOnboardingAdmin.secao) {
+    mostrarSecaoAdmin(proximoPassoOnboardingAdmin.secao);
+  }
+}
+
+window.executarProximoPassoOnboardingAdmin =
+  executarProximoPassoOnboardingAdmin;
+
+
 function montarChecklistOnboardingAdmin(resumo) {
   const config = resumo?.config || {};
 
@@ -2465,17 +2576,6 @@ function montarChecklistOnboardingAdmin(resumo) {
       },
     },
     {
-      id: "horarios",
-      titulo: "Conferir horários de atendimento",
-      descricao:
-        "Garanta que os horários estão corretos antes de divulgar o link.",
-      concluido: possuiConfiguracoes,
-      acaoTexto: "Conferir horários",
-      acao: function () {
-        irParaSecaoAdminOnboarding("secao-configuracoes");
-      },
-    },
-    {
       id: "link",
       titulo: "Copiar link público de agendamento",
       descricao: "Envie o link para clientes pelo WhatsApp, Instagram ou site.",
@@ -2513,7 +2613,33 @@ function dispensarOnboardingAdmin() {
   exibirMensagemAdmin("Checklist de primeiros passos dispensado.");
 }
 
+
+
+async function atualizarResumoAdminAposMudanca() {
+  if (atualizandoResumoAdmin) {
+    return;
+  }
+
+  atualizandoResumoAdmin = true;
+
+  try {
+    if (typeof ultimoCarregamentoOnboardingAdmin !== "undefined") {
+      ultimoCarregamentoOnboardingAdmin = 0;
+    }
+
+    await carregarAssinaturaAdmin();
+    await carregarOnboardingAdmin();
+    renderizarLinkPublicoAdmin();
+  } catch (erro) {
+    console.warn("Não foi possível atualizar resumo do Admin.", erro);
+  } finally {
+    atualizandoResumoAdmin = false;
+  }
+}
+
+
 function renderizarOnboardingAdminComResumo(resumo) {
+    renderizarProximoPassoOnboardingAdmin(resumo);
   const card = document.getElementById("card-onboarding-admin");
   const lista = document.getElementById("onboarding-admin-lista");
   const progresso = document.getElementById("onboarding-admin-progresso");
@@ -2542,7 +2668,36 @@ function renderizarOnboardingAdminComResumo(resumo) {
   });
 
   if (!itensPendentes.length) {
-    card.style.display = "none";
+    card.style.display = "block";
+
+    progresso.textContent = `${totalConcluido}/${itens.length} concluídos`;
+
+    lista.innerHTML = `
+        <div class="onboarding-admin-compacto onboarding-admin-concluido">
+            <div class="onboarding-admin-compacto-info">
+                <span class="onboarding-admin-status">✓</span>
+
+                <div>
+                    <strong>Sua agenda já está funcionando</strong>
+                    <p>
+                        Perfil configurado, serviço cadastrado, profissional cadastrado
+                        e primeiro agendamento recebido.
+                    </p>
+                </div>
+            </div>
+
+            <div class="onboarding-admin-compacto-acoes">
+                <button
+                    type="button"
+                    class="btn-secondary btn-onboarding-admin"
+                    onclick="mostrarSecaoAdmin('secao-agenda')"
+                >
+                    Ver agenda
+                </button>
+            </div>
+        </div>
+    `;
+
     return;
   }
 
@@ -3023,109 +3178,85 @@ async function carregarConfiguracaoAtual() {
 
 
 async function salvarConfiguracao(opcoes = {}) {
-    const abertura = Number(
-        document.getElementById("hora-abertura").value || 9
-    );
+  const abertura = Number(document.getElementById("hora-abertura").value || 9);
 
-    const fechamento = Number(
-        document.getElementById("hora-fechamento").value || 18
-    );
+  const fechamento = Number(
+    document.getElementById("hora-fechamento").value || 18,
+  );
 
-    const whatsappComercial = valorCampo("whatsapp-comercial", "");
-    const telefone = valorCampo("telefone-barbearia", whatsappComercial);
+  const whatsappComercial = valorCampo("whatsapp-comercial", "");
+  const telefone = valorCampo("telefone-barbearia", whatsappComercial);
 
-    try {
-        const payload = {
-            abertura,
-            fechamento,
-            limite_cancelamento_horas: Number(
-                valorCampo("limite-cancelamento-horas", 3)
-            ),
-            cor_tema: valorCampo("cor-tema", "#f59e0b"),
-            cor_fundo: valorCampo("cor-fundo", "#0f172a"),
-            endereco: valorCampo(
-                "endereco",
-                configuracaoAtual.endereco || ""
-            ),
-            logo_url: valorCampo(
-                "logo-url",
-                configuracaoAtual.logo_url || ""
-            ),
-            instrucoes: valorCampo(
-                "instrucoes",
-                configuracaoAtual.instrucoes || ""
-            ),
-            telefone,
+  try {
+    const payload = {
+      abertura,
+      fechamento,
+      limite_cancelamento_horas: Number(
+        valorCampo("limite-cancelamento-horas", 3),
+      ),
+      cor_tema: valorCampo("cor-tema", "#f59e0b"),
+      cor_fundo: valorCampo("cor-fundo", "#0f172a"),
+      endereco: valorCampo("endereco", configuracaoAtual.endereco || ""),
+      logo_url: valorCampo("logo-url", configuracaoAtual.logo_url || ""),
+      instrucoes: valorCampo("instrucoes", configuracaoAtual.instrucoes || ""),
+      telefone,
 
-            nome_publico: valorCampo(
-                "nome-publico",
-                configuracaoAtual.nome_publico || ""
-            ),
-            logomarca_url: valorCampo(
-                "logomarca-url",
-                configuracaoAtual.logomarca_url || ""
-            ),
+      nome_publico: valorCampo(
+        "nome-publico",
+        configuracaoAtual.nome_publico || "",
+      ),
+      logomarca_url: valorCampo(
+        "logomarca-url",
+        configuracaoAtual.logomarca_url || "",
+      ),
 
-            whatsapp_comercial: whatsappComercial,
-            instagram_url: valorCampo(
-                "instagram-url",
-                configuracaoAtual.instagram_url || ""
-            ),
-            facebook_url: valorCampo(
-                "facebook-url",
-                configuracaoAtual.facebook_url || ""
-            ),
-            tiktok_url: valorCampo(
-                "tiktok-url",
-                configuracaoAtual.tiktok_url || ""
-            ),
-            site_url: valorCampo(
-                "site-url",
-                configuracaoAtual.site_url || ""
-            ),
-            google_maps_url: valorCampo(
-                "google-maps-url",
-                configuracaoAtual.google_maps_url || ""
-            ),
+      whatsapp_comercial: whatsappComercial,
+      instagram_url: valorCampo(
+        "instagram-url",
+        configuracaoAtual.instagram_url || "",
+      ),
+      facebook_url: valorCampo(
+        "facebook-url",
+        configuracaoAtual.facebook_url || "",
+      ),
+      tiktok_url: valorCampo("tiktok-url", configuracaoAtual.tiktok_url || ""),
+      site_url: valorCampo("site-url", configuracaoAtual.site_url || ""),
+      google_maps_url: valorCampo(
+        "google-maps-url",
+        configuracaoAtual.google_maps_url || "",
+      ),
 
-            mensagem_publica: valorCampo(
-                "mensagem-publica",
-                configuracaoAtual.mensagem_publica || ""
-            ),
-            captar_whatsapp_lembretes: checkboxMarcado(
-                "captar-whatsapp-lembretes"
-            ),
-            captar_whatsapp_promocoes: checkboxMarcado(
-                "captar-whatsapp-promocoes"
-            ),
-        };
+      mensagem_publica: valorCampo(
+        "mensagem-publica",
+        configuracaoAtual.mensagem_publica || "",
+      ),
+      captar_whatsapp_lembretes: checkboxMarcado("captar-whatsapp-lembretes"),
+      captar_whatsapp_promocoes: checkboxMarcado("captar-whatsapp-promocoes"),
+    };
 
-        await apiRequest(
-            `/api/${tenantSlugLogado}/configuracoes`,
-            {
-                method: "POST",
-                auth: true,
-                body: payload,
-            }
-        );
+    await apiRequest(`/api/${tenantSlugLogado}/configuracoes`, {
+      method: "POST",
+      auth: true,
+      body: payload,
+    });
 
-        configuracaoAtual = {
-            ...configuracaoAtual,
-            ...payload,
-        };
+    await carregarConfiguracoesAdmin();
 
-        atualizarPreviewMarca();
+    configuracaoAtual = {
+      ...configuracaoAtual,
+      ...payload,
+    };
 
-        if (!opcoes.silencioso) {
-            exibirMensagemPainel("Configurações salvas com sucesso.");
+    atualizarPreviewMarca();
 
-            ultimoCarregamentoOnboardingAdmin = 0;
-            await carregarOnboardingAdmin();
-        }
+    await atualizarResumoAdminAposMudanca();
 
-    } catch (erro) {
-        tratarErro(erro);
+    if (!opcoes.silencioso) {
+      exibirMensagemPainel("Configurações salvas com sucesso.");
     }
+  } catch (erro) {
+    tratarErro(erro);
+  }
 }
 
 
@@ -3186,44 +3317,37 @@ async function carregarEquipe() {
 
 
 async function salvarProfissional() {
-    const input = document.getElementById("novo-prof-nome");
-    const nome = input.value.trim();
+  const input = document.getElementById("novo-prof-nome");
+  const nome = input.value.trim();
 
-    if (!nome) {
-        exibirMensagemAdmin("Informe o nome do profissional.");
-        return;
-    }
+  if (!nome) {
+    exibirMensagemAdmin("Informe o nome do profissional.");
+    return;
+  }
 
-    try {
-        await apiRequest(
-            `/api/${tenantSlugLogado}/profissionais`,
-            {
-                method: "POST",
-                auth: true,
-                body: { nome }
-            }
-        );
+  try {
+    await apiRequest(`/api/${tenantSlugLogado}/profissionais`, {
+      method: "POST",
+      auth: true,
+      body: { nome },
+    });
 
-        input.value = "";
+    input.value = "";
 
-        await carregarEquipe();
-        ultimoCarregamentoOnboardingAdmin = 0;
-        await carregarOnboardingAdmin();
+    await carregarProfissionais();
+    await atualizarResumoAdminAposMudanca();
 
-        invalidarSecoesAdmin([
-            "secao-dashboard",
-            "secao-configuracoes",
-            "secao-agenda",
-            "secao-bloqueios-agenda",
-        ]);
+    invalidarSecoesAdmin([
+      "secao-dashboard",
+      "secao-configuracoes",
+      "secao-agenda",
+      "secao-bloqueios-agenda",
+    ]);
 
-        exibirMensagemPainel(
-            "Profissional adicionado com sucesso."
-        );
-
-    } catch (erro) {
-        tratarErro(erro);
-    }
+    exibirMensagemPainel("Profissional adicionado com sucesso.");
+  } catch (erro) {
+    tratarErro(erro);
+  }
 }
 
 
@@ -3242,10 +3366,9 @@ async function deletarProfissional(id) {
         );
 
         await carregarEquipe();
+        await atualizarResumoAdminAposMudanca();
 
-        exibirMensagemPainel(
-            "Profissional removido com sucesso."
-        );
+        exibirMensagemPainel("Profissional removido com sucesso.");
 
     } catch (erro) {
         tratarErro(erro);
@@ -3373,8 +3496,7 @@ async function salvarServico() {
         inputDuracao.value = "";
 
         await carregarServicos();
-        ultimoCarregamentoOnboardingAdmin = 0;
-        await carregarOnboardingAdmin();
+        await atualizarResumoAdminAposMudanca();
 
         invalidarSecoesAdmin([
             "secao-dashboard",
@@ -3408,6 +3530,8 @@ async function deletarServico(id) {
         );
 
         await carregarServicos();
+        await atualizarResumoAdminAposMudanca();
+
 
         exibirMensagemPainel(
             "Serviço removido com sucesso."
@@ -3659,6 +3783,10 @@ async function carregarAgendamentos() {
         }
 
         ultimoCarregamentoAgendamentosAdmin = Date.now();
+
+        if (!atualizandoResumoAdmin) {
+          await atualizarResumoAdminAposMudanca();
+        }
 
     } catch (erro) {
         if (erro.status === 404) {

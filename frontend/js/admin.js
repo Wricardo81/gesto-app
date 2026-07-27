@@ -1205,27 +1205,6 @@ function atualizarPreviewMarca() {
 }
 
 
-async function recarregarConfiguracaoAdminAposSalvar() {
-  const config = await apiRequest(`/api/${tenantSlugLogado}/configuracoes`, {
-    auth: true,
-  });
-
-  configuracaoAtual = {
-    ...configuracaoAtual,
-    ...config,
-  };
-
-  configuracoesAdminCache = {
-    ...configuracoesAdminCache,
-    ...config,
-  };
-
-  atualizarPreviewMarca();
-
-  return config;
-}
-
-
 async function uploadImagemMarca(
     campoArquivoId,
     campoUrlId,
@@ -1885,19 +1864,6 @@ function traduzirStatusChamadoAdmin(status) {
     return mapa[status] || "Aberto";
 }
 
-
-async function abrirModalHistoricoChamadosAdmin() {
-    const modal = document.getElementById("modal-historico-chamados-admin");
-
-    if (!modal) {
-        return;
-    }
-
-    modal.style.display = "flex";
-
-    await carregarChamadosAdmin();
-}
-
 function abrirModalChamadoAdmin(tipo = "erro") {
     const modal = document.getElementById("modal-chamado-admin");
 
@@ -2233,22 +2199,6 @@ function obterUrlPublicaTenantAdmin() {
   return `${origem}${caminhoBase}agendamento.html?tenant=${encodeURIComponent(tenantSlugLogado)}`;
 }
 
-function copiarLinkPublicoAdmin() {
-  const link = obterUrlPublicaTenantAdmin();
-
-  navigator.clipboard
-    .writeText(link)
-    .then(function () {
-      exibirMensagemAdmin(
-        "Link público copiado. Agora você pode enviar para seus clientes.",
-      );
-    })
-    .catch(function () {
-      exibirMensagemAdmin(`Seu link público é: ${link}`);
-    });
-}
-
-window.copiarLinkPublicoAdmin = copiarLinkPublicoAdmin;
 
 
 function obterUrlPublicaTenantAdmin() {

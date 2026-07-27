@@ -27,7 +27,7 @@ gesto.db
 # Uploads de clientes
 uploads/
 backend/uploads/
-backend/uploads_antigo/
+frontend/uploads/
 
 # Python
 __pycache__/

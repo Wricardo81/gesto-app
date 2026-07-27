@@ -156,35 +156,7 @@ function limparCachesAdminEmMemoria() {
 }
 
 
-function decodificarTokenAdmin(token) {
-  if (!token || !token.includes(".")) {
-    return null;
-  }
 
-  try {
-    return JSON.parse(
-      atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")),
-    );
-  } catch (erro) {
-    console.warn("Não foi possível decodificar token admin:", erro);
-    return null;
-  }
-}
-
-
-function obterTenantDoTokenAdmin() {
-  const token = localStorage.getItem("gesto_token");
-  const payload = decodificarTokenAdmin(token);
-
-  return (
-    payload?.sub ||
-    payload?.tenant_slug ||
-    payload?.barbearia_slug ||
-    payload?.tenant ||
-    payload?.slug ||
-    ""
-  );
-}
 
 
 function atualizarUrlTenantAdmin() {
@@ -205,26 +177,7 @@ function atualizarUrlTenantAdmin() {
 }
 
 
-function sincronizarTenantAdminComToken() {
-  const tenantToken = obterTenantDoTokenAdmin();
 
-  if (!tenantToken) {
-    return "";
-  }
-
-  localStorage.setItem("gesto_tenant", tenantToken);
-
-  const parametros = new URLSearchParams(window.location.search);
-  const tenantUrl = parametros.get("tenant");
-
-  if (tenantUrl !== tenantToken) {
-    const novaUrl = `${window.location.origin}${window.location.pathname}?tenant=${encodeURIComponent(tenantToken)}`;
-
-    window.history.replaceState({}, document.title, novaUrl);
-  }
-
-  return tenantToken;
-}
 
 function cacheAdminAindaValido(ultimoCarregamento, tempoMaximo) {
     if (!ultimoCarregamento) {
@@ -1030,7 +983,7 @@ async function tratarRetornoPagamentoAdmin() {
     }
 
     await carregarAssinaturaAdmin();
-    carregarAssinaturaAdmin();
+    await atualizarResumoAdminAposMudanca();
     iniciarMonitorNovosAgendamentos();
 
     const urlLimpa =
@@ -1251,6 +1204,28 @@ function atualizarPreviewMarca() {
     }
 }
 
+
+async function recarregarConfiguracaoAdminAposSalvar() {
+  const config = await apiRequest(`/api/${tenantSlugLogado}/configuracoes`, {
+    auth: true,
+  });
+
+  configuracaoAtual = {
+    ...configuracaoAtual,
+    ...config,
+  };
+
+  configuracoesAdminCache = {
+    ...configuracoesAdminCache,
+    ...config,
+  };
+
+  atualizarPreviewMarca();
+
+  return config;
+}
+
+
 async function uploadImagemMarca(
     campoArquivoId,
     campoUrlId,
@@ -1447,6 +1422,27 @@ function obterTenantDaUrlAdmin() {
 
   return parametros.get("tenant") || "";
 }
+
+
+function atualizarUrlTenantAdmin() {
+  if (!tenantSlugLogado) {
+    return;
+  }
+
+  const parametros = new URLSearchParams(window.location.search);
+  const tenantUrl = parametros.get("tenant");
+
+  if (tenantUrl === tenantSlugLogado) {
+    return;
+  }
+
+  const novaUrl =
+    `${window.location.origin}${window.location.pathname}` +
+    `?tenant=${encodeURIComponent(tenantSlugLogado)}`;
+
+  window.history.replaceState({}, document.title, novaUrl);
+}
+
 
 function sincronizarTenantAdminComToken() {
   const tenantToken = obterTenantDoTokenAdmin();
@@ -3177,6 +3173,35 @@ async function carregarConfiguracaoAtual() {
 }
 
 
+async function recarregarConfiguracaoAdminAposSalvar() {
+  const config = await apiRequest(`/api/${tenantSlugLogado}/configuracoes`, {
+    auth: true,
+  });
+
+  configuracaoAtual = {
+    ...configuracaoAtual,
+    ...config,
+  };
+
+  configuracoesAdminCache = {
+    ...configuracoesAdminCache,
+    ...config,
+  };
+
+  if (typeof preencherFormularioConfiguracao === "function") {
+    preencherFormularioConfiguracao(config);
+  }
+
+  if (typeof preencherFormularioConfiguracoes === "function") {
+    preencherFormularioConfiguracoes(config);
+  }
+
+  atualizarPreviewMarca();
+
+  return config;
+}
+
+
 async function salvarConfiguracao(opcoes = {}) {
   const abertura = Number(document.getElementById("hora-abertura").value || 9);
 
@@ -3240,7 +3265,7 @@ async function salvarConfiguracao(opcoes = {}) {
       body: payload,
     });
 
-    await carregarConfiguracoesAdmin();
+    await recarregarConfiguracaoAdminAposSalvar();
 
     configuracaoAtual = {
       ...configuracaoAtual,
@@ -3334,7 +3359,7 @@ async function salvarProfissional() {
 
     input.value = "";
 
-    await carregarProfissionais();
+    await carregarEquipe();
     await atualizarResumoAdminAposMudanca();
 
     invalidarSecoesAdmin([
@@ -3344,7 +3369,8 @@ async function salvarProfissional() {
       "secao-bloqueios-agenda",
     ]);
 
-    exibirMensagemPainel("Profissional adicionado com sucesso.");
+      exibirMensagemPainel("Profissional adicionado com sucesso.");
+
   } catch (erro) {
     tratarErro(erro);
   }

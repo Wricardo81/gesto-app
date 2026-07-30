@@ -358,3 +358,33 @@ table {
     font-size: 0.9rem;
     font-weight: 900;
 }
+
+/* =========================================================
+   PWA — BOTÃO DE INSTALAÇÃO
+========================================================= */
+
+.btn-pwa-install {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 1px solid rgba(100, 255, 218, 0.34);
+    border-radius: 999px;
+    background: rgba(100, 255, 218, 0.12);
+    color: #64FFDA;
+    font-weight: 900;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 14px 42px rgba(100, 255, 218, 0.12);
+}
+
+.btn-pwa-install:hover {
+    background: rgba(100, 255, 218, 0.18);
+}
+
+.btn-pwa-install:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

@@ -3,6 +3,15 @@
     return;
   }
 
+  function atualizarBotoesInstalacaoPwa(disponivel) {
+    const botoes = document.querySelectorAll("[data-pwa-install]");
+
+    botoes.forEach(function (botao) {
+      botao.style.display = disponivel ? "inline-flex" : "none";
+      botao.disabled = !disponivel;
+    });
+  }
+
   async function registrarServiceWorker() {
     try {
       const registro = await navigator.serviceWorker.register(
@@ -15,8 +24,11 @@
     }
   }
 
-    window.addEventListener("load", registrarServiceWorker);
-    
+  window.addEventListener("load", function () {
+    registrarServiceWorker();
+
+    atualizarBotoesInstalacaoPwa(Boolean(window.bitsAgendaInstallPrompt));
+  });
 
   window.addEventListener("beforeinstallprompt", function (evento) {
     evento.preventDefault();
@@ -25,9 +37,19 @@
 
     window.bitsAgendaInstallPrompt = evento;
 
+    atualizarBotoesInstalacaoPwa(true);
+
     document.dispatchEvent(
       new CustomEvent("bitsagenda:pwa-instalacao-disponivel"),
     );
+  });
+
+  window.addEventListener("appinstalled", function () {
+    console.info("BitsAgenda OS instalado como app.");
+
+    window.bitsAgendaInstallPrompt = null;
+
+    atualizarBotoesInstalacaoPwa(false);
   });
 
   window.instalarBitsAgenda = async function () {
@@ -36,7 +58,8 @@
     if (!promptInstalacao) {
       return {
         disponivel: false,
-        mensagem: "Instalação ainda não disponível neste navegador.",
+        mensagem:
+          "Instalação ainda não disponível neste navegador. No celular, toque nos três pontinhos e escolha Instalar app.",
       };
     }
 
@@ -46,6 +69,8 @@
 
     window.bitsAgendaInstallPrompt = null;
 
+    atualizarBotoesInstalacaoPwa(false);
+
     return {
       disponivel: true,
       resultado: escolha.outcome,
@@ -53,4 +78,20 @@
   };
 
   window.instalarGestoApp = window.instalarBitsAgenda;
+
+  window.addEventListener("click", async function (evento) {
+    const botao = evento.target.closest("[data-pwa-install]");
+
+    if (!botao) {
+      return;
+    }
+
+    evento.preventDefault();
+
+    const resultado = await window.instalarBitsAgenda();
+
+    if (!resultado.disponivel) {
+      alert(resultado.mensagem);
+    }
+  });
 })();

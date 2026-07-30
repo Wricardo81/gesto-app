@@ -17,27 +17,34 @@
    <link rel="stylesheet" href="./css/saas.css?v=97">
 <link rel="stylesheet" href="./css/pwa.css?v=1">
 
-    <link rel="manifest" href="./manifest.webmanifest">
-        <meta name="theme-color" content="#0A192F">
-        <meta name="mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-title" content="BitsAgenda OS">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#0A192F">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="BitsAgenda OS">
 
-        <link
-            rel="icon"
-            type="image/png"
-            sizes="192x192"
-            href="./icons/bitsagenda-icon-192.png"
-        >
+<link
+rel="icon"
+type="image/png"
+sizes="192x192"
+href="./icons/bitsagenda-icon-192.png"
+>
 
-        <link
-            rel="apple-touch-icon"
-            href="./icons/bitsagenda-icon-192.png"
-        >
+<link
+rel="apple-touch-icon"
+href="./icons/bitsagenda-icon-192.png"
+>
 
 </head>
 
 <body>
+    <button
+        type="button"
+        class="btn-pwa-install"
+        data-pwa-install
+    >
+        Instalar app
+    </button>
     <section id="tela-login-saas">
         <div class="login-box">
             <h2>Painel Mestre</h2>
@@ -80,71 +87,72 @@
         style="display: none;"
     >
 
-        <div
-            id="toast-saas"
-            class="toast-saas"
-            style="display: none;"
-        >
-            <span id="toast-saas-texto">
-                Mensagem do sistema
-            </span>
-        </div>
 
-        <header class="header">
-            <div>
-                <h1>Engenharia de Bits</h1>
-                <span>Painel Mestre do SaaS</span>
-            </div>
+    <div
+    id="toast-saas"
+    class="toast-saas"
+    style="display: none;"
+    >
+    <span id="toast-saas-texto">
+        Mensagem do sistema
+    </span>
+</div>
 
-            <div class="header-acoes-saas">
-                <button
-                    type="button"
-                    class="btn-secundario-saas"
-                    onclick="atualizarPainelSaas()"
-                >
-                    Atualizar
-                </button>
+<header class="header">
+    <div>
+        <h1>Engenharia de Bits</h1>
+        <span>Painel Mestre do SaaS</span>
+    </div>
 
-                <button
-                    id="btn-sair-saas"
-                    class="btn-sair"
-                    type="button"
-                >
-                    Sair
-                </button>
-            </div>
-        </header>
-
+    <div class="header-acoes-saas">
         <button
-            type="button"
-            class="btn-menu-saas"
-            onclick="alternarMenuSaas()"
+        type="button"
+        class="btn-secundario-saas"
+        onclick="atualizarPainelSaas()"
         >
-            ☰ Menu do SaaS
-        </button>
+        Atualizar
+    </button>
 
-        <nav class="saas-tabs" id="saas-tabs">
-            <button
-                type="button"
-                class="saas-tab ativa"
-                data-secao="secao-saas-dashboard"
-            >
-                Visão geral
-            </button>
+    <button
+    id="btn-sair-saas"
+    class="btn-sair"
+    type="button"
+    >
+    Sair
+</button>
+</div>
+</header>
 
-            <button
-                type="button"
-                class="saas-tab"
-                data-secao="secao-saas-empresas"
-            >
-                Empresas
-            </button>
+<button
+type="button"
+class="btn-menu-saas"
+onclick="alternarMenuSaas()"
+>
+☰ Menu do SaaS
+</button>
 
-            <button
-                type="button"
-                class="saas-tab"
-                data-secao="secao-saas-criar"
-            >
+<nav class="saas-tabs" id="saas-tabs">
+    <button
+    type="button"
+    class="saas-tab ativa"
+    data-secao="secao-saas-dashboard"
+    >
+    Visão geral
+</button>
+
+<button
+type="button"
+class="saas-tab"
+data-secao="secao-saas-empresas"
+>
+Empresas
+</button>
+
+<button
+type="button"
+class="saas-tab"
+data-secao="secao-saas-criar"
+>
                 Criar empresa
             </button>
 

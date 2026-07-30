@@ -15,10 +15,13 @@
     }
   }
 
-  window.addEventListener("load", registrarServiceWorker);
+    window.addEventListener("load", registrarServiceWorker);
+    
 
   window.addEventListener("beforeinstallprompt", function (evento) {
     evento.preventDefault();
+
+    console.info("PWA instalação disponível.");
 
     window.bitsAgendaInstallPrompt = evento;
 

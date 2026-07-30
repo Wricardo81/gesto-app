@@ -410,42 +410,7 @@ function formatarDataMensagemWhatsApp(data) {
 }
 
 
-function montarMensagemWhatsAppAgendamento(agendamento, tipo = "confirmacao") {
-    const nomeCliente = agendamento?.cliente_nome || "cliente";
-    const servico = agendamento?.servico || "seu atendimento";
-    const profissional = agendamento?.profissional || "nossa equipe";
-    const data = formatarDataMensagemWhatsApp(agendamento?.data);
-    const horario = agendamento?.horario || "";
 
-
-    const nomeEmpresa =
-        configuracoesAdminCache?.nome_publico
-        || configuracoesAdminCache?.nome_empresa
-        || tenantSlugLogado
-        || "nossa empresa";
-
-    if (tipo === "remarcacao") {
-        return (
-            `Olá, ${nomeCliente}! Aqui é da ${nomeEmpresa}. ` +
-            `Precisamos falar sobre seu agendamento de ${servico}, marcado para ${data} às ${horario} com ${profissional}. ` +
-            `Podemos combinar um novo horário?`
-        );
-    }
-
-    if (tipo === "agradecimento") {
-        return (
-            `Olá, ${nomeCliente}! Aqui é da ${nomeEmpresa}. ` +
-            `Passando para agradecer pela sua visita. Foi um prazer atender você! ` +
-            `Quando quiser agendar novamente, estamos à disposição.`
-        );
-    }
-
-    return (
-        `Olá, ${nomeCliente}! Aqui é da ${nomeEmpresa}. ` +
-        `Confirmando seu agendamento de ${servico} para ${data} às ${horario} com ${profissional}. ` +
-        `Qualquer dúvida, estamos à disposição.`
-    );
-}
 
 
 function abrirWhatsAppAgendamento(agendamentoId, tipo = "confirmacao") {
@@ -1600,6 +1565,7 @@ function montarMensagemWhatsAppAgendamento(agendamento, tipo = "confirmacao") {
     const profissional = agendamento?.profissional || "nossa equipe";
     const data = formatarDataMensagemWhatsApp(agendamento?.data);
     const horario = agendamento?.horario || "";
+    const linkAgenda = obterUrlPublicaTenantAdmin();
 
     const nomeEmpresa =
         configuracoesAdminCache?.nome_publico
@@ -1607,8 +1573,6 @@ function montarMensagemWhatsAppAgendamento(agendamento, tipo = "confirmacao") {
         || tenantSlugLogado
         || "nossa empresa";
 
-    const linkAgenda =
-        `${window.location.origin}/frontend/agendamento.html?tenant=${encodeURIComponent(tenantSlugLogado)}`;
 
     if (tipo === "remarcacao") {
         return (
@@ -2192,24 +2156,31 @@ window.abrirModalHistoricoChamadosAdmin = abrirModalHistoricoChamadosAdmin;
 window.fecharModalHistoricoChamadosAdmin = fecharModalHistoricoChamadosAdmin;
 
 
-function obterUrlPublicaTenantAdmin() {
-  const origem = window.location.origin;
-  const caminhoBase = window.location.pathname.replace("admin.html", "");
+function obterBasePublicaFrontendAdmin() {
+    const hostname = window.location.hostname;
+    const origin = window.location.origin;
 
-  return `${origem}${caminhoBase}agendamento.html?tenant=${encodeURIComponent(tenantSlugLogado)}`;
+    const rodandoLocal =
+        hostname === "127.0.0.1" ||
+        hostname === "localhost";
+
+    if (rodandoLocal) {
+        return `${origin}/frontend`;
+    }
+
+    return origin;
 }
 
-
-
 function obterUrlPublicaTenantAdmin() {
-  if (!tenantSlugLogado) {
-    return "";
-  }
+    if (!tenantSlugLogado) {
+        return "";
+    }
 
-  const baseUrl = window.location.origin + "/frontend";
+    const baseUrl = obterBasePublicaFrontendAdmin();
 
-  return `${baseUrl}/agendamento.html?tenant=${encodeURIComponent(tenantSlugLogado)}`;
+    return `${baseUrl}/agendamento.html?tenant=${encodeURIComponent(tenantSlugLogado)}`;
 }
+
 
 function renderizarLinkPublicoAdmin() {
   const elemento = document.getElementById("link-publico-admin-url");
@@ -2253,6 +2224,7 @@ function abrirLinkPublicoAdmin() {
 
 window.copiarLinkPublicoAdmin = copiarLinkPublicoAdmin;
 window.abrirLinkPublicoAdmin = abrirLinkPublicoAdmin;
+
 
 function irParaSecaoAdminOnboarding(secaoId) {
   if (typeof mostrarSecaoAdmin === "function") {

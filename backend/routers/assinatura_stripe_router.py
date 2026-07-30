@@ -312,6 +312,8 @@ def criar_checkout_stripe_para_barbearia(
     barbearia.plano_periodicidade = plano.periodicidade
     barbearia.valor_mensal = plano.valor_mensal_equivalente
     barbearia.status_assinatura = "checkout_criado"
+    barbearia.status_pagamento = "pendente"
+    barbearia.plano_ativo = False
     barbearia.stripe_checkout_session_id = checkout["id"]
 
     db.commit()
@@ -664,9 +666,24 @@ async def webhook_stripe(
                         "reason": "Empresa desativada manualmente pelo SaaS Master.",
                     }
 
+
+                payment_status = (
+                    objeto.get("payment_status")
+                    or ""
+                ).strip().lower()
+
                 barbearia.stripe_subscription_id = subscription_id
                 barbearia.stripe_customer_id = customer_id
-                barbearia.status_assinatura = "checkout_concluido"
+
+                if payment_status == "paid" or subscription_id:
+                    barbearia.status_pagamento = "em_dia"
+                    barbearia.status_assinatura = "ativa"
+                    barbearia.plano_ativo = True
+                else:
+                    barbearia.status_pagamento = "pendente"
+                    barbearia.status_assinatura = "checkout_concluido"
+                    barbearia.plano_ativo = False
+
                 db.commit()
 
     return {

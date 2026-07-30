@@ -52,7 +52,6 @@ def criar_novo_agendamento(
         "trialing",
         "active",
         "em_dia",
-        "checkout_concluido",
         "mercado_pago_aprovado",
     }
 

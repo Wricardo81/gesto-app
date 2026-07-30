@@ -2837,3 +2837,73 @@
         width: 100%;
     }
 }
+
+/* =========================================================
+   MOBILE FIX — CARDS E LINK PÚBLICO ADMIN
+========================================================= */
+
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.admin-shell,
+.admin-main,
+.admin-content,
+.admin-card,
+.link-publico-admin-card,
+.onboarding-admin-card,
+.trial-admin-card {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+#link-publico-admin-url {
+    display: block;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.link-publico-admin-acoes {
+    width: 100%;
+}
+
+@media (max-width: 720px) {
+    .admin-card,
+    .link-publico-admin-card,
+    .onboarding-admin-card,
+    .trial-admin-card {
+        width: 100%;
+        padding: 18px;
+        border-radius: 22px;
+    }
+
+    .link-publico-admin-card {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .link-publico-admin-info {
+        min-width: 0;
+    }
+
+    .link-publico-admin-acoes {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .link-publico-admin-acoes button {
+        width: 100%;
+        min-width: 0;
+        white-space: normal;
+    }
+
+    .trial-admin-metricas {
+        grid-template-columns: 1fr;
+    }
+}

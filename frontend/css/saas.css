@@ -1961,3 +1961,82 @@ small {
         max-width: 100%;
     }
 }
+
+/* =========================================================
+   MOBILE FIX — SAAS MASTER
+========================================================= */
+
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.saas-container,
+.saas-card,
+.saas-panel,
+.saas-table-wrapper,
+.tabela-clientes-wrapper,
+.empresas-wrapper {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.saas-table-wrapper,
+.tabela-clientes-wrapper,
+.empresas-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.saas-table,
+.tabela-clientes,
+table {
+    min-width: 760px;
+}
+
+@media (max-width: 720px) {
+    .saas-container,
+    .saas-main,
+    .saas-content {
+        width: 100%;
+        max-width: 100%;
+        padding-left: 14px;
+        padding-right: 14px;
+        box-sizing: border-box;
+    }
+
+    .saas-card,
+    .saas-panel {
+        width: 100%;
+        padding: 18px;
+        border-radius: 22px;
+    }
+
+    .saas-table-wrapper,
+    .tabela-clientes-wrapper,
+    .empresas-wrapper {
+        border-radius: 18px;
+    }
+
+    .saas-table,
+    .tabela-clientes,
+    table {
+        min-width: 720px;
+    }
+
+    .saas-actions,
+    .empresa-acoes,
+    .acoes-empresa {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .saas-actions button,
+    .empresa-acoes button,
+    .acoes-empresa button {
+        width: 100%;
+        white-space: normal;
+    }
+}

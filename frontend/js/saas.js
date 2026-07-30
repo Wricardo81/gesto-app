@@ -208,12 +208,12 @@ async function realizarLoginSaas(event) {
         salvarTokenSaas(
             dados.access_token
         );
-        
+
         exibirPainelSaas();
-        
+
         secoesSaasCarregadas.clear();
         secoesSaasCarregando.clear();
-        
+
         inicializarNavegacaoSaas();
 
     } catch (erro) {
@@ -382,7 +382,7 @@ async function carregarClientes() {
         );
 
         clientesSaasCache = clientes;
-        
+
         atualizarResumoSaas(clientes);
 
         if (!clientes.length) {
@@ -405,23 +405,23 @@ async function carregarClientes() {
 
         for (const cliente of clientes) {
             const tr = document.createElement("tr");
-        
+
             tr.appendChild(
                 criarCelula(`#${cliente.id}`)
             );
-        
+
             const tdEmpresa = document.createElement("td");
-        
+
             const nome = document.createElement("strong");
             nome.textContent = cliente.nome;
-        
+
             const email = document.createElement("small");
             email.textContent = cliente.email || "";
-        
+
             const link = document.createElement("small");
             link.textContent =
                 `agendamento.html?tenant=${cliente.slug}`;
-        
+
             tdEmpresa.append(
                 nome,
                 document.createElement("br"),
@@ -429,9 +429,9 @@ async function carregarClientes() {
                 document.createElement("br"),
                 link
             );
-        
+
             tr.appendChild(tdEmpresa);
-        
+
             const tdPlano = document.createElement("td");
             tdPlano.innerHTML = `
                 <div class="financeiro-info">
@@ -440,13 +440,13 @@ async function carregarClientes() {
                 </div>
             `;
             tr.appendChild(tdPlano);
-        
+
             tr.appendChild(
                 criarCelula(
                     formatarMoedaSaas(cliente.valor_mensal || 0)
                 )
             );
-        
+
             const tdVencimento = document.createElement("td");
             tdVencimento.innerHTML = `
                 <div class="financeiro-info">
@@ -461,41 +461,41 @@ async function carregarClientes() {
                 </div>
             `;
             tr.appendChild(tdVencimento);
-        
+
             const tdStatusFinanceiro = document.createElement("td");
-        
+
             const badgeFinanceiro = document.createElement("span");
-        
+
             badgeFinanceiro.className =
                 `status-badge ${classeStatusPagamento(cliente.status_pagamento)}`;
-        
+
             badgeFinanceiro.textContent =
                 traduzirStatusPagamento(cliente.status_pagamento);
-        
+
             tdStatusFinanceiro.appendChild(badgeFinanceiro);
             tr.appendChild(tdStatusFinanceiro);
-        
+
             const tdAcesso = document.createElement("td");
-        
+
             const badgeAcesso = document.createElement("span");
-        
+
             badgeAcesso.className =
                 `status-badge ${
                     cliente.acesso_ativo
                         ? "status-ativo"
                         : "status-bloqueado"
                 }`;
-        
+
             badgeAcesso.textContent =
                 cliente.acesso_ativo
                     ? "Liberado"
                     : "Bloqueado";
-        
+
             tdAcesso.appendChild(badgeAcesso);
             tr.appendChild(tdAcesso);
-        
+
             const tdAcao = document.createElement("td");
-        
+
             tdAcao.innerHTML = `
                 <div class="acoes-financeiras">
                     <button
@@ -534,9 +534,9 @@ async function carregarClientes() {
                     </button>
                 </div>
             `;
-        
+
             tr.appendChild(tdAcao);
-        
+
             tbody.appendChild(tr);
         }
 
@@ -645,7 +645,7 @@ async function alterarStatus(id) {
             }
         );
 
-        
+
         exibirMensagemSaas("Status manual atualizado com sucesso.");
 
     } catch (erro) {
@@ -796,7 +796,7 @@ function abrirModalFinanceiroSaas(id) {
         cliente.vencimento_plano || "";
 
     document.getElementById("financeiro-status").value =
-        cliente.status_pagamento || "em_dia";
+        cliente.status_pagamento || "pendente";
 
     document.getElementById("financeiro-dias-tolerancia").value =
         cliente.dias_tolerancia ?? 3;
@@ -1525,7 +1525,7 @@ async function alternarStatusAvisoSaas(id, ativo) {
                 forcar: true,
             }
         );
-        
+
         exibirMensagemSaas(
                 ativo
                     ? "Aviso ativado com sucesso."
@@ -2338,7 +2338,7 @@ function renderizarMetricasDashboardSaas(metricas) {
     renderizarAlertasOperacionaisSaas(
         metricas.empresas || []
     );
-    
+
     renderizarRankingAgendamentosSaas(
         metricas.empresas || []
     );

@@ -9,7 +9,6 @@ from settings import settings
 STATUS_ASSINATURA_ATIVA = {
     "active",
     # "trialing",
-    "checkout_concluido",
     "mercado_pago_aprovado",
 }
 

@@ -8,7 +8,6 @@ STATUS_ASSINATURA_LIBERADOS = {
     "teste",
     "trialing",
     "active",
-    "checkout_concluido",
     "mercado_pago_aprovado",
 }
 

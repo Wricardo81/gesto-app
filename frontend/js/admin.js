@@ -1459,13 +1459,7 @@ async function realizarLogin(event) {
 }
 
 function alternarMenuAdmin() {
-    const menu = document.getElementById("admin-tabs");
-
-    if (!menu) {
-        return;
-    }
-
-    menu.classList.toggle("aberto");
+  document.body.classList.toggle("admin-menu-aberto");
 }
 
 
@@ -1479,6 +1473,10 @@ function mostrarSecaoAdmin(secaoId) {
             secao.id === secaoId
         );
     });
+
+    if (window.innerWidth <= 900) {
+      document.body.classList.remove("admin-menu-aberto");
+    }
 
     botoes.forEach((botao) => {
         botao.classList.toggle(

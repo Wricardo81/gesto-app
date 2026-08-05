@@ -148,55 +148,72 @@
             </div>
         </div>
 
-        <nav class="admin-tabs" id="admin-tabs">
-            <button
-                type="button"
-                class="admin-tab ativa"
-                data-secao="secao-dashboard"
-            >
-                Visão geral
-            </button>
+        <aside id="admin-sidebar" class="admin-sidebar">
+            <div class="admin-sidebar-brand">
+                <div class="admin-sidebar-logo">B</div>
 
-            <button
-                type="button"
-                class="admin-tab"
-                data-secao="secao-configuracoes"
-            >
-                Configurações
-            </button>
+                <div>
+                    <strong>BitsAgenda OS</strong>
+                    <span>Painel da empresa</span>
+                </div>
+            </div>
 
-            <button
-                type="button"
-                class="admin-tab"
-                data-secao="secao-agenda"
-            >
-                Agenda
-            </button>
+            <nav class="admin-sidebar-nav admin-tabs" id="admin-tabs">
+                <button
+                    type="button"
+                    class="admin-tab admin-nav-item ativa"
+                    data-secao="secao-dashboard"
+                >
+                    <span class="admin-nav-icon">📊</span>
+                    <span>Visão geral</span>
+                </button>
 
-            <button
-                type="button"
-                class="admin-tab"
-                data-secao="secao-bloqueios-agenda"
-            >
-                Bloqueios
-            </button>
+                <button
+                    type="button"
+                    class="admin-tab admin-nav-item"
+                    data-secao="secao-agenda"
+                >
+                    <span class="admin-nav-icon">📅</span>
+                    <span>Agenda</span>
+                </button>
 
-            <button
-                type="button"
-                class="admin-tab"
-                data-secao="secao-clientes-crm"
-            >
-                Clientes / CRM
-            </button>
+                <button
+                    type="button"
+                    class="admin-tab admin-nav-item"
+                    data-secao="secao-bloqueios-agenda"
+                >
+                    <span class="admin-nav-icon">⛔</span>
+                    <span>Bloqueios</span>
+                </button>
 
-            <button
-                type="button"
-                class="admin-tab"
-                data-secao="secao-admin-assinatura"
-            >
-                Plano / Assinatura
-            </button>
-        </nav>
+                <button
+                    type="button"
+                    class="admin-tab admin-nav-item"
+                    data-secao="secao-clientes-crm"
+                >
+                    <span class="admin-nav-icon">👥</span>
+                    <span>Clientes / CRM</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="admin-tab admin-nav-item"
+                    data-secao="secao-configuracoes"
+                >
+                    <span class="admin-nav-icon">⚙️</span>
+                    <span>Configurações</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="admin-tab admin-nav-item"
+                    data-secao="secao-admin-assinatura"
+                >
+                    <span class="admin-nav-icon">💳</span>
+                    <span>Plano / Assinatura</span>
+                </button>
+            </nav>
+        </aside>
 
         <div id="aviso-bloqueio-admin"
             class="aviso-bloqueio-admin"

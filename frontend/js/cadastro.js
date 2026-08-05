@@ -10,11 +10,30 @@
     return;
     }
 
+    function normalizarPlano(plano) {
+      const mapaCompatibilidade = {
+        mensal: "essencial",
+        trimestral: "profissional",
+        anual: "empresa",
+      };
+
+      const codigo = String(plano || "teste")
+        .trim()
+        .toLowerCase();
+
+      return mapaCompatibilidade[codigo] || codigo;
+    }
+
     function obterPlanoDaUrl() {
       const parametros = new URLSearchParams(window.location.search);
-      const plano = parametros.get("plano") || "teste";
+      const plano = normalizarPlano(parametros.get("plano") || "teste");
 
-      const planosPermitidos = ["teste", "mensal", "trimestral", "anual"];
+      const planosPermitidos = [
+        "teste",
+        "essencial",
+        "profissional",
+        "empresa",
+      ];
 
       if (!planosPermitidos.includes(plano)) {
         return "teste";
@@ -26,12 +45,12 @@
     function nomePlano(plano) {
       const nomes = {
         teste: "Teste grátis",
-        mensal: "Plano mensal",
-        trimestral: "Plano trimestral",
-        anual: "Plano anual",
+        essencial: "Plano Essencial",
+        profissional: "Plano Profissional",
+        empresa: "Plano Empresa",
       };
 
-      return nomes[plano] || "Teste grátis";
+      return nomes[normalizarPlano(plano)] || "Teste grátis";
     }
 
     function aplicarPlanoSelecionado() {
@@ -53,6 +72,8 @@
       }
     }
 
+    aplicarPlanoSelecionado();
+
 
     function valorCampo(id) {
     return document.getElementById(id)?.value?.trim() || "";
@@ -69,7 +90,9 @@
     }
 
     function planoEhPago(plano) {
-      return ["mensal", "trimestral", "anual"].includes(plano);
+      return ["essencial", "profissional", "empresa"].includes(
+        normalizarPlano(plano),
+      );
     }
 
     async function iniciarCheckoutAposCadastro(respostaCadastro) {
@@ -137,7 +160,9 @@
       telefone: valorCampo("cadastro-telefone"),
       senha: valorCampo("cadastro-senha"),
       tipo_negocio: valorCampo("cadastro-tipo-negocio") || null,
-      plano_codigo: valorCampo("cadastro-plano-codigo") || "teste",
+      plano_codigo: normalizarPlano(
+        valorCampo("cadastro-plano-codigo") || "teste",
+      ),
     };
 
     if (

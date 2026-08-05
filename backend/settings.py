@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     stripe_price_trimestral: str | None = None
     stripe_price_anual: str | None = None
 
+    stripe_price_essencial: str | None = None
+    stripe_price_profissional: str | None = None
+    stripe_price_empresa: str | None = None
+
     # Mercado Pago
     mercado_pago_access_token: str | None = None
     mercado_pago_webhook_secret: str | None = None

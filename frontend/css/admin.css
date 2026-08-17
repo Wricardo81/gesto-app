@@ -115,7 +115,7 @@
 
         .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
             gap: 14px;
             margin-bottom: 24px;
         }
@@ -149,6 +149,14 @@
             color: var(--texto-secundario);
             margin-top: 8px;
             font-size: 12px;
+        }
+
+        .metric-card-financeiro {
+            border-color: rgba(100, 255, 218, 0.32);
+        }
+
+        .metric-card-alerta {
+            border-color: rgba(251, 191, 36, 0.32);
         }
 
         .layout-grid {

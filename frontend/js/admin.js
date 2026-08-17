@@ -3547,23 +3547,86 @@ async function carregarAgendamentos() {
             }
         );
 
-        const total = dados.total_agendamentos || 0;
-        const faturamento = Number(
-            dados.faturamento_previsto || 0
+        const agendamentos = Array.isArray(dados.agendamentos)
+            ? dados.agendamentos
+            : [];
+
+        const total = Number(dados.total_agendamentos || agendamentos.length || 0);
+
+        const normalizarStatusFinanceiro = (valor) =>
+            String(valor || "confirmado").trim().toLowerCase();
+
+        const obterValorAgendamento = (agendamento) =>
+            Number(agendamento?.valor || 0);
+
+        const agendamentosFaturaveis = agendamentos.filter((agendamento) => {
+            const status = normalizarStatusFinanceiro(agendamento.status);
+            return ["confirmado", "concluido"].includes(status);
+        });
+
+        const agendamentosConcluidos = agendamentos.filter((agendamento) => {
+            const status = normalizarStatusFinanceiro(agendamento.status);
+            return status === "concluido";
+        });
+
+        const agendamentosPerdidos = agendamentos.filter((agendamento) => {
+            const status = normalizarStatusFinanceiro(agendamento.status);
+            return ["cancelado", "falta"].includes(status);
+        });
+
+        const faturamento = agendamentosFaturaveis.reduce(
+            (totalFinanceiro, agendamento) =>
+                totalFinanceiro + obterValorAgendamento(agendamento),
+            0
         );
 
-        const ticketMedio = total > 0
-            ? faturamento / total
+        const faturamentoConcluido = agendamentosConcluidos.reduce(
+            (totalFinanceiro, agendamento) =>
+                totalFinanceiro + obterValorAgendamento(agendamento),
+            0
+        );
+
+        const ticketMedio = agendamentosFaturaveis.length > 0
+            ? faturamento / agendamentosFaturaveis.length
             : 0;
 
-        document.getElementById("visor-total-agendamentos").textContent =
-            total;
+        const atualizarMetricaAdmin = (id, valor) => {
+            const elemento = document.getElementById(id);
 
-        document.getElementById("visor-faturamento").textContent =
-            formatarMoeda(faturamento);
+            if (elemento) {
+                elemento.textContent = valor;
+            }
+        };
 
-        document.getElementById("visor-ticket-medio").textContent =
-            formatarMoeda(ticketMedio);
+        atualizarMetricaAdmin(
+            "visor-total-agendamentos",
+            total
+        );
+
+        atualizarMetricaAdmin(
+            "visor-faturamento",
+            formatarMoeda(faturamento)
+        );
+
+        atualizarMetricaAdmin(
+            "visor-faturamento-concluido",
+            formatarMoeda(faturamentoConcluido)
+        );
+
+        atualizarMetricaAdmin(
+            "visor-agendamentos-faturaveis",
+            agendamentosFaturaveis.length
+        );
+
+        atualizarMetricaAdmin(
+            "visor-ticket-medio",
+            formatarMoeda(ticketMedio)
+        );
+
+        atualizarMetricaAdmin(
+            "visor-cancelamentos-financeiro",
+            agendamentosPerdidos.length
+        );
 
         tbody.innerHTML = "";
 

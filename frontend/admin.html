@@ -7,7 +7,7 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="./css/admin.css?v=91">
+    <link rel="stylesheet" href="./css/admin.css?v=96">
     <link rel="stylesheet" href="./css/pwa.css?v=1">
     <link rel="stylesheet" href="./css/ui-clean.css?v=1">
 
@@ -356,10 +356,16 @@
         </section>
 
         <section class="dashboard-grid secao-admin ativa" id="secao-dashboard">
-            <div class="metric-card">
-                <p>Faturamento previsto</p>
+            <div class="metric-card metric-card-financeiro">
+                <p>Receita prevista</p>
                 <strong id="visor-faturamento">R$ 0,00</strong>
-                <small>Com base nos agendamentos cadastrados.</small>
+                <small>Confirmados e concluídos no período.</small>
+            </div>
+
+            <div class="metric-card metric-card-financeiro">
+                <p>Receita concluída</p>
+                <strong id="visor-faturamento-concluido">R$ 0,00</strong>
+                <small>Somente atendimentos concluídos.</small>
             </div>
 
             <div class="metric-card">
@@ -369,17 +375,24 @@
             </div>
 
             <div class="metric-card">
-                <p>Ticket médio</p>
-                <strong id="visor-ticket-medio">R$ 0,00</strong>
-                <small>Faturamento dividido por agendamentos.</small>
+                <p>Faturáveis</p>
+                <strong id="visor-agendamentos-faturaveis">0</strong>
+                <small>Confirmados e concluídos.</small>
             </div>
 
             <div class="metric-card">
-                <p>Status</p>
-                <strong style="color: var(--cor-sucesso);">Ativo</strong>
-                <small>Empresa liberada para receber reservas.</small>
+                <p>Ticket médio</p>
+                <strong id="visor-ticket-medio">R$ 0,00</strong>
+                <small>Receita prevista dividida por faturáveis.</small>
+            </div>
+
+            <div class="metric-card metric-card-alerta">
+                <p>Cancelamentos/perdas</p>
+                <strong id="visor-cancelamentos-financeiro">0</strong>
+                <small>Cancelados e faltas no período.</small>
             </div>
         </section>
+
 
 
 
@@ -1282,7 +1295,7 @@
         <script src="./js/config.js?v=94"></script>
         <script src="./js/api.js?v=95"></script>
         <script src="./js/auth.js?v=95"></script>
-        <script src="./js/admin.js?v=98"></script>
+        <script src="./js/admin.js?v=96"></script>
         <script src="./js/pwa.js?v=1"></script>
         <script src="./js/diagnostico.js?v=1"></script>
 </body>

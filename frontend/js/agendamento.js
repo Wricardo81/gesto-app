@@ -240,56 +240,36 @@ async function iniciarAplicativo() {
    CONFIGURAÇÕES VISUAIS
 ========================================================= */
 
-async function carregarConfiguracoes() {
-    const config = await apiRequest(
-        `/api/${encodeURIComponent(tenantSlug)}/configuracoes`
+
+
+function aplicarIdentidadePublica(config) {
+    const nomePublico = (
+        config.nome_publico
+        || config.nome
+        || tenantSlug.replaceAll("-", " ")
     );
 
-    if (
-        config.empresa_desativada === true
-        || config.status_assinatura === "desativada"
-        || config.acesso_liberado === false
-        || config.acesso_ativo === false
-    ) {
-        mostrarAvisoAssinaturaInativa(
-            "O acesso deste estabelecimento está bloqueado manualmente pela administração da plataforma."
-        );
-
-        const formulario = document.getElementById("form-agendamento");
-
-        if (formulario) {
-            formulario.style.display = "none";
-        }
-
-        return;
+    const nomeLoja = document.getElementById("nome-loja");
+    if (nomeLoja) {
+        nomeLoja.innerText = nomePublico;
     }
 
-    const nomePublico =
-        config.nome_publico
-        || tenantSlug.replaceAll("-", " ");
+    document.title = `Agendamento - ${nomePublico}`;
 
-    document.getElementById("nome-loja").innerText =
-        nomePublico;
-
-    document.title = `Agendamento — ${nomePublico}`;
-
-    const telefone =
+    const telefone = (
         config.whatsapp_comercial
         || config.telefone
-        || "";
+        || ""
+    );
 
-    if (telefone) {
-        document
-            .getElementById("telefone-loja")
-            .innerText = `WhatsApp: ${telefone}`;
+    const telefoneLoja = document.getElementById("telefone-loja");
+    if (telefoneLoja && telefone) {
+        telefoneLoja.innerText = `WhatsApp: ${telefone}`;
     }
 
     const enderecoEl = document.getElementById("endereco-loja");
-
-    if (config.endereco) {
-        enderecoEl.innerText = config.endereco;
-    } else {
-        enderecoEl.innerText = "";
+    if (enderecoEl) {
+        enderecoEl.innerText = config.endereco || "";
     }
 
     if (config.cor_tema) {
@@ -309,57 +289,89 @@ async function carregarConfiguracoes() {
     const tituloPublicoEmpresa = document.getElementById(
         "titulo-publico-empresa"
     );
-    
+
+    if (tituloPublicoEmpresa) {
+        tituloPublicoEmpresa.innerText =
+            `Agende seu hor?rio na ${nomePublico}`;
+    }
+
     const subtituloPublicoEmpresa = document.getElementById(
         "subtitulo-publico-empresa"
     );
-    
-    if (tituloPublicoEmpresa) {
-        tituloPublicoEmpresa.innerText = config.nome
-            ? `Agende seu horário na ${config.nome}`
-            : "Agende seu horário em poucos cliques";
-    }
-    
+
     if (subtituloPublicoEmpresa) {
-        subtituloPublicoEmpresa.innerText = config.descricao
-            || "Escolha o serviço, profissional, data e horário disponível. A confirmação é rápida e simples.";
+        subtituloPublicoEmpresa.innerText =
+            config.descricao
+            || "Escolha o servi?o, profissional, data e hor?rio dispon?vel. A confirma??o ? r?pida e simples.";
     }
 
     const logoBox = document.getElementById("logo-loja");
+    const logoUrl = String(config.logo_url || "").trim();
 
-    if (config.logo_url) {
-        logoBox.innerHTML = `
-            <img src="${config.logo_url}" alt="Logo de ${nomePublico}">
-        `;
-    } else {
-        logoBox.textContent = "Logo";
+    if (logoBox) {
+        if (logoUrl) {
+            logoBox.innerHTML =
+                `<img src="${logoUrl}" alt="Logo de ${nomePublico}" loading="eager">`;
+        } else {
+            logoBox.textContent = "Logo";
+        }
     }
 
     const banner = document.getElementById("banner-loja");
+    const logomarcaUrl = String(config.logomarca_url || "").trim();
 
-    if (config.logomarca_url) {
+    if (banner && logomarcaUrl) {
         banner.style.backgroundImage = `
             linear-gradient(135deg, rgba(15,23,42,0.25), rgba(15,23,42,0.85)),
-            url("${config.logomarca_url}")
+            url("${logomarcaUrl}")
         `;
     }
 
     const mensagemPublica = document.getElementById("mensagem-publica");
 
-    if (config.mensagem_publica) {
-        mensagemPublica.innerText = config.mensagem_publica;
-        mensagemPublica.style.display = "block";
-    } else if (config.instrucoes) {
-        mensagemPublica.innerText = config.instrucoes;
-        mensagemPublica.style.display = "block";
-    } else {
-        mensagemPublica.style.display = "none";
+    if (mensagemPublica) {
+        if (config.mensagem_publica) {
+            mensagemPublica.innerText = config.mensagem_publica;
+            mensagemPublica.style.display = "block";
+        } else if (config.instrucoes) {
+            mensagemPublica.innerText = config.instrucoes;
+            mensagemPublica.style.display = "block";
+        } else {
+            mensagemPublica.style.display = "none";
+        }
     }
 
     renderizarLinksMarca(config, telefone);
-
     configurarConsentimentos(config);
 }
+
+async function carregarConfiguracoes() {
+    const config = await apiRequest(
+        `/api/${encodeURIComponent(tenantSlug)}/configuracoes`
+    );
+
+    aplicarIdentidadePublica(config);
+
+    if (
+        config.empresa_desativada === true
+        || config.status_assinatura === "desativada"
+        || config.acesso_liberado === false
+        || config.acesso_ativo === false
+    ) {
+        mostrarAvisoAssinaturaInativa(
+            "O acesso deste estabelecimento est? bloqueado manualmente pela administra??o da plataforma."
+        );
+
+        const formulario = document.getElementById("form-agendamento");
+
+        if (formulario) {
+            formulario.style.display = "none";
+        }
+
+        return;
+    }
+}
+
 
 function normalizarUrl(url) {
     const valor = String(url || "").trim();

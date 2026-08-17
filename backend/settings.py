@@ -1,4 +1,4 @@
-from functools import lru_cache
+﻿from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -43,6 +43,10 @@ class Settings(BaseSettings):
     stripe_price_profissional: str | None = None
     stripe_price_empresa: str | None = None
 
+    supabase_url: str | None = None
+    supabase_service_role_key: str | None = None
+    supabase_storage_bucket: str = "branding"
+
     # Mercado Pago
     mercado_pago_access_token: str | None = None
     mercado_pago_webhook_secret: str | None = None
@@ -76,3 +80,6 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
+
+
+

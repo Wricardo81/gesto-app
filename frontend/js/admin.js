@@ -1466,6 +1466,37 @@ function alternarMenuAdmin() {
 
 
 
+
+function atualizarInsightDashboardAdmin(totalHoje, receitaHoje, concluidosHoje, proximoHorario) {
+    const titulo = document.getElementById("dashboard-insight-titulo");
+    const texto = document.getElementById("dashboard-insight-texto");
+
+    if (!titulo || !texto) {
+        return;
+    }
+
+    if (!totalHoje) {
+        titulo.textContent = "Agenda livre hoje.";
+        texto.textContent = "Nenhum agendamento para hoje. Divulgue o link p\u00fablico ou use as a\u00e7\u00f5es r\u00e1pidas para movimentar a agenda.";
+        return;
+    }
+
+    if (concluidosHoje >= totalHoje) {
+        titulo.textContent = "Dia praticamente conclu\u00eddo.";
+        texto.textContent = "Todos os agendamentos carregados para hoje j\u00e1 aparecem como conclu\u00eddos. Revise o financeiro realizado.";
+        return;
+    }
+
+    if (receitaHoje > 0 && proximoHorario && proximoHorario !== "--:--") {
+        titulo.textContent = "Movimento ativo hoje.";
+        texto.textContent = `Pr\u00f3ximo hor\u00e1rio: ${proximoHorario}. Acompanhe os atendimentos e mantenha os status atualizados.`;
+        return;
+    }
+
+    titulo.textContent = "Agenda com movimento.";
+    texto.textContent = "Existem agendamentos para hoje. Revise confirma\u00e7\u00f5es, faltas e pr\u00f3ximos hor\u00e1rios.";
+}
+
 function atualizarSaudacaoDashboardAdmin() {
     const kicker = document.getElementById("dashboard-pro-kicker");
     const titulo = document.getElementById("dashboard-pro-titulo");
@@ -3838,9 +3869,19 @@ async function carregarAgendamentos() {
             concluidosHoje
         );
 
+        const proximoHorarioHojeDashboard =
+            horariosFuturosHoje[0]?.horario || "--:--";
+
         atualizarMetricaAdmin(
             "visor-hoje-proximo",
-            horariosFuturosHoje[0]?.horario || "--:--"
+            proximoHorarioHojeDashboard
+        );
+
+        atualizarInsightDashboardAdmin(
+            agendamentosHoje.length,
+            receitaHoje,
+            concluidosHoje,
+            proximoHorarioHojeDashboard
         );
 
         tbody.innerHTML = "";

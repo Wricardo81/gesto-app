@@ -286,6 +286,39 @@
             }
         }
 
+
+        .dashboard-insight-card {
+            margin: 0 0 18px;
+            padding: 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            background:
+                linear-gradient(145deg, rgba(100, 255, 218, 0.08), rgba(15, 23, 42, 0.38));
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+        }
+
+        .dashboard-insight-card span {
+            display: block;
+            color: var(--destaque);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 900;
+            margin-bottom: 7px;
+        }
+
+        .dashboard-insight-card strong {
+            display: block;
+            font-size: 18px;
+            margin-bottom: 7px;
+        }
+
+        .dashboard-insight-card p {
+            margin: 0;
+            color: var(--texto-secundario);
+            line-height: 1.5;
+        }
+
         .dashboard-hoje-card {
             margin: 0 0 18px;
             padding: 18px;

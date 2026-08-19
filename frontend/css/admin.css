@@ -3493,3 +3493,9 @@ body {
             border-color: rgba(100, 255, 218, 0.65);
             box-shadow: 0 0 0 4px rgba(100, 255, 218, 0.12);
         }
+
+
+        .dashboard-acoes-topo small.dashboard-acoes-status-ativo {
+            color: var(--destaque);
+            font-weight: 800;
+        }

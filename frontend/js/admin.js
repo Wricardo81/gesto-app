@@ -1464,8 +1464,33 @@ function alternarMenuAdmin() {
 
 
 
-function abrirAtalhoDashboardAdmin(secaoId, campoId = null) {
+
+function atualizarStatusAcoesRapidasAdmin(mensagem) {
+    const status = document.getElementById("dashboard-acoes-status");
+
+    if (!status || !mensagem) {
+        return;
+    }
+
+    status.textContent = mensagem;
+    status.classList.add("dashboard-acoes-status-ativo");
+
+    window.clearTimeout(window.bitsAgendaDashboardAcoesStatusTimeout);
+
+    window.bitsAgendaDashboardAcoesStatusTimeout = window.setTimeout(() => {
+        status.classList.remove("dashboard-acoes-status-ativo");
+        status.textContent = "Comece as principais tarefas sem procurar no menu.";
+    }, 2600);
+}
+
+function copiarLinkPublicoDashboardAdmin() {
+    copiarLinkPublicoAdmin();
+    atualizarStatusAcoesRapidasAdmin("Link p?blico copiado.");
+}
+
+function abrirAtalhoDashboardAdmin(secaoId, campoId = null, mensagem = null) {
     mostrarSecaoAdmin(secaoId);
+    atualizarStatusAcoesRapidasAdmin(mensagem);
 
     if (!campoId) {
         return;

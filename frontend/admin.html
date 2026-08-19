@@ -7,7 +7,7 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="./css/admin.css?v=102">
+    <link rel="stylesheet" href="./css/admin.css?v=103">
     <link rel="stylesheet" href="./css/pwa.css?v=1">
     <link rel="stylesheet" href="./css/ui-clean.css?v=1">
 
@@ -295,7 +295,7 @@
                 <button
                     type="button"
                     class="btn-add"
-                    onclick="copiarLinkPublicoAdmin()"
+                    onclick="copiarLinkPublicoDashboardAdmin()"
                 >
                     Copiar link
                 </button>
@@ -407,21 +407,21 @@
                         <span>Ações rápidas</span>
                         <h3>Atalhos para operar o negócio</h3>
                     </div>
-                    <small>Comece as principais tarefas sem procurar no menu.</small>
+                    <small id="dashboard-acoes-status">Comece as principais tarefas sem procurar no menu.</small>
                 </div>
 
                 <div class="dashboard-acoes-grid">
-                    <button type="button" onclick="abrirAtalhoDashboardAdmin('secao-agenda', 'filtro-data-inicio')">
+                    <button type="button" onclick="abrirAtalhoDashboardAdmin('secao-agenda', 'filtro-data-inicio', 'Atalho aberto: Agenda')">
                         <span>Agenda</span>
                         <strong>Novo agendamento</strong>
                     </button>
 
-                    <button type="button" onclick="abrirAtalhoDashboardAdmin('secao-servicos', 'novo-servico-nome')">
+                    <button type="button" onclick="abrirAtalhoDashboardAdmin('secao-servicos', 'novo-servico-nome', 'Atalho aberto: Servi?os')">
                         <span>Serviços</span>
                         <strong>Cadastrar serviço</strong>
                     </button>
 
-                    <button type="button" onclick="abrirAtalhoDashboardAdmin('secao-equipe', 'novo-prof-nome')">
+                    <button type="button" onclick="abrirAtalhoDashboardAdmin('secao-equipe', 'novo-prof-nome', 'Atalho aberto: Equipe')">
                         <span>Equipe</span>
                         <strong>Adicionar profissional</strong>
                     </button>
@@ -1414,7 +1414,7 @@
         <script src="./js/config.js?v=94"></script>
         <script src="./js/api.js?v=95"></script>
         <script src="./js/auth.js?v=95"></script>
-        <script src="./js/admin.js?v=102"></script>
+        <script src="./js/admin.js?v=103"></script>
         <script src="./js/pwa.js?v=1"></script>
         <script src="./js/diagnostico.js?v=1"></script>
 </body>

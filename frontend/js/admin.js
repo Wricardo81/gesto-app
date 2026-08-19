@@ -3702,14 +3702,48 @@ async function carregarAgendamentos() {
             return status === "concluido";
         }).length;
 
+        const minutosAgoraDashboard =
+            agoraDashboard.getHours() * 60 + agoraDashboard.getMinutes();
+
+        const obterMinutosHorarioDashboard = (horario) => {
+            const partes = String(horario || "").trim().split(":");
+
+            if (partes.length < 2) {
+                return null;
+            }
+
+            const horas = Number(partes[0]);
+            const minutos = Number(partes[1]);
+
+            if (
+                Number.isNaN(horas)
+                || Number.isNaN(minutos)
+            ) {
+                return null;
+            }
+
+            return horas * 60 + minutos;
+        };
+
         const horariosFuturosHoje = agendamentosHoje
             .filter((agendamento) => {
                 const status = normalizarStatusFinanceiro(agendamento.status);
                 return !["cancelado", "falta"].includes(status);
             })
-            .map((agendamento) => String(agendamento?.horario || "").trim())
-            .filter(Boolean)
-            .sort();
+            .map((agendamento) => {
+                const horario = String(agendamento?.horario || "").trim();
+
+                return {
+                    horario,
+                    minutos: obterMinutosHorarioDashboard(horario)
+                };
+            })
+            .filter((item) =>
+                item.horario
+                && item.minutos !== null
+                && item.minutos >= minutosAgoraDashboard
+            )
+            .sort((a, b) => a.minutos - b.minutos);
 
         atualizarMetricaAdmin(
             "visor-hoje-agendamentos",
@@ -3728,7 +3762,7 @@ async function carregarAgendamentos() {
 
         atualizarMetricaAdmin(
             "visor-hoje-proximo",
-            horariosFuturosHoje[0] || "--:--"
+            horariosFuturosHoje[0]?.horario || "--:--"
         );
 
         tbody.innerHTML = "";

@@ -7,7 +7,7 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="./css/admin.css?v=100">
+    <link rel="stylesheet" href="./css/admin.css?v=101">
     <link rel="stylesheet" href="./css/pwa.css?v=1">
     <link rel="stylesheet" href="./css/ui-clean.css?v=1">
 
@@ -398,6 +398,38 @@
                         <span>Próximo horário</span>
                         <strong id="visor-hoje-proximo">--:--</strong>
                     </div>
+                </div>
+            </section>
+
+            <section class="dashboard-acoes-card" id="dashboard-acoes-rapidas">
+                <div class="dashboard-acoes-topo">
+                    <div>
+                        <span>Ações rápidas</span>
+                        <h3>Atalhos para operar o negócio</h3>
+                    </div>
+                    <small>Comece as principais tarefas sem procurar no menu.</small>
+                </div>
+
+                <div class="dashboard-acoes-grid">
+                    <button type="button" onclick="mostrarSecaoAdmin('secao-agenda')">
+                        <span>Agenda</span>
+                        <strong>Novo agendamento</strong>
+                    </button>
+
+                    <button type="button" onclick="mostrarSecaoAdmin('secao-servicos')">
+                        <span>Serviços</span>
+                        <strong>Cadastrar serviço</strong>
+                    </button>
+
+                    <button type="button" onclick="mostrarSecaoAdmin('secao-equipe')">
+                        <span>Equipe</span>
+                        <strong>Adicionar profissional</strong>
+                    </button>
+
+                    <button type="button" onclick="copiarLinkPublicoAdmin()">
+                        <span>Divulgação</span>
+                        <strong>Copiar link público</strong>
+                    </button>
                 </div>
             </section>
 

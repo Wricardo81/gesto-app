@@ -1485,7 +1485,7 @@ function atualizarStatusAcoesRapidasAdmin(mensagem) {
 
 function copiarLinkPublicoDashboardAdmin() {
     copiarLinkPublicoAdmin();
-    atualizarStatusAcoesRapidasAdmin("Link p?blico copiado.");
+    atualizarStatusAcoesRapidasAdmin("Link p\u00fablico copiado.");
 }
 
 function abrirAtalhoDashboardAdmin(secaoId, campoId = null, mensagem = null) {

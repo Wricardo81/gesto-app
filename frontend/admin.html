@@ -7,7 +7,7 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="./css/admin.css?v=97">
+    <link rel="stylesheet" href="./css/admin.css?v=98">
     <link rel="stylesheet" href="./css/pwa.css?v=1">
     <link rel="stylesheet" href="./css/ui-clean.css?v=1">
 
@@ -355,7 +355,22 @@
             </div>
         </section>
 
-        <section class="dashboard-grid secao-admin ativa" id="secao-dashboard">
+        <section class="secao-admin ativa dashboard-pro-section" id="secao-dashboard">
+            <div class="dashboard-pro-hero">
+                <div>
+                    <span class="dashboard-pro-kicker">Painel do negócio</span>
+                    <h2>Resumo inteligente da sua operação</h2>
+                    <p>Acompanhe receita, agendamentos, status e próximos movimentos em um só lugar.</p>
+                </div>
+
+                <div class="dashboard-pro-actions">
+                    <button type="button" onclick="copiarLinkPublicoAdmin()">Copiar link público</button>
+                    <button type="button" class="secundario" onclick="window.open(obterUrlPublicaTenantAdmin(), '_blank')">Ver agenda pública</button>
+                </div>
+            </div>
+
+            <div class="dashboard-grid dashboard-grid-pro">
+
             <div class="metric-card metric-card-financeiro">
                 <p>Receita prevista</p>
                 <strong id="visor-faturamento">R$ 0,00</strong>
@@ -391,9 +406,9 @@
                 <strong id="visor-cancelamentos-financeiro">0</strong>
                 <small>Cancelados e faltas no período.</small>
             </div>
-        </section>
+            </div>
 
-        <section class="financeiro-resumo-card secao-admin ativa" id="resumo-financeiro-dashboard">
+            <section class="financeiro-resumo-card" id="resumo-financeiro-dashboard">
             <div class="financeiro-resumo-topo">
                 <div>
                     <span>Resumo financeiro</span>
@@ -433,6 +448,7 @@
                     <strong id="visor-financeiro-receita-realizada">R$ 0,00</strong>
                 </div>
             </div>
+            </section>
         </section>
 
 

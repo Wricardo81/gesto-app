@@ -1484,7 +1484,7 @@ function atualizarStatusAcoesRapidasAdmin(mensagem) {
 }
 
 function copiarLinkPublicoDashboardAdmin() {
-    copiarLinkPublicoAdmin();
+    copiarLinkPublicoAdmin({ silencioso: true });
     atualizarStatusAcoesRapidasAdmin("Link p\u00fablico copiado.");
 }
 
@@ -2243,7 +2243,7 @@ function renderizarLinkPublicoAdmin() {
   elemento.textContent = urlPublica || "Link indisponível no momento.";
 }
 
-async function copiarLinkPublicoAdmin() {
+async function copiarLinkPublicoAdmin(opcoes = {}) {
   const urlPublica = obterUrlPublicaTenantAdmin();
 
   if (!urlPublica) {

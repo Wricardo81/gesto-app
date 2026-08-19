@@ -1463,6 +1463,32 @@ function alternarMenuAdmin() {
 }
 
 
+
+function abrirAtalhoDashboardAdmin(secaoId, campoId = null) {
+    mostrarSecaoAdmin(secaoId);
+
+    if (!campoId) {
+        return;
+    }
+
+    setTimeout(() => {
+        const campo = document.getElementById(campoId);
+
+        if (!campo) {
+            return;
+        }
+
+        campo.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+
+        if (typeof campo.focus === "function") {
+            campo.focus();
+        }
+    }, 180);
+}
+
 function mostrarSecaoAdmin(secaoId) {
     const secoes = document.querySelectorAll(".secao-admin");
     const botoes = document.querySelectorAll(".admin-tab");

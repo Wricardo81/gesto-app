@@ -7,7 +7,7 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="./css/admin.css?v=101">
+    <link rel="stylesheet" href="./css/admin.css?v=102">
     <link rel="stylesheet" href="./css/pwa.css?v=1">
     <link rel="stylesheet" href="./css/ui-clean.css?v=1">
 
@@ -411,17 +411,17 @@
                 </div>
 
                 <div class="dashboard-acoes-grid">
-                    <button type="button" onclick="mostrarSecaoAdmin('secao-agenda')">
+                    <button type="button" onclick="abrirAtalhoDashboardAdmin('secao-agenda', 'filtro-data-inicio')">
                         <span>Agenda</span>
                         <strong>Novo agendamento</strong>
                     </button>
 
-                    <button type="button" onclick="mostrarSecaoAdmin('secao-servicos')">
+                    <button type="button" onclick="abrirAtalhoDashboardAdmin('secao-servicos', 'novo-servico-nome')">
                         <span>Serviços</span>
                         <strong>Cadastrar serviço</strong>
                     </button>
 
-                    <button type="button" onclick="mostrarSecaoAdmin('secao-equipe')">
+                    <button type="button" onclick="abrirAtalhoDashboardAdmin('secao-equipe', 'novo-prof-nome')">
                         <span>Equipe</span>
                         <strong>Adicionar profissional</strong>
                     </button>
@@ -1414,7 +1414,7 @@
         <script src="./js/config.js?v=94"></script>
         <script src="./js/api.js?v=95"></script>
         <script src="./js/auth.js?v=95"></script>
-        <script src="./js/admin.js?v=100"></script>
+        <script src="./js/admin.js?v=102"></script>
         <script src="./js/pwa.js?v=1"></script>
         <script src="./js/diagnostico.js?v=1"></script>
 </body>

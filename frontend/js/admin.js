@@ -3628,6 +3628,53 @@ async function carregarAgendamentos() {
             agendamentosPerdidos.length
         );
 
+        const totalConfirmados = agendamentos.filter((agendamento) => {
+            const status = normalizarStatusFinanceiro(agendamento.status);
+            return status === "confirmado";
+        }).length;
+
+        const totalConcluidos = agendamentosConcluidos.length;
+
+        const totalCancelados = agendamentos.filter((agendamento) => {
+            const status = normalizarStatusFinanceiro(agendamento.status);
+            return status === "cancelado";
+        }).length;
+
+        const totalFaltas = agendamentos.filter((agendamento) => {
+            const status = normalizarStatusFinanceiro(agendamento.status);
+            return status === "falta";
+        }).length;
+
+        atualizarMetricaAdmin(
+            "visor-financeiro-confirmados",
+            totalConfirmados
+        );
+
+        atualizarMetricaAdmin(
+            "visor-financeiro-concluidos",
+            totalConcluidos
+        );
+
+        atualizarMetricaAdmin(
+            "visor-financeiro-cancelados",
+            totalCancelados
+        );
+
+        atualizarMetricaAdmin(
+            "visor-financeiro-faltas",
+            totalFaltas
+        );
+
+        atualizarMetricaAdmin(
+            "visor-financeiro-receita-prevista",
+            formatarMoeda(faturamento)
+        );
+
+        atualizarMetricaAdmin(
+            "visor-financeiro-receita-realizada",
+            formatarMoeda(faturamentoConcluido)
+        );
+
         tbody.innerHTML = "";
 
         if (!dados.agendamentos || !dados.agendamentos.length) {

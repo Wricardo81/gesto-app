@@ -159,6 +159,84 @@
             border-color: rgba(251, 191, 36, 0.32);
         }
 
+
+        .financeiro-resumo-card {
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.86), rgba(30, 41, 59, 0.72));
+            border: 1px solid var(--borda-suave);
+            border-radius: 18px;
+            padding: 18px;
+            margin: -8px 0 24px;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+        }
+
+        .financeiro-resumo-topo {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .financeiro-resumo-topo span {
+            display: inline-block;
+            color: var(--destaque);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 900;
+            margin-bottom: 6px;
+        }
+
+        .financeiro-resumo-topo h3 {
+            margin: 0;
+            font-size: 17px;
+        }
+
+        .financeiro-resumo-topo small {
+            color: var(--texto-secundario);
+            font-size: 12px;
+            text-align: right;
+        }
+
+        .financeiro-resumo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .financeiro-resumo-grid div {
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            border-radius: 14px;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .financeiro-resumo-grid span {
+            display: block;
+            color: var(--texto-secundario);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .financeiro-resumo-grid strong {
+            display: block;
+            font-size: 21px;
+            letter-spacing: -0.4px;
+        }
+
+        @media (max-width: 720px) {
+            .financeiro-resumo-topo {
+                flex-direction: column;
+            }
+
+            .financeiro-resumo-topo small {
+                text-align: left;
+            }
+        }
+
         .layout-grid {
             display: grid;
             grid-template-columns: 1.1fr 0.9fr;

@@ -7,7 +7,7 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="./css/admin.css?v=96">
+    <link rel="stylesheet" href="./css/admin.css?v=97">
     <link rel="stylesheet" href="./css/pwa.css?v=1">
     <link rel="stylesheet" href="./css/ui-clean.css?v=1">
 
@@ -393,8 +393,47 @@
             </div>
         </section>
 
+        <section class="financeiro-resumo-card secao-admin ativa" id="resumo-financeiro-dashboard">
+            <div class="financeiro-resumo-topo">
+                <div>
+                    <span>Resumo financeiro</span>
+                    <h3>Vis?o por status dos agendamentos</h3>
+                </div>
+                <small>Baseado no per?odo carregado no dashboard.</small>
+            </div>
 
+            <div class="financeiro-resumo-grid">
+                <div>
+                    <span>Confirmados</span>
+                    <strong id="visor-financeiro-confirmados">0</strong>
+                </div>
 
+                <div>
+                    <span>Conclu?dos</span>
+                    <strong id="visor-financeiro-concluidos">0</strong>
+                </div>
+
+                <div>
+                    <span>Cancelados</span>
+                    <strong id="visor-financeiro-cancelados">0</strong>
+                </div>
+
+                <div>
+                    <span>Faltas</span>
+                    <strong id="visor-financeiro-faltas">0</strong>
+                </div>
+
+                <div>
+                    <span>Receita prevista</span>
+                    <strong id="visor-financeiro-receita-prevista">R$ 0,00</strong>
+                </div>
+
+                <div>
+                    <span>Receita realizada</span>
+                    <strong id="visor-financeiro-receita-realizada">R$ 0,00</strong>
+                </div>
+            </div>
+        </section>
 
 
         <section class="layout-grid secao-admin" id="secao-configuracoes">
@@ -1295,7 +1334,7 @@
         <script src="./js/config.js?v=94"></script>
         <script src="./js/api.js?v=95"></script>
         <script src="./js/auth.js?v=95"></script>
-        <script src="./js/admin.js?v=96"></script>
+        <script src="./js/admin.js?v=97"></script>
         <script src="./js/pwa.js?v=1"></script>
         <script src="./js/diagnostico.js?v=1"></script>
 </body>

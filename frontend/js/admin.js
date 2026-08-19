@@ -1465,6 +1465,33 @@ function alternarMenuAdmin() {
 
 
 
+
+function atualizarSaudacaoDashboardAdmin() {
+    const kicker = document.getElementById("dashboard-pro-kicker");
+    const titulo = document.getElementById("dashboard-pro-titulo");
+    const subtitulo = document.getElementById("dashboard-pro-subtitulo");
+
+    if (!kicker || !titulo || !subtitulo) {
+        return;
+    }
+
+    const horaAtual = new Date().getHours();
+
+    let saudacao = "Boa noite";
+
+    if (horaAtual >= 5 && horaAtual < 12) {
+        saudacao = "Bom dia";
+    } else if (horaAtual >= 12 && horaAtual < 18) {
+        saudacao = "Boa tarde";
+    }
+
+    kicker.textContent = "Painel do neg\u00f3cio";
+    titulo.textContent = `${saudacao}, acompanhe sua opera\u00e7\u00e3o.`;
+    subtitulo.textContent = "Veja o que acontece hoje, acompanhe o financeiro e use atalhos para operar mais r\u00e1pido.";
+}
+
+document.addEventListener("DOMContentLoaded", atualizarSaudacaoDashboardAdmin);
+
 function atualizarStatusAcoesRapidasAdmin(mensagem) {
     const status = document.getElementById("dashboard-acoes-status");
 

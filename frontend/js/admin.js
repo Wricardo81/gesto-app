@@ -3675,6 +3675,62 @@ async function carregarAgendamentos() {
             formatarMoeda(faturamentoConcluido)
         );
 
+        const agoraDashboard = new Date();
+        const dataHojeDashboard = [
+            agoraDashboard.getFullYear(),
+            String(agoraDashboard.getMonth() + 1).padStart(2, "0"),
+            String(agoraDashboard.getDate()).padStart(2, "0")
+        ].join("-");
+
+        const agendamentosHoje = agendamentos.filter((agendamento) =>
+            String(agendamento?.data || "").slice(0, 10) === dataHojeDashboard
+        );
+
+        const agendamentosHojeFaturaveis = agendamentosHoje.filter((agendamento) => {
+            const status = normalizarStatusFinanceiro(agendamento.status);
+            return ["confirmado", "concluido"].includes(status);
+        });
+
+        const receitaHoje = agendamentosHojeFaturaveis.reduce(
+            (totalFinanceiro, agendamento) =>
+                totalFinanceiro + obterValorAgendamento(agendamento),
+            0
+        );
+
+        const concluidosHoje = agendamentosHoje.filter((agendamento) => {
+            const status = normalizarStatusFinanceiro(agendamento.status);
+            return status === "concluido";
+        }).length;
+
+        const horariosFuturosHoje = agendamentosHoje
+            .filter((agendamento) => {
+                const status = normalizarStatusFinanceiro(agendamento.status);
+                return !["cancelado", "falta"].includes(status);
+            })
+            .map((agendamento) => String(agendamento?.horario || "").trim())
+            .filter(Boolean)
+            .sort();
+
+        atualizarMetricaAdmin(
+            "visor-hoje-agendamentos",
+            agendamentosHoje.length
+        );
+
+        atualizarMetricaAdmin(
+            "visor-hoje-receita",
+            formatarMoeda(receitaHoje)
+        );
+
+        atualizarMetricaAdmin(
+            "visor-hoje-concluidos",
+            concluidosHoje
+        );
+
+        atualizarMetricaAdmin(
+            "visor-hoje-proximo",
+            horariosFuturosHoje[0] || "--:--"
+        );
+
         tbody.innerHTML = "";
 
         if (!dados.agendamentos || !dados.agendamentos.length) {

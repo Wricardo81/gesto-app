@@ -1,8 +1,9 @@
-const CACHE_NAME = "bitsagenda-os-pwa-v59"; // Atualize a versão do cache conforme necessário
+const CACHE_NAME = "bitsagenda-os-pwa-v60"; // Atualize a versão do cache conforme necessário
 
 const APP_SHELL = [
   "./",
   "./index.html",
+    "./app.html",
   "./admin.html",
   "./saas.html",
   "./agendamento.html",

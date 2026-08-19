@@ -3,14 +3,17 @@
   "name": "BitsAgenda OS - Gestão de Agendamentos",
   "short_name": "BitsAgenda",
   "description": "Agenda, atendimento e gestão para negócios com horário marcado.",
-  "start_url": "./index.html",
+  "start_url": "./app.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0A192F",
   "theme_color": "#0A192F",
   "orientation": "portrait-primary",
   "lang": "pt-BR",
-  "categories": ["business", "productivity"],
+  "categories": [
+    "business",
+    "productivity"
+  ],
   "icons": [
     {
       "src": "./icons/bitsagenda-icon-192.png",

@@ -7117,3 +7117,332 @@ document.addEventListener("DOMContentLoaded", () => {
         exibirBannerFuncionalidadesAdmin();
     }, 700);
 });
+
+
+/* Fila de espera - Sprint 4.7B */
+let filaEsperaAdminCache = [];
+
+function usuarioAdminPodeVerFilaEspera() {
+    if (usuarioAdminEhGestor && usuarioAdminEhGestor()) {
+        return true;
+    }
+
+    if (usuarioAdminEhRecepcao && usuarioAdminEhRecepcao()) {
+        return true;
+    }
+
+    return usuarioAdminTemPermissao
+        && (
+            usuarioAdminTemPermissao("ver_fila_espera")
+            || usuarioAdminTemPermissao("gerenciar_fila_espera")
+        );
+}
+
+function traduzirStatusFilaEsperaAdmin(status) {
+    const mapa = {
+        aguardando: "Aguardando",
+        chamado: "Chamado",
+        agendado: "Agendado",
+        cancelado: "Cancelado",
+        expirado: "Expirado",
+    };
+
+    return mapa[String(status || "").toLowerCase()] || status || "Aguardando";
+}
+
+
+function formatarDataFilaEsperaAdmin(data) {
+    if (!data) {
+        return "-";
+    }
+
+    const partes = String(data).split("-");
+
+    if (partes.length === 3) {
+        return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+
+    return String(data);
+}
+
+function formatarPeriodoFilaEsperaAdmin(periodo) {
+    const mapa = {
+        manha: "Manha",
+        tarde: "Tarde",
+        noite: "Noite",
+        qualquer: "Qualquer",
+    };
+
+    return mapa[String(periodo || "").toLowerCase()] || periodo || "Qualquer";
+}
+
+function criarEstruturaFilaEsperaAdmin() {
+    if (document.getElementById("secao-fila-espera")) {
+        return;
+    }
+
+    const podeVer = usuarioAdminPodeVerFilaEspera();
+
+    const referenciaTab = document.querySelector(".admin-tab");
+    const containerTabs = referenciaTab ? referenciaTab.parentElement : null;
+
+    if (containerTabs) {
+        const botao = document.createElement("button");
+        botao.type = "button";
+        botao.className = "admin-tab";
+        botao.dataset.secaoAdmin = "secao-fila-espera";
+        botao.textContent = "Fila de espera";
+        botao.onclick = () => {
+            mostrarSecaoAdmin("secao-fila-espera");
+            carregarFilaEsperaAdmin();
+        };
+
+        if (!podeVer) {
+            botao.hidden = true;
+            botao.style.display = "none";
+        }
+
+        containerTabs.appendChild(botao);
+    }
+
+    const referenciaSecao = document.querySelector(".admin-section, .secao-admin, section[id^='secao-']");
+    const containerPrincipal = referenciaSecao ? referenciaSecao.parentElement : document.querySelector("main") || document.body;
+
+    const secao = document.createElement("section");
+    secao.id = "secao-fila-espera";
+    secao.className = referenciaSecao ? referenciaSecao.className : "admin-section";
+    secao.hidden = true;
+
+    if (!podeVer) {
+        secao.style.display = "none";
+    }
+
+    secao.innerHTML = `
+        <div class="fila-espera-admin-header">
+            <div>
+                <span class="admin-kicker">Operacao</span>
+                <h2>Fila de espera</h2>
+                <p>
+                    Acompanhe clientes interessados em horarios indisponiveis e organize retornos pelo atendimento.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                class="btn-secundario"
+                onclick="carregarFilaEsperaAdmin()"
+            >
+                Atualizar fila
+            </button>
+        </div>
+
+        <div class="fila-espera-admin-resumo">
+            <article>
+                <small>Aguardando</small>
+                <strong id="fila-espera-total-aguardando">0</strong>
+            </article>
+            <article>
+                <small>Chamados</small>
+                <strong id="fila-espera-total-chamado">0</strong>
+            </article>
+            <article>
+                <small>Finalizados</small>
+                <strong id="fila-espera-total-finalizados">0</strong>
+            </article>
+        </div>
+
+        <div id="lista-fila-espera-admin" class="lista-fila-espera-admin">
+            Carregando fila de espera...
+        </div>
+    `;
+
+    containerPrincipal.appendChild(secao);
+}
+
+
+function atualizarTextoFilaEsperaAdmin(id, valor) {
+    const elemento = document.getElementById(id);
+
+    if (elemento) {
+        elemento.textContent = valor;
+    }
+}
+
+function atualizarResumoFilaEsperaAdmin(itens) {
+    const aguardando = itens.filter((item) => item.status === "aguardando").length;
+    const chamado = itens.filter((item) => item.status === "chamado").length;
+    const finalizados = itens.filter((item) => {
+        return ["agendado", "cancelado", "expirado"].includes(item.status);
+    }).length;
+
+    atualizarTextoFilaEsperaAdmin("fila-espera-total-aguardando", aguardando);
+    atualizarTextoFilaEsperaAdmin("fila-espera-total-chamado", chamado);
+    atualizarTextoFilaEsperaAdmin("fila-espera-total-finalizados", finalizados);
+}
+
+function renderizarFilaEsperaAdmin(itens) {
+    const container = document.getElementById("lista-fila-espera-admin");
+
+    if (!container) {
+        return;
+    }
+
+    const lista = Array.isArray(itens) ? itens : [];
+
+    atualizarResumoFilaEsperaAdmin(lista);
+
+    if (!lista.length) {
+        container.innerHTML = `
+            <div class="estado-vazio-admin">
+                Nenhum cliente na fila de espera.
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = lista.map((item) => {
+        const status = String(item.status || "aguardando").toLowerCase();
+        const acoesDesabilitadas = ["agendado", "cancelado", "expirado"].includes(status);
+
+        return `
+            <article class="fila-espera-card-admin status-${status}">
+                <div class="fila-espera-card-topo">
+                    <div>
+                        <h3>${item.cliente_nome || "Cliente sem nome"}</h3>
+                        <p>${item.telefone_cliente || "Telefone nao informado"}</p>
+                    </div>
+
+                    <span class="badge-fila-espera-admin">${traduzirStatusFilaEsperaAdmin(status)}</span>
+                </div>
+
+                <div class="fila-espera-card-detalhes">
+                    <span><strong>Servico:</strong> ${item.servico || "Nao informado"}</span>
+                    <span><strong>Profissional:</strong> ${item.profissional_preferido || "Sem preferencia"}</span>
+                    <span><strong>Data:</strong> ${formatarDataFilaEsperaAdmin(item.data_desejada)}</span>
+                    <span><strong>Periodo:</strong> ${formatarPeriodoFilaEsperaAdmin(item.periodo_preferido)}</span>
+                </div>
+
+                ${item.observacao ? `<p class="fila-espera-observacao-admin">${item.observacao}</p>` : ""}
+
+                <div class="fila-espera-card-acoes">
+                    <button
+                        type="button"
+                        class="btn-secundario"
+                        onclick="atualizarStatusFilaEsperaAdmin(${item.id}, 'chamado')"
+                        ${acoesDesabilitadas ? "disabled" : ""}
+                    >
+                        Chamar
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn-secundario"
+                        onclick="atualizarStatusFilaEsperaAdmin(${item.id}, 'agendado')"
+                        ${acoesDesabilitadas ? "disabled" : ""}
+                    >
+                        Agendado
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn-secundario"
+                        onclick="atualizarStatusFilaEsperaAdmin(${item.id}, 'cancelado')"
+                        ${acoesDesabilitadas ? "disabled" : ""}
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn-secundario"
+                        onclick="atualizarStatusFilaEsperaAdmin(${item.id}, 'expirado')"
+                        ${acoesDesabilitadas ? "disabled" : ""}
+                    >
+                        Expirar
+                    </button>
+                </div>
+            </article>
+        `;
+    }).join("");
+}
+
+async function carregarFilaEsperaAdmin() {
+    if (!usuarioAdminPodeVerFilaEspera()) {
+        return;
+    }
+
+    const container = document.getElementById("lista-fila-espera-admin");
+
+    if (container) {
+        container.innerHTML = "Carregando fila de espera...";
+    }
+
+    try {
+        const resposta = await apiRequest(`/api/${tenantSlugLogado}/admin/fila-espera`, {
+            auth: true,
+        });
+
+        filaEsperaAdminCache = resposta?.fila_espera || [];
+        renderizarFilaEsperaAdmin(filaEsperaAdminCache);
+    } catch (erro) {
+        console.error("Erro ao carregar fila de espera:", erro);
+
+        if (container) {
+            container.innerHTML = `
+                <div class="estado-vazio-admin">
+                    Nao foi possivel carregar a fila de espera.
+                </div>
+            `;
+        }
+    }
+}
+
+async function atualizarStatusFilaEsperaAdmin(itemId, status) {
+    if (!usuarioAdminPodeVerFilaEspera()) {
+        alert("Seu perfil nao tem permissao para gerenciar a fila de espera.");
+        return;
+    }
+
+    try {
+        await apiRequest(`/api/${tenantSlugLogado}/admin/fila-espera/${itemId}/status`, {
+            method: "PUT",
+            auth: true,
+            body: { status },
+        });
+
+        await carregarFilaEsperaAdmin();
+    } catch (erro) {
+        console.error("Erro ao atualizar status da fila de espera:", erro);
+        alert(erro.message || "Nao foi possivel atualizar o status da fila de espera.");
+    }
+}
+
+function iniciarFilaEsperaAdminQuandoDisponivel() {
+    let tentativas = 0;
+
+    const timer = setInterval(() => {
+        tentativas += 1;
+
+        if (typeof tenantSlugLogado !== "undefined" && tenantSlugLogado) {
+            criarEstruturaFilaEsperaAdmin();
+
+            if (usuarioAdminPodeVerFilaEspera()) {
+                carregarFilaEsperaAdmin();
+            }
+
+            clearInterval(timer);
+            return;
+        }
+
+        if (tentativas >= 20) {
+            clearInterval(timer);
+        }
+    }, 300);
+}
+
+window.carregarFilaEsperaAdmin = carregarFilaEsperaAdmin;
+window.atualizarStatusFilaEsperaAdmin = atualizarStatusFilaEsperaAdmin;
+window.criarEstruturaFilaEsperaAdmin = criarEstruturaFilaEsperaAdmin;
+
+iniciarFilaEsperaAdminQuandoDisponivel();
+

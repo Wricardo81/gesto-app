@@ -3638,3 +3638,114 @@ body {
     width: 16px;
     height: 16px;
 }
+
+
+/* Fila de espera - Sprint 4.7B */
+.fila-espera-admin-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+    margin-bottom: 18px;
+}
+
+.fila-espera-admin-header h2 {
+    margin: 4px 0 6px;
+}
+
+.fila-espera-admin-resumo {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.fila-espera-admin-resumo article {
+    padding: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.44);
+}
+
+.fila-espera-admin-resumo small {
+    display: block;
+    opacity: 0.72;
+    margin-bottom: 6px;
+}
+
+.fila-espera-admin-resumo strong {
+    font-size: 1.6rem;
+}
+
+.lista-fila-espera-admin {
+    display: grid;
+    gap: 12px;
+}
+
+.fila-espera-card-admin {
+    padding: 16px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 18px;
+    background: rgba(2, 6, 23, 0.34);
+}
+
+.fila-espera-card-topo {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.fila-espera-card-topo h3 {
+    margin: 0 0 4px;
+}
+
+.fila-espera-card-topo p {
+    margin: 0;
+    opacity: 0.75;
+}
+
+.badge-fila-espera-admin {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 5px 10px;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.fila-espera-card-detalhes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.fila-espera-card-detalhes span {
+    opacity: 0.86;
+}
+
+.fila-espera-observacao-admin {
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.56);
+    opacity: 0.86;
+}
+
+.fila-espera-card-acoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.fila-espera-card-acoes button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+

@@ -425,3 +425,33 @@ class ChamadoSuporte(Base):
         DateTime,
         nullable=True,
     )
+
+class FilaEspera(Base):
+    __tablename__ = "fila_espera"
+
+    id = Column(Integer, primary_key=True, index=True)
+    barbearia_slug = Column(String, index=True, nullable=False)
+
+    cliente_nome = Column(String, nullable=False)
+    telefone_cliente = Column(String, nullable=False)
+
+    servico = Column(String, nullable=False)
+    profissional_preferido = Column(String, nullable=True)
+
+    data_desejada = Column(Date, nullable=True)
+    periodo_preferido = Column(String, nullable=True)
+
+    prioridade = Column(String, default="normal", nullable=False)
+    status = Column(String, default="aguardando", nullable=False)
+
+    observacao = Column(Text, nullable=True)
+    origem = Column(String, default="agenda_publica", nullable=False)
+
+    chamado_em = Column(DateTime, nullable=True)
+    agendado_em = Column(DateTime, nullable=True)
+    cancelado_em = Column(DateTime, nullable=True)
+    expirado_em = Column(DateTime, nullable=True)
+
+    criado_em = Column(DateTime, default=datetime.utcnow, nullable=False)
+    atualizado_em = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+

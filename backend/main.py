@@ -15,6 +15,7 @@ from middleware.observability import ObservabilityMiddleware
 # Importando os roteadores refatorados
 from routers import profissional_router
 from routers import agendamento_router
+from routers import comissao_router
 from routers import servico_router
 from routers import servico_profissional_router
 from routers import fila_espera_router
@@ -83,6 +84,7 @@ stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 # Registrando as rotas isoladas
 app.include_router(profissional_router.router)
 app.include_router(agendamento_router.router)
+app.include_router(comissao_router.router)
 app.include_router(servico_router.router)
 app.include_router(servico_profissional_router.router)
 app.include_router(fila_espera_router.router)

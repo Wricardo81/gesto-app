@@ -90,3 +90,76 @@ def gerar_comissao_atendimento_se_necessario(
     db.add(comissao)
 
     return comissao
+
+
+def listar_comissoes_pendentes(
+    db: Session,
+    tenant_slug: str,
+    profissional_nome: str | None = None,
+) -> dict:
+    consulta = (
+        db.query(models.ComissaoAtendimento)
+        .filter(
+            models.ComissaoAtendimento.barbearia_slug
+            == tenant_slug,
+            models.ComissaoAtendimento.status
+            == "pendente",
+        )
+    )
+
+    if profissional_nome:
+        consulta = consulta.filter(
+            models.ComissaoAtendimento.profissional_nome
+            == profissional_nome
+        )
+
+    comissoes = (
+        consulta
+        .order_by(
+            models.ComissaoAtendimento.gerado_em.asc(),
+            models.ComissaoAtendimento.id.asc(),
+        )
+        .all()
+    )
+
+    itens = [
+        {
+            "id": comissao.id,
+            "agendamento_id": comissao.agendamento_id,
+            "profissional_nome": comissao.profissional_nome,
+            "servico": comissao.servico,
+            "valor_atendimento": float(
+                comissao.valor_atendimento or 0
+            ),
+            "comissao_tipo": comissao.comissao_tipo,
+            "comissao_regra_valor": float(
+                comissao.comissao_regra_valor or 0
+            ),
+            "valor_comissao": float(
+                comissao.valor_comissao or 0
+            ),
+            "status": comissao.status,
+            "gerado_em": (
+                comissao.gerado_em.isoformat()
+                if comissao.gerado_em
+                else None
+            ),
+        }
+        for comissao in comissoes
+    ]
+
+    total_pendente = round(
+        sum(
+            float(comissao.valor_comissao or 0)
+            for comissao in comissoes
+        ),
+        2,
+    )
+
+    return {
+        "tenant_slug": tenant_slug,
+        "profissional_nome": profissional_nome,
+        "quantidade": len(itens),
+        "total_pendente": total_pendente,
+        "comissoes": itens,
+    }

@@ -1,7 +1,7 @@
 from sqlalchemy import Boolean, Column, Date, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 
 from database import Base
-from datetime import datetime
+from datetime import UTC, datetime
 
 
 # ==========================================
@@ -257,7 +257,7 @@ class ComissaoAtendimento(Base):
 
     gerado_em = Column(
         DateTime,
-        default=datetime.utcnow,
+        default=lambda: datetime.now(UTC).replace(tzinfo=None),
         nullable=False,
     )
 
@@ -311,13 +311,13 @@ class RepasseProfissional(Base):
 
     pago_em = Column(
         DateTime,
-        default=datetime.utcnow,
+        default=lambda: datetime.now(UTC).replace(tzinfo=None),
         nullable=False,
     )
 
     criado_em = Column(
         DateTime,
-        default=datetime.utcnow,
+        default=lambda: datetime.now(UTC).replace(tzinfo=None),
         nullable=False,
     )
 

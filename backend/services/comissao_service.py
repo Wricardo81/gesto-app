@@ -164,7 +164,7 @@ def listar_comissoes_pendentes(
         "comissoes": itens,
     }
 
-from datetime import datetime
+from datetime import UTC, datetime
 from pydantic import BaseModel, Field
 
 
@@ -249,7 +249,7 @@ def registrar_repasse_profissional(
                 agendamento.data
             )
 
-    agora = datetime.utcnow()
+    agora = datetime.now(UTC).replace(tzinfo=None)
 
     repasse = models.RepasseProfissional(
         barbearia_slug=tenant_slug,

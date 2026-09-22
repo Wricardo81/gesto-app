@@ -1,9 +1,14 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
+import models
 
 from database import SessaoLocal
 from security import validar_tenant_logado, obter_contexto_usuario_logado
 from services import fila_espera_service
+from services import agendamento_service
 
 
 router = APIRouter()
@@ -116,3 +121,109 @@ def atualizar_status_fila_espera_admin(
             dados=dados,
         ),
     }
+
+@router.post(
+    "/api/{tenant_slug}/admin/fila-espera/{item_id}/agendar",
+    status_code=201,
+)
+def converter_fila_espera_em_agendamento(
+    tenant_slug: str,
+    item_id: int,
+    dados: fila_espera_service.ConverterFilaEsperaAgendamento,
+    db: Session = Depends(get_db),
+    _tenant_autorizado: str = Depends(validar_tenant_logado),
+    contexto_usuario: dict = Depends(obter_contexto_usuario_logado),
+):
+    validar_acesso_fila_espera_admin(
+        contexto_usuario,
+        gerenciar=True,
+    )
+
+    item = (
+        db.query(models.FilaEspera)
+        .filter(
+            models.FilaEspera.id == item_id,
+            models.FilaEspera.barbearia_slug == tenant_slug,
+        )
+        .first()
+    )
+
+    if not item:
+        raise HTTPException(
+            status_code=404,
+            detail="Item da fila de espera nao encontrado.",
+        )
+
+    status_atual = str(item.status or "").strip().lower()
+
+    if status_atual == "agendado":
+        raise HTTPException(
+            status_code=409,
+            detail="Este item da fila ja foi convertido em agendamento.",
+        )
+
+    if status_atual in {"cancelado", "expirado"}:
+        raise HTTPException(
+            status_code=409,
+            detail="Este item da fila nao esta mais ativo.",
+        )
+
+    data_agendamento = (
+        str(dados.data or "").strip()
+        or (
+            item.data_desejada.isoformat()
+            if item.data_desejada
+            else ""
+        )
+    )
+
+    profissional = (
+        str(dados.profissional or "").strip()
+        or str(item.profissional_preferido or "").strip()
+    )
+
+    horario = str(dados.horario or "").strip()
+
+    if not data_agendamento:
+        raise HTTPException(
+            status_code=422,
+            detail="Informe a data do agendamento.",
+        )
+
+    if not profissional:
+        raise HTTPException(
+            status_code=422,
+            detail="Informe o profissional do agendamento.",
+        )
+
+    ficha = agendamento_service.FichaAgendamento(
+        cliente_nome=item.cliente_nome,
+        telefone_cliente=item.telefone_cliente,
+        servico=item.servico,
+        profissional=profissional,
+        data=data_agendamento,
+        horario=horario,
+        valor=0,
+        aceita_lembrete_whatsapp=True,
+        aceita_promocoes_whatsapp=False,
+    )
+
+    agendamento = agendamento_service.criar_novo_agendamento(
+        db=db,
+        tenant_slug=tenant_slug,
+        dados=ficha,
+    )
+
+    # Somente depois da criacao real do agendamento.
+    item.status = "agendado"
+    item.agendado_em = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    db.commit()
+    db.refresh(item)
+
+    return {
+        "mensagem": "Item da fila convertido em agendamento com sucesso.",
+        "agendamento": agendamento,
+        "item_fila": fila_espera_service.serializar_item_fila_espera(item),
+    }
+

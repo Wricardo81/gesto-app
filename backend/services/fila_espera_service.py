@@ -42,6 +42,12 @@ class EntradaFilaEsperaPublica(BaseModel):
     observacao: str | None = Field(default=None, max_length=500)
 
 
+class ConverterFilaEsperaAgendamento(BaseModel):
+    data: str | None = None
+    horario: str = Field(min_length=4, max_length=10)
+    profissional: str | None = Field(default=None, max_length=120)
+
+
 class AtualizacaoStatusFilaEspera(BaseModel):
     status: str = Field(min_length=3, max_length=30)
 

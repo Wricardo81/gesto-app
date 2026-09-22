@@ -1283,6 +1283,56 @@ function criarEstilosFilaEsperaPublica() {
             font-size: 1.35rem;
         }
 
+        .fila-espera-publica-convite {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+        }
+
+        .fila-espera-publica-convite > div {
+            flex: 1;
+        }
+
+        .fila-espera-publica-destaque {
+            border-color: rgba(100, 255, 218, 0.48);
+            box-shadow: 0 0 0 1px rgba(100, 255, 218, 0.08);
+        }
+
+        #conteudo-fila-espera-publica {
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 1px solid rgba(148, 163, 184, 0.18);
+        }
+
+        #conteudo-fila-espera-publica[hidden] {
+            display: none !important;
+        }
+
+        @media (max-width: 640px) {
+            .fila-espera-publica {
+                margin: 20px 12px;
+                padding: 16px;
+            }
+
+            .fila-espera-publica-convite {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .fila-espera-publica-convite button {
+                width: 100%;
+            }
+
+            .fila-espera-publica-acoes {
+                flex-direction: column;
+            }
+
+            .fila-espera-publica-acoes button {
+                width: 100%;
+            }
+        }
+
         .fila-espera-publica p {
             margin: 0 0 16px;
             opacity: 0.82;
@@ -1334,6 +1384,119 @@ function criarEstilosFilaEsperaPublica() {
     document.head.appendChild(style);
 }
 
+
+function abrirFilaEsperaPublica() {
+    const formulario = document.getElementById("conteudo-fila-espera-publica");
+    const botao = document.getElementById("btn-abrir-fila-espera-publica");
+
+    if (formulario) {
+        formulario.hidden = false;
+        formulario.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+        });
+    }
+
+    if (botao) {
+        botao.hidden = true;
+    }
+
+    preencherFilaEsperaComReservaPublica();
+
+    const nome = document.getElementById("fila-publica-nome");
+
+    if (nome) {
+        setTimeout(() => nome.focus(), 250);
+    }
+}
+
+function fecharFilaEsperaPublica() {
+    const formulario = document.getElementById("conteudo-fila-espera-publica");
+    const botao = document.getElementById("btn-abrir-fila-espera-publica");
+
+    if (formulario) {
+        formulario.hidden = true;
+    }
+
+    if (botao) {
+        botao.hidden = false;
+    }
+}
+
+function paginaPublicaIndicaSemHorarios() {
+    const texto = String(document.body?.innerText || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+
+    const sinais = [
+        "nenhum horario disponivel",
+        "nao ha horarios disponiveis",
+        "sem horarios disponiveis",
+        "nenhum horario encontrado",
+    ];
+
+    return sinais.some((sinal) => texto.includes(sinal));
+}
+
+function atualizarDestaqueFilaEsperaPublica() {
+    const secao = document.getElementById("fila-espera-publica");
+
+    if (!secao) {
+        return;
+    }
+
+    const semHorarios = paginaPublicaIndicaSemHorarios();
+
+    secao.classList.toggle(
+        "fila-espera-publica-destaque",
+        semHorarios
+    );
+
+    const titulo = document.getElementById("titulo-fila-espera-publica");
+    const texto = document.getElementById("texto-fila-espera-publica");
+
+    if (titulo) {
+        titulo.textContent = semHorarios
+            ? "Nao encontrou horario disponivel?"
+            : "Precisa de outro horario?";
+    }
+
+    if (texto) {
+        texto.textContent = semHorarios
+            ? "Entre na fila de espera e deixe seus dados. Se surgir uma vaga, a equipe podera entrar em contato com voce."
+            : "Se os horarios atuais nao servirem para voce, entre na fila de espera.";
+    }
+}
+
+function observarDisponibilidadeParaFilaEsperaPublica() {
+    if (window.observadorFilaEsperaPublica) {
+        return;
+    }
+
+    let timer = null;
+
+    const observer = new MutationObserver(() => {
+        clearTimeout(timer);
+
+        timer = setTimeout(() => {
+            atualizarDestaqueFilaEsperaPublica();
+            preencherFilaEsperaComReservaPublica();
+        }, 150);
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+    });
+
+    window.observadorFilaEsperaPublica = observer;
+
+    atualizarDestaqueFilaEsperaPublica();
+}
+
+
 function criarFormularioFilaEsperaPublica() {
     if (document.getElementById("fila-espera-publica")) {
         preencherFilaEsperaComReservaPublica();
@@ -1349,11 +1512,25 @@ function criarFormularioFilaEsperaPublica() {
     secao.className = "fila-espera-publica";
 
     secao.innerHTML = `
-        <h2>Nao encontrou um horario ideal?</h2>
-        <p>
-            Entre na fila de espera. Se surgir uma vaga, a equipe podera entrar em contato com voce.
-        </p>
+        <div class="fila-espera-publica-convite">
+            <div>
+                <h2 id="titulo-fila-espera-publica">Precisa de outro horario?</h2>
+                <p id="texto-fila-espera-publica">
+                    Se os horarios atuais nao servirem para voce, entre na fila de espera.
+                </p>
+            </div>
 
+            <button
+                id="btn-abrir-fila-espera-publica"
+                type="button"
+                class="btn-primario"
+                onclick="abrirFilaEsperaPublica()"
+            >
+                Entrar na fila
+            </button>
+        </div>
+
+        <div id="conteudo-fila-espera-publica" hidden>
         <form id="form-fila-espera-publica">
             <div class="fila-espera-publica-grid">
                 <label>
@@ -1402,9 +1579,18 @@ function criarFormularioFilaEsperaPublica() {
                     Entrar na fila de espera
                 </button>
 
+                <button
+                    type="button"
+                    class="btn-secundario"
+                    onclick="fecharFilaEsperaPublica()"
+                >
+                    Agora nao
+                </button>
+
                 <span id="fila-publica-feedback" class="fila-espera-publica-feedback"></span>
             </div>
         </form>
+        </div>
     `;
 
     referencia.appendChild(secao);
@@ -1485,6 +1671,7 @@ function iniciarFilaEsperaPublicaQuandoDisponivel() {
 
         if (typeof tenantSlug !== "undefined" && tenantSlug) {
             criarFormularioFilaEsperaPublica();
+            observarDisponibilidadeParaFilaEsperaPublica();
             clearInterval(timer);
             return;
         }
@@ -1497,6 +1684,9 @@ function iniciarFilaEsperaPublicaQuandoDisponivel() {
 
 window.criarFormularioFilaEsperaPublica = criarFormularioFilaEsperaPublica;
 window.enviarFilaEsperaPublica = enviarFilaEsperaPublica;
+window.abrirFilaEsperaPublica = abrirFilaEsperaPublica;
+window.fecharFilaEsperaPublica = fecharFilaEsperaPublica;
+window.atualizarDestaqueFilaEsperaPublica = atualizarDestaqueFilaEsperaPublica;
 
 iniciarFilaEsperaPublicaQuandoDisponivel();
 

@@ -189,6 +189,7 @@ def registrar_repasse_profissional(
             models.ComissaoAtendimento.id.in_(ids_unicos),
         )
         .order_by(models.ComissaoAtendimento.id.asc())
+        .with_for_update()
         .all()
     )
 

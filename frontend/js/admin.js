@@ -5163,6 +5163,336 @@ window.renderizarResumoProducaoPrestadorAdmin = renderizarResumoProducaoPrestado
 
 
 
+
+let comissoesPendentesRepasseAdminCache = [];
+
+
+function renderizarComissoesPendentesRepasseAdmin(comissoes) {
+    const container = document.getElementById(
+        "lista-comissoes-pendentes-admin"
+    );
+
+    if (!container) {
+        return;
+    }
+
+    comissoesPendentesRepasseAdminCache = Array.isArray(comissoes)
+        ? comissoes
+        : [];
+
+    if (!comissoesPendentesRepasseAdminCache.length) {
+        container.innerHTML = `
+            <div class="financeiro-repasse-vazio-admin">
+                Nenhuma comissão pendente de repasse.
+            </div>
+        `;
+
+        atualizarSelecaoRepasseAdmin();
+        return;
+    }
+
+    const grupos = {};
+
+    comissoesPendentesRepasseAdminCache.forEach((comissao) => {
+        const profissional =
+            comissao?.profissional_nome
+            || "Profissional não informado";
+
+        if (!grupos[profissional]) {
+            grupos[profissional] = [];
+        }
+
+        grupos[profissional].push(comissao);
+    });
+
+    container.innerHTML = Object.entries(grupos)
+        .map(([profissional, itens]) => {
+            const totalProfissional = itens.reduce(
+                (total, item) =>
+                    total + Number(item?.valor_comissao || 0),
+                0
+            );
+
+            const itensHtml = itens
+                .map((comissao) => {
+                    const id = Number(comissao?.id || 0);
+
+                    const servico = escaparHtmlAdmin(
+                        comissao?.servico || "Serviço não informado"
+                    );
+
+                    const profissionalSeguro = escaparHtmlAdmin(
+                        profissional
+                    );
+
+                    const valorComissao = Number(
+                        comissao?.valor_comissao || 0
+                    );
+
+                    const valorAtendimento = Number(
+                        comissao?.valor_atendimento || 0
+                    );
+
+                    return `
+                        <label class="comissao-pendente-item-admin">
+                            <input
+                                type="checkbox"
+                                class="checkbox-comissao-repasse-admin"
+                                value="${id}"
+                                data-profissional="${profissionalSeguro}"
+                                data-valor="${valorComissao}"
+                                onchange="atualizarSelecaoRepasseAdmin()"
+                            >
+
+                            <div>
+                                <strong>
+                                    ${servico}
+                                </strong>
+
+                                <span>
+                                    Atendimento #${Number(
+                                        comissao?.agendamento_id || 0
+                                    )}
+                                    ? ${formatarMoeda(
+                                        valorAtendimento
+                                    )}
+                                </span>
+                            </div>
+
+                            <strong class="comissao-pendente-valor-admin">
+                                ${formatarMoeda(valorComissao)}
+                            </strong>
+                        </label>
+                    `;
+                })
+                .join("");
+
+            return `
+                <section class="grupo-comissoes-profissional-admin">
+                    <div class="grupo-comissoes-profissional-topo-admin">
+                        <div>
+                            <span>Profissional</span>
+                            <strong>
+                                ${escaparHtmlAdmin(profissional)}
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Total pendente</span>
+                            <strong>
+                                ${formatarMoeda(totalProfissional)}
+                            </strong>
+                        </div>
+                    </div>
+
+                    <div class="grupo-comissoes-itens-admin">
+                        ${itensHtml}
+                    </div>
+                </section>
+            `;
+        })
+        .join("");
+
+    atualizarSelecaoRepasseAdmin();
+}
+
+
+function obterCheckboxesComissaoRepasseAdmin() {
+    return Array.from(
+        document.querySelectorAll(
+            ".checkbox-comissao-repasse-admin"
+        )
+    );
+}
+
+
+function atualizarSelecaoRepasseAdmin() {
+    const checkboxes =
+        obterCheckboxesComissaoRepasseAdmin();
+
+    const selecionados = checkboxes.filter(
+        (checkbox) => checkbox.checked
+    );
+
+    const profissionalSelecionado =
+        selecionados[0]?.dataset.profissional || "";
+
+    checkboxes.forEach((checkbox) => {
+        const outroProfissional = (
+            profissionalSelecionado
+            && checkbox.dataset.profissional
+                !== profissionalSelecionado
+        );
+
+        checkbox.disabled = (
+            outroProfissional
+            && !checkbox.checked
+        );
+    });
+
+    const totalSelecionado = selecionados.reduce(
+        (total, checkbox) =>
+            total + Number(checkbox.dataset.valor || 0),
+        0
+    );
+
+    const visorQuantidade = document.getElementById(
+        "repasse-selecionadas-quantidade"
+    );
+
+    const visorTotal = document.getElementById(
+        "repasse-selecionadas-total"
+    );
+
+    const botao = document.getElementById(
+        "btn-registrar-repasse-admin"
+    );
+
+    if (visorQuantidade) {
+        visorQuantidade.textContent = String(
+            selecionados.length
+        );
+    }
+
+    if (visorTotal) {
+        visorTotal.textContent = formatarMoeda(
+            totalSelecionado
+        );
+    }
+
+    if (botao) {
+        botao.disabled = selecionados.length === 0;
+    }
+}
+
+
+async function registrarRepasseSelecionadoAdmin() {
+    if (!usuarioAdminPodeVerFinanceiroGeral()) {
+        exibirMensagemAdmin(
+            "Apenas o gestor pode registrar repasses.",
+            "erro"
+        );
+        return;
+    }
+
+    const selecionados =
+        obterCheckboxesComissaoRepasseAdmin()
+            .filter((checkbox) => checkbox.checked);
+
+    if (!selecionados.length) {
+        exibirMensagemAdmin(
+            "Selecione ao menos uma comissão.",
+            "aviso"
+        );
+        return;
+    }
+
+    const profissionais = new Set(
+        selecionados.map(
+            (checkbox) => checkbox.dataset.profissional
+        )
+    );
+
+    if (profissionais.size !== 1) {
+        exibirMensagemAdmin(
+            "Selecione comissões de apenas um profissional.",
+            "aviso"
+        );
+        return;
+    }
+
+    const profissional =
+        selecionados[0].dataset.profissional;
+
+    const ids = selecionados.map(
+        (checkbox) => Number(checkbox.value)
+    );
+
+    const total = selecionados.reduce(
+        (soma, checkbox) =>
+            soma + Number(checkbox.dataset.valor || 0),
+        0
+    );
+
+    const observacao = (
+        document.getElementById(
+            "repasse-observacao-admin"
+        )?.value || ""
+    ).trim();
+
+    const confirmado = confirm(
+        `Registrar repasse de ${formatarMoeda(total)} `
+        + `para ${profissional}?`
+    );
+
+    if (!confirmado) {
+        return;
+    }
+
+    const botao = document.getElementById(
+        "btn-registrar-repasse-admin"
+    );
+
+    const textoOriginal = botao?.textContent
+        || "Registrar repasse";
+
+    if (botao) {
+        botao.disabled = true;
+        botao.textContent = "Registrando...";
+    }
+
+    try {
+        const resposta = await apiRequest(
+            `/api/${tenantSlugLogado}/repasses`,
+            {
+                method: "POST",
+                auth: true,
+                body: {
+                    comissoes_ids: ids,
+                    observacao: observacao || null,
+                },
+            }
+        );
+
+        const campoObservacao = document.getElementById(
+            "repasse-observacao-admin"
+        );
+
+        if (campoObservacao) {
+            campoObservacao.value = "";
+        }
+
+        exibirMensagemAdmin(
+            `Repasse de ${formatarMoeda(
+                resposta?.valor || total
+            )} registrado para ${profissional}.`
+        );
+
+        await carregarResumoComissoesRepassesAdmin();
+
+    } catch (erro) {
+        tratarErro(erro);
+
+    } finally {
+        if (botao) {
+            botao.textContent = textoOriginal;
+        }
+
+        atualizarSelecaoRepasseAdmin();
+    }
+}
+
+
+window.renderizarComissoesPendentesRepasseAdmin =
+    renderizarComissoesPendentesRepasseAdmin;
+
+window.atualizarSelecaoRepasseAdmin =
+    atualizarSelecaoRepasseAdmin;
+
+window.registrarRepasseSelecionadoAdmin =
+    registrarRepasseSelecionadoAdmin;
+
+
 async function carregarResumoComissoesRepassesAdmin() {
     const card = document.getElementById(
         "comissoes-repasses-dashboard"
@@ -5220,6 +5550,10 @@ async function carregarResumoComissoesRepassesAdmin() {
             ),
         ]);
 
+        renderizarComissoesPendentesRepasseAdmin(
+            pendentes?.comissoes || []
+        );
+
         if (visorQuantidadePendentes) {
             visorQuantidadePendentes.textContent = String(
                 Number(pendentes?.quantidade || 0)
@@ -5267,7 +5601,7 @@ async function carregarResumoComissoesRepassesAdmin() {
             .map((repasse) => {
                 const profissional = escaparHtmlAdmin(
                     repasse?.profissional_nome
-                    || "Profissional n?o informado"
+                    || "Profissional não informado"
                 );
 
                 const quantidadeComissoes = Number(
@@ -5282,14 +5616,20 @@ async function carregarResumoComissoesRepassesAdmin() {
                     ? formatarDataHoraBR(repasse.pago_em)
                     : "-";
 
+                const textoComissoes = (
+                    quantidadeComissoes === 1
+                        ? "1 comiss\u00e3o"
+                        : `${quantidadeComissoes} comiss\u00f5es`
+                );
+
                 return `
                     <li>
                         <strong>${profissional}</strong>
 
                         <span>
                             ${valor}
-                            ? ${quantidadeComissoes} comiss?o(?es)
-                            ? ${pagoEm}
+                            \u00b7 ${textoComissoes}
+                            \u00b7 ${pagoEm}
                         </span>
                     </li>
                 `;
@@ -5305,7 +5645,7 @@ async function carregarResumoComissoesRepassesAdmin() {
         if (listaRepasses) {
             listaRepasses.innerHTML = `
                 <li>
-                    N?o foi poss?vel carregar os dados financeiros.
+                    Não foi poss\u00edvel carregar os dados financeiros.
                 </li>
             `;
         }
@@ -7361,7 +7701,7 @@ function criarEstruturaFilaEsperaAdmin() {
         botao.className = "admin-tab admin-nav-item";
         botao.dataset.secao = "secao-fila-espera";
         botao.innerHTML = `
-            <span class="admin-nav-icon">?</span>
+            <span class="admin-nav-icon">⏳</span>
             <span>Fila de espera</span>
         `;
         botao.onclick = () => {

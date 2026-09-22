@@ -530,22 +530,22 @@
             >
                 <div class="financeiro-resumo-topo">
                     <div>
-                        <span>Comiss?es e repasses</span>
+                        <span>Comissões e repasses</span>
                         <h3>Financeiro da equipe</h3>
                         <p>
-                            Acompanhe valores pendentes de comiss?o
-                            e os repasses j? registrados.
+                            Acompanhe valores pendentes de comissão
+                            e os repasses já registrados.
                         </p>
                     </div>
 
                     <small>
-                        Valores persistidos por atendimento conclu?do.
+                        Valores persistidos por atendimento concluído.
                     </small>
                 </div>
 
                 <div class="financeiro-resumo-grid">
                     <div>
-                        <span>Comiss?es pendentes</span>
+                        <span>Comissões pendentes</span>
                         <strong id="visor-comissoes-pendentes-quantidade">
                             0
                         </strong>
@@ -573,8 +573,67 @@
                     </div>
                 </div>
 
+                <div class="financeiro-repasse-operacao-admin">
+                    <div class="financeiro-repasse-operacao-topo">
+                        <div>
+                            <span>Comissões pendentes</span>
+                            <h4>Registrar repasse</h4>
+                            <p>
+                                Selecione comissões do mesmo profissional
+                                para registrar o pagamento.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div
+                        id="lista-comissoes-pendentes-admin"
+                        class="lista-comissoes-pendentes-admin"
+                    >
+                        Carregando comissões pendentes...
+                    </div>
+
+                    <div class="financeiro-repasse-selecao-admin">
+                        <div>
+                            <small>Selecionadas</small>
+                            <strong id="repasse-selecionadas-quantidade">
+                                0
+                            </strong>
+                        </div>
+
+                        <div>
+                            <small>Total selecionado</small>
+                            <strong id="repasse-selecionadas-total">
+                                R$ 0,00
+                            </strong>
+                        </div>
+                    </div>
+
+                    <label class="financeiro-repasse-observacao-admin">
+                        <span>Observação opcional</span>
+
+                        <input
+                            type="text"
+                            id="repasse-observacao-admin"
+                            maxlength="240"
+                            placeholder="Ex: Repasse semanal"
+                        >
+                    </label>
+
+                    <div class="financeiro-repasse-acoes-admin">
+                        <button
+                            type="button"
+                            id="btn-registrar-repasse-admin"
+                            class="btn-primary"
+                            onclick="registrarRepasseSelecionadoAdmin()"
+                            disabled
+                        >
+                            Registrar repasse
+                        </button>
+                    </div>
+                </div>
+
                 <div class="financeiro-resumo-detalhes">
-                    <h4>?ltimos repasses</h4>
+                    <h4>Últimos repasses</h4>
 
                     <ul id="lista-repasses-recentes-admin">
                         <li>Nenhum repasse registrado ainda.</li>

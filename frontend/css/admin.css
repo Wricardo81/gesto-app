@@ -3845,3 +3845,153 @@ body {
     }
 }
 
+
+
+/* =========================================================
+   COMISSOES E REPASSES - SPRINT 4.9
+========================================================= */
+
+.financeiro-repasse-operacao-admin {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.financeiro-repasse-operacao-topo h4,
+.financeiro-resumo-detalhes h4 {
+    margin: 4px 0 6px;
+}
+
+.financeiro-repasse-operacao-topo p {
+    margin: 0;
+    color: var(--texto-secundario);
+    font-size: 13px;
+}
+
+.lista-comissoes-pendentes-admin {
+    display: grid;
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.grupo-comissoes-profissional-admin {
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.grupo-comissoes-profissional-topo-admin {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 10px;
+}
+
+.grupo-comissoes-profissional-topo-admin > div {
+    display: grid;
+    gap: 2px;
+}
+
+.grupo-comissoes-profissional-topo-admin span,
+.financeiro-repasse-selecao-admin small {
+    color: var(--texto-secundario);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.grupo-comissoes-itens-admin {
+    display: grid;
+    gap: 8px;
+}
+
+.comissao-pendente-item-admin {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.5);
+    cursor: pointer;
+}
+
+.comissao-pendente-item-admin > div {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.comissao-pendente-item-admin span {
+    color: var(--texto-secundario);
+    font-size: 12px;
+}
+
+.comissao-pendente-valor-admin {
+    white-space: nowrap;
+}
+
+.checkbox-comissao-repasse-admin {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--destaque);
+}
+
+.financeiro-repasse-selecao-admin {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.financeiro-repasse-selecao-admin > div {
+    display: grid;
+    gap: 3px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(100, 255, 218, 0.05);
+    border: 1px solid rgba(100, 255, 218, 0.1);
+}
+
+.financeiro-repasse-observacao-admin {
+    display: grid;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.financeiro-repasse-observacao-admin span {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.financeiro-repasse-observacao-admin input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.financeiro-repasse-acoes-admin {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+
+.financeiro-repasse-vazio-admin {
+    padding: 14px;
+    border-radius: 12px;
+    color: var(--texto-secundario);
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 720px) {
+    .grupo-comissoes-profissional-topo-admin {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .financeiro-repasse-selecao-admin {
+        grid-template-columns: 1fr;
+    }
+}

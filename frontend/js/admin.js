@@ -3241,6 +3241,8 @@ async function iniciarPainel() {
   await carregarContextoUsuarioAdmin();
   await carregarCatalogoPerfisOperacionaisAdmin();
 
+  criarEstruturaFilaEsperaAdmin();
+
   atualizarLinkPublico();
   registrarListenersDePreview();
   registrarListenersCRM();
@@ -3266,6 +3268,11 @@ async function iniciarPainel() {
   }
 
   aplicarDashboardLimpoPorPerfilAdmin();
+
+  if (usuarioAdminPodeVerFinanceiroGeral()) {
+    await carregarResumoComissoesRepassesAdmin();
+  }
+
   iniciarMonitorNovosAgendamentos();
 }
 
@@ -3295,6 +3302,11 @@ async function iniciarPainel() {
             );
 
             await carregarAgendamentos();
+
+            if (usuarioAdminPodeVerFinanceiroGeral()) {
+                await carregarResumoComissoesRepassesAdmin();
+            }
+
             await carregarAgendaVisualDia({
                 forcar: true,
             });
@@ -5148,6 +5160,163 @@ async function renderizarResumoProducaoPrestadorAdmin(agendamentos) {
 
 
 window.renderizarResumoProducaoPrestadorAdmin = renderizarResumoProducaoPrestadorAdmin;
+
+
+
+async function carregarResumoComissoesRepassesAdmin() {
+    const card = document.getElementById(
+        "comissoes-repasses-dashboard"
+    );
+
+    if (!card) {
+        return;
+    }
+
+    if (!usuarioAdminPodeVerFinanceiroGeral()) {
+        card.hidden = true;
+        card.setAttribute("aria-hidden", "true");
+        return;
+    }
+
+    card.hidden = false;
+    card.setAttribute("aria-hidden", "false");
+
+    const visorQuantidadePendentes = document.getElementById(
+        "visor-comissoes-pendentes-quantidade"
+    );
+
+    const visorTotalPendente = document.getElementById(
+        "visor-comissoes-pendentes-total"
+    );
+
+    const visorQuantidadeRepasses = document.getElementById(
+        "visor-repasses-quantidade"
+    );
+
+    const visorTotalRepasses = document.getElementById(
+        "visor-repasses-total"
+    );
+
+    const listaRepasses = document.getElementById(
+        "lista-repasses-recentes-admin"
+    );
+
+    try {
+        const [
+            pendentes,
+            historico,
+        ] = await Promise.all([
+            apiRequest(
+                `/api/${tenantSlugLogado}/comissoes/pendentes`,
+                {
+                    auth: true,
+                }
+            ),
+            apiRequest(
+                `/api/${tenantSlugLogado}/repasses`,
+                {
+                    auth: true,
+                }
+            ),
+        ]);
+
+        if (visorQuantidadePendentes) {
+            visorQuantidadePendentes.textContent = String(
+                Number(pendentes?.quantidade || 0)
+            );
+        }
+
+        if (visorTotalPendente) {
+            visorTotalPendente.textContent = formatarMoeda(
+                pendentes?.total_pendente || 0
+            );
+        }
+
+        if (visorQuantidadeRepasses) {
+            visorQuantidadeRepasses.textContent = String(
+                Number(historico?.quantidade || 0)
+            );
+        }
+
+        if (visorTotalRepasses) {
+            visorTotalRepasses.textContent = formatarMoeda(
+                historico?.total_pago || 0
+            );
+        }
+
+        if (!listaRepasses) {
+            return;
+        }
+
+        const repasses = Array.isArray(historico?.repasses)
+            ? historico.repasses
+            : [];
+
+        if (!repasses.length) {
+            listaRepasses.innerHTML = `
+                <li>
+                    Nenhum repasse registrado ainda.
+                </li>
+            `;
+
+            return;
+        }
+
+        listaRepasses.innerHTML = repasses
+            .slice(0, 5)
+            .map((repasse) => {
+                const profissional = escaparHtmlAdmin(
+                    repasse?.profissional_nome
+                    || "Profissional n?o informado"
+                );
+
+                const quantidadeComissoes = Number(
+                    repasse?.quantidade_comissoes || 0
+                );
+
+                const valor = formatarMoeda(
+                    repasse?.valor || 0
+                );
+
+                const pagoEm = repasse?.pago_em
+                    ? formatarDataHoraBR(repasse.pago_em)
+                    : "-";
+
+                return `
+                    <li>
+                        <strong>${profissional}</strong>
+
+                        <span>
+                            ${valor}
+                            ? ${quantidadeComissoes} comiss?o(?es)
+                            ? ${pagoEm}
+                        </span>
+                    </li>
+                `;
+            })
+            .join("");
+
+    } catch (erro) {
+        console.error(
+            "Erro ao carregar comissoes e repasses:",
+            erro
+        );
+
+        if (listaRepasses) {
+            listaRepasses.innerHTML = `
+                <li>
+                    N?o foi poss?vel carregar os dados financeiros.
+                </li>
+            `;
+        }
+
+        tratarErro(erro);
+    }
+}
+
+
+window.carregarResumoComissoesRepassesAdmin =
+    carregarResumoComissoesRepassesAdmin;
 
 
 function usuarioPodeConcluirAgendamentoAdmin(agendamento) {
@@ -7189,9 +7358,12 @@ function criarEstruturaFilaEsperaAdmin() {
     if (containerTabs) {
         const botao = document.createElement("button");
         botao.type = "button";
-        botao.className = "admin-tab";
-        botao.dataset.secaoAdmin = "secao-fila-espera";
-        botao.textContent = "Fila de espera";
+        botao.className = "admin-tab admin-nav-item";
+        botao.dataset.secao = "secao-fila-espera";
+        botao.innerHTML = `
+            <span class="admin-nav-icon">?</span>
+            <span>Fila de espera</span>
+        `;
         botao.onclick = () => {
             mostrarSecaoAdmin("secao-fila-espera");
             carregarFilaEsperaAdmin();
@@ -7210,10 +7382,10 @@ function criarEstruturaFilaEsperaAdmin() {
 
     const secao = document.createElement("section");
     secao.id = "secao-fila-espera";
-    secao.className = referenciaSecao ? referenciaSecao.className : "admin-section";
-    secao.hidden = true;
+    secao.className = "secao-admin";
 
     if (!podeVer) {
+        secao.hidden = true;
         secao.style.display = "none";
     }
 

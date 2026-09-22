@@ -7351,15 +7351,6 @@ function renderizarFilaEsperaAdmin(itens) {
                     <button
                         type="button"
                         class="btn-secundario"
-                        onclick="atualizarStatusFilaEsperaAdmin(${item.id}, 'agendado')"
-                        ${acoesDesabilitadas ? "disabled" : ""}
-                    >
-                        Agendado
-                    </button>
-
-                    <button
-                        type="button"
-                        class="btn-secundario"
                         onclick="atualizarStatusFilaEsperaAdmin(${item.id}, 'cancelado')"
                         ${acoesDesabilitadas ? "disabled" : ""}
                     >

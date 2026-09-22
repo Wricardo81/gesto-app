@@ -18,6 +18,22 @@ STATUS_FILA_ESPERA = {
     "expirado",
 }
 
+TRANSICOES_STATUS_FILA_ESPERA = {
+    "aguardando": {
+        "chamado",
+        "cancelado",
+        "expirado",
+    },
+    "chamado": {
+        "aguardando",
+        "cancelado",
+        "expirado",
+    },
+    "agendado": set(),
+    "cancelado": set(),
+    "expirado": set(),
+}
+
 PERIODOS_PREFERIDOS = {
     "manha",
     "tarde",
@@ -178,6 +194,37 @@ def atualizar_status_fila_espera(
         raise HTTPException(
             status_code=404,
             detail="Item da fila de espera nao encontrado.",
+        )
+
+    status_atual = normalizar_status(item.status)
+
+    # PUT idempotente: repetir o mesmo status nao altera timestamps.
+    if status == status_atual:
+        return serializar_item_fila_espera(item)
+
+    # "agendado" somente pode ser alcan?ado pela conversao real
+    # fila -> agendamento.
+    if status == "agendado":
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "O status agendado so pode ser definido "
+                "pela conversao da fila em agendamento."
+            ),
+        )
+
+    transicoes_permitidas = TRANSICOES_STATUS_FILA_ESPERA.get(
+        status_atual,
+        set(),
+    )
+
+    if status not in transicoes_permitidas:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"Transicao de status nao permitida: "
+                f"{status_atual} -> {status}."
+            ),
         )
 
     agora = datetime.utcnow()

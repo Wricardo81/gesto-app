@@ -3995,3 +3995,193 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+
+/* =========================================================
+   DETALHE DE REPASSE - SPRINT 4.9
+========================================================= */
+
+#lista-repasses-recentes-admin li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 14px;
+    align-items: center;
+}
+
+#lista-repasses-recentes-admin li > strong,
+#lista-repasses-recentes-admin li > span {
+    grid-column: 1;
+}
+
+.btn-detalhe-repasse-admin {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+    padding: 8px 11px;
+    border: 1px solid rgba(100, 255, 218, 0.18);
+    border-radius: 10px;
+    background: rgba(100, 255, 218, 0.06);
+    color: var(--texto-principal);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        transform 0.15s ease,
+        border-color 0.15s ease,
+        background 0.15s ease;
+}
+
+.btn-detalhe-repasse-admin:hover {
+    transform: translateY(-1px);
+    border-color: rgba(100, 255, 218, 0.4);
+    background: rgba(100, 255, 218, 0.1);
+}
+
+.modal-repasse-card-admin {
+    width: min(900px, 96vw);
+}
+
+.detalhe-repasse-conteudo-admin {
+    display: grid;
+    gap: 18px;
+}
+
+.detalhe-repasse-resumo-grid-admin {
+    display: grid;
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.detalhe-repasse-resumo-grid-admin > div {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.detalhe-repasse-resumo-grid-admin small,
+.detalhe-repasse-observacao-admin small,
+.detalhe-repasse-item-grid-admin small {
+    color: var(--texto-secundario);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.detalhe-repasse-resumo-grid-admin strong {
+    overflow-wrap: anywhere;
+}
+
+.detalhe-repasse-observacao-admin {
+    padding: 14px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.detalhe-repasse-observacao-admin p {
+    margin: 6px 0 0;
+    color: var(--texto-principal);
+    line-height: 1.5;
+}
+
+.detalhe-repasse-lista-admin {
+    display: grid;
+    gap: 10px;
+}
+
+.detalhe-repasse-lista-topo-admin {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.detalhe-repasse-lista-topo-admin h3 {
+    margin: 4px 0 0;
+}
+
+.detalhe-repasse-item-admin {
+    display: grid;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.44);
+}
+
+.detalhe-repasse-item-topo-admin {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.detalhe-repasse-item-topo-admin > div {
+    display: grid;
+    gap: 3px;
+}
+
+.detalhe-repasse-item-topo-admin span {
+    color: var(--texto-secundario);
+    font-size: 12px;
+}
+
+.detalhe-repasse-status-admin {
+    flex: 0 0 auto;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.detalhe-repasse-status-admin.status-pago {
+    color: #64ffda;
+    background: rgba(100, 255, 218, 0.08);
+    border: 1px solid rgba(100, 255, 218, 0.18);
+}
+
+.detalhe-repasse-item-grid-admin {
+    display: grid;
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.detalhe-repasse-item-grid-admin > div {
+    display: grid;
+    gap: 3px;
+}
+
+@media (max-width: 720px) {
+
+    #lista-repasses-recentes-admin li {
+        grid-template-columns: 1fr;
+    }
+
+    #lista-repasses-recentes-admin li > strong,
+    #lista-repasses-recentes-admin li > span,
+    .btn-detalhe-repasse-admin {
+        grid-column: 1;
+        grid-row: auto;
+    }
+
+    .btn-detalhe-repasse-admin {
+        justify-self: start;
+    }
+
+    .detalhe-repasse-resumo-grid-admin,
+    .detalhe-repasse-item-grid-admin {
+        grid-template-columns: 1fr;
+    }
+
+    .detalhe-repasse-lista-topo-admin {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}

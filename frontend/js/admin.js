@@ -5493,6 +5493,411 @@ window.registrarRepasseSelecionadoAdmin =
     registrarRepasseSelecionadoAdmin;
 
 
+
+function formatarDataRepasseAdmin(valor) {
+    if (!valor) {
+        return "-";
+    }
+
+    const texto = String(valor);
+
+    const match = texto.match(
+        /^(\d{4})-(\d{2})-(\d{2})$/
+    );
+
+    if (match) {
+        return `${match[3]}/${match[2]}/${match[1]}`;
+    }
+
+    return texto;
+}
+
+
+function formatarRegraComissaoRepasseAdmin(
+    tipo,
+    valor
+) {
+    const tipoNormalizado = String(
+        tipo || ""
+    ).toLowerCase();
+
+    const numero = Number(valor || 0);
+
+    if (tipoNormalizado === "percentual") {
+        return `${numero}%`;
+    }
+
+    if (tipoNormalizado === "fixo") {
+        return formatarMoeda(numero);
+    }
+
+    return "-";
+}
+
+
+function garantirModalDetalheRepasseAdmin() {
+    let modal = document.getElementById(
+        "modal-detalhe-repasse-admin"
+    );
+
+    if (modal) {
+        return modal;
+    }
+
+    modal = document.createElement("div");
+
+    modal.id = "modal-detalhe-repasse-admin";
+    modal.className =
+        "modal-historico-cliente modal-detalhe-repasse-admin";
+
+    modal.style.display = "none";
+
+    modal.innerHTML = `
+        <div
+            class="modal-historico-overlay"
+            onclick="fecharDetalheRepasseAdmin()"
+        ></div>
+
+        <div class="modal-historico-card modal-repasse-card-admin">
+
+            <div class="modal-historico-header">
+                <div>
+                    <span class="admin-kicker">
+                        Financeiro da equipe
+                    </span>
+
+                    <h2 id="detalhe-repasse-titulo-admin">
+                        Detalhes do repasse
+                    </h2>
+
+                    <p id="detalhe-repasse-resumo-admin">
+                        Carregando informa\u00e7\u00f5es...
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    class="btn-fechar-modal"
+                    onclick="fecharDetalheRepasseAdmin()"
+                    aria-label="Fechar"
+                >
+                    \u00d7
+                </button>
+            </div>
+
+            <div
+                id="detalhe-repasse-conteudo-admin"
+                class="detalhe-repasse-conteudo-admin"
+            >
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    return modal;
+}
+
+
+function fecharDetalheRepasseAdmin() {
+    const modal = document.getElementById(
+        "modal-detalhe-repasse-admin"
+    );
+
+    if (modal) {
+        modal.style.display = "none";
+    }
+}
+
+
+async function abrirDetalheRepasseAdmin(repasseId) {
+    if (!usuarioAdminPodeVerFinanceiroGeral()) {
+        exibirMensagemAdmin(
+            "Apenas o gestor pode acessar os detalhes financeiros.",
+            "erro"
+        );
+        return;
+    }
+
+    const id = Number(repasseId);
+
+    if (!Number.isInteger(id) || id <= 0) {
+        exibirMensagemAdmin(
+            "Repasse inv\u00e1lido.",
+            "erro"
+        );
+        return;
+    }
+
+    const modal = garantirModalDetalheRepasseAdmin();
+
+    const titulo = document.getElementById(
+        "detalhe-repasse-titulo-admin"
+    );
+
+    const resumo = document.getElementById(
+        "detalhe-repasse-resumo-admin"
+    );
+
+    const conteudo = document.getElementById(
+        "detalhe-repasse-conteudo-admin"
+    );
+
+    modal.style.display = "flex";
+
+    titulo.textContent = `Repasse #${id}`;
+
+    resumo.textContent =
+        "Carregando informa\u00e7\u00f5es...";
+
+    conteudo.innerHTML = `
+        <div class="financeiro-repasse-vazio-admin">
+            Carregando detalhes do repasse...
+        </div>
+    `;
+
+    try {
+        const dados = await apiRequest(
+            `/api/${tenantSlugLogado}/repasses/${id}`,
+            {
+                auth: true,
+            }
+        );
+
+        const profissional = escaparHtmlAdmin(
+            dados?.profissional_nome
+            || "Profissional n\u00e3o informado"
+        );
+
+        const registradoPor = escaparHtmlAdmin(
+            dados?.registrado_por
+            || "N\u00e3o informado"
+        );
+
+        const observacao = escaparHtmlAdmin(
+            dados?.observacao
+            || "Nenhuma observa\u00e7\u00e3o"
+        );
+
+        const valorTotal = formatarMoeda(
+            dados?.valor || 0
+        );
+
+        const periodoInicio =
+            formatarDataRepasseAdmin(
+                dados?.periodo_inicio
+            );
+
+        const periodoFim =
+            formatarDataRepasseAdmin(
+                dados?.periodo_fim
+            );
+
+        const periodo = (
+            periodoInicio === periodoFim
+                ? periodoInicio
+                : `${periodoInicio} a ${periodoFim}`
+        );
+
+        const pagoEm = dados?.pago_em
+            ? formatarDataHoraBR(dados.pago_em)
+            : "-";
+
+        const comissoes = Array.isArray(
+            dados?.comissoes
+        )
+            ? dados.comissoes
+            : [];
+
+        const quantidade = Number(
+            dados?.quantidade_comissoes
+            || comissoes.length
+            || 0
+        );
+
+        const textoQuantidade = (
+            quantidade === 1
+                ? "1 comiss\u00e3o"
+                : `${quantidade} comiss\u00f5es`
+        );
+
+        resumo.textContent =
+            `${profissional} \u00b7 ${valorTotal} `
+            + `\u00b7 ${textoQuantidade}`;
+
+        const itensHtml = comissoes.length
+            ? comissoes.map((comissao) => {
+
+                const servico = escaparHtmlAdmin(
+                    comissao?.servico
+                    || "Servi\u00e7o n\u00e3o informado"
+                );
+
+                const status = String(
+                    comissao?.status || ""
+                ).toLowerCase();
+
+                const statusTexto = (
+                    status === "pago"
+                        ? "Pago"
+                        : escaparHtmlAdmin(
+                            comissao?.status || "-"
+                        )
+                );
+
+                const regra =
+                    formatarRegraComissaoRepasseAdmin(
+                        comissao?.comissao_tipo,
+                        comissao?.comissao_regra_valor
+                    );
+
+                return `
+                    <article class="detalhe-repasse-item-admin">
+
+                        <div class="detalhe-repasse-item-topo-admin">
+                            <div>
+                                <span>
+                                    Atendimento
+                                    #${Number(
+                                        comissao?.agendamento_id
+                                        || 0
+                                    )}
+                                </span>
+
+                                <strong>
+                                    ${servico}
+                                </strong>
+                            </div>
+
+                            <span
+                                class="detalhe-repasse-status-admin status-${status}"
+                            >
+                                ${statusTexto}
+                            </span>
+                        </div>
+
+                        <div class="detalhe-repasse-item-grid-admin">
+
+                            <div>
+                                <small>
+                                    Valor do atendimento
+                                </small>
+
+                                <strong>
+                                    ${formatarMoeda(
+                                        comissao?.valor_atendimento
+                                        || 0
+                                    )}
+                                </strong>
+                            </div>
+
+                            <div>
+                                <small>
+                                    Regra
+                                </small>
+
+                                <strong>
+                                    ${regra}
+                                </strong>
+                            </div>
+
+                            <div>
+                                <small>
+                                    Comiss\u00e3o
+                                </small>
+
+                                <strong>
+                                    ${formatarMoeda(
+                                        comissao?.valor_comissao
+                                        || 0
+                                    )}
+                                </strong>
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join("")
+            : `
+                <div class="financeiro-repasse-vazio-admin">
+                    Nenhuma comiss\u00e3o vinculada
+                    a este repasse.
+                </div>
+            `;
+
+        conteudo.innerHTML = `
+            <div class="detalhe-repasse-resumo-grid-admin">
+
+                <div>
+                    <small>Profissional</small>
+                    <strong>${profissional}</strong>
+                </div>
+
+                <div>
+                    <small>Total pago</small>
+                    <strong>${valorTotal}</strong>
+                </div>
+
+                <div>
+                    <small>Per\u00edodo</small>
+                    <strong>${periodo}</strong>
+                </div>
+
+                <div>
+                    <small>Pago em</small>
+                    <strong>${pagoEm}</strong>
+                </div>
+
+                <div>
+                    <small>Registrado por</small>
+                    <strong>${registradoPor}</strong>
+                </div>
+
+                <div>
+                    <small>Comiss\u00f5es</small>
+                    <strong>${textoQuantidade}</strong>
+                </div>
+            </div>
+
+            <div class="detalhe-repasse-observacao-admin">
+                <small>Observa\u00e7\u00e3o</small>
+                <p>${observacao}</p>
+            </div>
+
+            <div class="detalhe-repasse-lista-admin">
+                <div class="detalhe-repasse-lista-topo-admin">
+                    <div>
+                        <span class="admin-kicker">
+                            Rastreabilidade
+                        </span>
+
+                        <h3>
+                            Comiss\u00f5es inclu\u00eddas
+                        </h3>
+                    </div>
+
+                    <strong>
+                        ${textoQuantidade}
+                    </strong>
+                </div>
+
+                ${itensHtml}
+            </div>
+        `;
+
+    } catch (erro) {
+        tratarErro(erro);
+        fecharDetalheRepasseAdmin();
+    }
+}
+
+
+window.abrirDetalheRepasseAdmin =
+    abrirDetalheRepasseAdmin;
+
+window.fecharDetalheRepasseAdmin =
+    fecharDetalheRepasseAdmin;
+
+
 async function carregarResumoComissoesRepassesAdmin() {
     const card = document.getElementById(
         "comissoes-repasses-dashboard"
@@ -5631,6 +6036,16 @@ async function carregarResumoComissoesRepassesAdmin() {
                             \u00b7 ${textoComissoes}
                             \u00b7 ${pagoEm}
                         </span>
+
+                        <button
+                            type="button"
+                            class="btn-detalhe-repasse-admin"
+                            onclick="abrirDetalheRepasseAdmin(
+                                ${Number(repasse?.id || 0)}
+                            )"
+                        >
+                            Ver detalhes
+                        </button>
                     </li>
                 `;
             })

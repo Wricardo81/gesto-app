@@ -69,18 +69,38 @@ def ambiente_http():
 
 def cabecalho_tenant(
     tenant_slug: str = "tenant-teste",
+    papel: str = "gestor",
 ) -> dict:
+    permissoes_por_papel = {
+        "gestor": ["*"],
+        "recepcao": [
+            "ver_dashboard",
+            "ver_agenda_geral",
+            "ver_fila_espera",
+            "gerenciar_fila_espera",
+        ],
+        "prestador": [
+            "ver_agenda_propria",
+            "concluir_agendamento",
+            "ver_financeiro_proprio",
+            "ver_comissao_propria",
+        ],
+    }
+
     token = criar_token_acesso(
         {
             "sub": tenant_slug,
             "tenant_slug": tenant_slug,
-            "email": "gestor@teste.com",
+            "email": f"{papel}@teste.com",
             "role": "tenant_admin",
-            "papel": "gestor",
-            "perfil_operacional": "gestor",
-            "papel_operacional": "gestor",
-            "permissoes": ["*"],
-            "nome": "Gestor Teste",
+            "papel": papel,
+            "perfil_operacional": papel,
+            "papel_operacional": papel,
+            "permissoes": permissoes_por_papel.get(
+                papel,
+                [],
+            ),
+            "nome": f"{papel.title()} Teste",
         }
     )
 
@@ -305,4 +325,68 @@ def test_repasse_inexistente_retorna_404(
     assert (
         resposta.json()["detail"]
         == "Repasse nao encontrado."
+    )
+
+
+@pytest.mark.parametrize(
+    "papel",
+    [
+        "recepcao",
+        "prestador",
+    ],
+)
+@pytest.mark.parametrize(
+    (
+        "metodo",
+        "endpoint",
+        "payload",
+    ),
+    [
+        (
+            "GET",
+            "/api/tenant-teste/comissoes/pendentes",
+            None,
+        ),
+        (
+            "GET",
+            "/api/tenant-teste/repasses",
+            None,
+        ),
+        (
+            "GET",
+            "/api/tenant-teste/repasses/999999",
+            None,
+        ),
+        (
+            "POST",
+            "/api/tenant-teste/repasses",
+            {
+                "comissoes_ids": [3001],
+            },
+        ),
+    ],
+)
+def test_rotas_financeiras_gerais_exigem_gestor(
+    ambiente_http,
+    papel,
+    metodo,
+    endpoint,
+    payload,
+):
+    client = ambiente_http["client"]
+
+    resposta = client.request(
+        metodo,
+        endpoint,
+        headers=cabecalho_tenant(
+            papel=papel,
+        ),
+        json=payload,
+    )
+
+    assert resposta.status_code == 403
+
+    assert (
+        resposta.json()["detail"]
+        == "Apenas o gestor pode acessar o financeiro geral."
     )

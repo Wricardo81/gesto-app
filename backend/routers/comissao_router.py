@@ -1,6 +1,6 @@
 ﻿from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from database import SessaoLocal
@@ -12,6 +12,19 @@ from services import comissao_service
 
 
 router = APIRouter()
+
+
+def validar_acesso_financeiro_gestor(
+    contexto_usuario: dict,
+) -> None:
+    if contexto_usuario.get("papel") != "gestor":
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Apenas o gestor pode acessar "
+                "o financeiro geral."
+            ),
+        )
 
 
 def get_db():
@@ -31,10 +44,14 @@ def listar_comissoes_pendentes(
     _tenant_autorizado: str = Depends(
         validar_tenant_logado
     ),
-    _contexto_usuario: dict = Depends(
+    contexto_usuario: dict = Depends(
         obter_contexto_usuario_logado
     ),
 ):
+    validar_acesso_financeiro_gestor(
+        contexto_usuario
+    )
+
     return comissao_service.listar_comissoes_pendentes(
         db=db,
         tenant_slug=tenant_slug,
@@ -54,6 +71,10 @@ def registrar_repasse_profissional(
         obter_contexto_usuario_logado
     ),
 ):
+    validar_acesso_financeiro_gestor(
+        contexto_usuario
+    )
+
     registrado_por = (
         contexto_usuario.get("email")
         or contexto_usuario.get("nome")
@@ -87,10 +108,14 @@ def listar_repasses_profissionais(
     _tenant_autorizado: str = Depends(
         validar_tenant_logado
     ),
-    _contexto_usuario: dict = Depends(
+    contexto_usuario: dict = Depends(
         obter_contexto_usuario_logado
     ),
 ):
+    validar_acesso_financeiro_gestor(
+        contexto_usuario
+    )
+
     return comissao_service.listar_repasses_profissionais(
         db=db,
         tenant_slug=tenant_slug,
@@ -106,10 +131,14 @@ def obter_repasse_profissional(
     _tenant_autorizado: str = Depends(
         validar_tenant_logado
     ),
-    _contexto_usuario: dict = Depends(
+    contexto_usuario: dict = Depends(
         obter_contexto_usuario_logado
     ),
 ):
+    validar_acesso_financeiro_gestor(
+        contexto_usuario
+    )
+
     repasse = comissao_service.obter_repasse_profissional(
         db=db,
         tenant_slug=tenant_slug,

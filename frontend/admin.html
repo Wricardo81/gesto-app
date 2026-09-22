@@ -227,89 +227,6 @@
             </p>
         </div>
 
-        <section
-            id="card-trial-admin"
-            class="admin-card trial-admin-card"
-            style="display: none;"
-        >
-            <div class="trial-admin-info">
-                <span class="trial-admin-kicker">
-                    Teste grátis
-                </span>
-
-                <h3 id="trial-admin-titulo">
-                    Teste grátis ativo
-                </h3>
-
-                <p id="trial-admin-descricao">
-                    Você está usando o BitsAgenda OS no período gratuito.
-                </p>
-            </div>
-
-            <div class="trial-admin-metricas">
-                <div>
-                    <small>Dias restantes</small>
-                    <strong id="trial-admin-dias">--</strong>
-                </div>
-
-                <div>
-                    <small>Agendamentos restantes</small>
-                    <strong id="trial-admin-agendamentos">--</strong>
-                </div>
-            </div>
-
-            <div class="trial-admin-acoes">
-                <button
-                    type="button"
-                    class="btn-add"
-                    onclick="mostrarSecaoAdmin('secao-admin-assinatura')"
-                >
-                    Ver planos
-                </button>
-            </div>
-        </section>
-
-        <section
-    id="card-link-publico-admin"
-    class="admin-card link-publico-admin-card"
-        >
-            <div class="link-publico-admin-info">
-                <span class="link-publico-admin-kicker">
-                    Agenda pública
-                </span>
-
-                <h3>
-                    Seu link de agendamento
-                </h3>
-
-
-                <p>
-                    Compartilhe este link com seus clientes para receber agendamentos online.
-                </p>
-
-                <code id="link-publico-admin-url">
-                    Carregando link...
-                </code>
-            </div>
-
-            <div class="link-publico-admin-acoes">
-                <button
-                    type="button"
-                    class="btn-add"
-                    onclick="copiarLinkPublicoAdmin()"
-                >
-                    Copiar link
-                </button>
-
-                <button
-                    type="button"
-                    class="btn-secundario"
-                    onclick="abrirLinkPublicoAdmin()"
-                >
-                    Abrir agenda
-                </button>
-            </div>
-        </section>
 
         <section id="card-onboarding-admin" class="admin-card onboarding-admin-card">
             <div class="onboarding-admin-header">
@@ -357,11 +274,54 @@
         </section>
 
         <section class="secao-admin ativa dashboard-pro-section" id="secao-dashboard">
+
+<section
+            id="card-trial-admin"
+            class="admin-card trial-admin-card"
+            style="display: none;"
+        >
+            <div class="trial-admin-info">
+                <span class="trial-admin-kicker">
+                    Teste grátis
+                </span>
+
+                <h3 id="trial-admin-titulo">
+                    Teste grátis ativo
+                </h3>
+
+                <p id="trial-admin-descricao">
+                    Você está usando o BitsAgenda OS no período gratuito.
+                </p>
+            </div>
+
+            <div class="trial-admin-metricas">
+                <div>
+                    <small>Dias restantes</small>
+                    <strong id="trial-admin-dias">--</strong>
+                </div>
+
+                <div>
+                    <small>Agendamentos restantes</small>
+                    <strong id="trial-admin-agendamentos">--</strong>
+                </div>
+            </div>
+
+            <div class="trial-admin-acoes">
+                <button
+                    type="button"
+                    class="btn-add"
+                    onclick="mostrarSecaoAdmin('secao-admin-assinatura')"
+                >
+                    Ver planos
+                </button>
+            </div>
+        </section>
+
             <div class="dashboard-pro-hero">
                 <div>
                     <span class="dashboard-pro-kicker" id="dashboard-pro-kicker">Painel do neg&oacute;cio</span>
-                    <h2 id="dashboard-pro-titulo">Resumo inteligente da sua opera&ccedil;&atilde;o</h2>
-                    <p id="dashboard-pro-subtitulo">Acompanhe receita, agendamentos, status e pr&oacute;ximos movimentos em um s&oacute; lugar.</p>
+                    <h2 id="dashboard-pro-titulo">Vis&atilde;o do dia</h2>
+                    <p id="dashboard-pro-subtitulo">Veja o que merece aten&ccedil;&atilde;o agora.</p>
                 </div>
 
                 <div class="dashboard-pro-actions">
@@ -373,10 +333,10 @@
             <section class="dashboard-hoje-card" id="dashboard-hoje-negocio">
                 <div class="dashboard-hoje-topo">
                     <div>
-                        <span>Hoje no negócio</span>
-                        <h3>Resumo rápido do dia</h3>
+                        <span>Hoje</span>
+                        <h3>Opera&ccedil;&atilde;o do dia</h3>
                     </div>
-                    <small>Atualizado com os agendamentos carregados no painel.</small>
+                    <small>Atualiza com a agenda carregada.</small>
                 </div>
 
                 <div class="dashboard-hoje-grid">
@@ -405,10 +365,10 @@
             <section class="dashboard-acoes-card" id="dashboard-acoes-rapidas">
                 <div class="dashboard-acoes-topo">
                     <div>
-                        <span>Ações rápidas</span>
-                        <h3>Atalhos para operar o negócio</h3>
+                        <span>A&ccedil;&otilde;es</span>
+                        <h3>Atalhos operacionais</h3>
                     </div>
-                    <small id="dashboard-acoes-status">Comece as principais tarefas sem procurar no menu.</small>
+                    <small id="dashboard-acoes-status">Acesse tarefas frequentes.</small>
                 </div>
 
                 <div class="dashboard-acoes-grid">
@@ -436,7 +396,7 @@
 
             <section class="dashboard-insight-card" id="dashboard-insight-dia">
                 <div>
-                    <span>Insight do dia</span>
+                    <span>Aten&ccedil;&atilde;o</span>
                     <strong id="dashboard-insight-titulo">Analisando sua agenda...</strong>
                     <p id="dashboard-insight-texto">Carregue os agendamentos para receber uma leitura r&aacute;pida da opera&ccedil;&atilde;o.</p>
                 </div>
@@ -484,8 +444,8 @@
             <section class="financeiro-resumo-card" id="resumo-financeiro-dashboard">
                 <div class="financeiro-resumo-topo">
                     <div>
-                        <span>Resumo financeiro</span>
-                        <h3>Visão por status dos agendamentos</h3>
+                        <span>Financeiro</span>
+                        <h3>Resumo do per&iacute;odo</h3>
                     </div>
                     <small>Baseado no período carregado no dashboard.</small>
                 </div>
@@ -644,9 +604,54 @@
         </section>
 
 
+
         <section class="layout-grid secao-admin" id="secao-configuracoes">
+            <div class="configuracoes-intro-admin">
+                <div>
+                    <span class="admin-kicker">Configura&ccedil;&otilde;es</span>
+                    <h2>Organize a opera&ccedil;&atilde;o do neg&oacute;cio</h2>
+                    <p>
+                        Ajuste identidade, agenda, comunica&ccedil;&atilde;o e equipe
+                        sem misturar as configura&ccedil;&otilde;es do dia a dia.
+                    </p>
+                </div>
+
+                <nav
+                    class="configuracoes-nav-admin"
+                    aria-label="Categorias das configura&ccedil;&otilde;es"
+                >
+                    <button
+                        type="button"
+                        data-config-destino="config-marca"
+                    >
+                        Marca
+                    </button>
+
+                    <button
+                        type="button"
+                        data-config-destino="config-agenda"
+                    >
+                        Agenda
+                    </button>
+
+                    <button
+                        type="button"
+                        data-config-destino="config-comunicacao"
+                    >
+                        Comunica&ccedil;&atilde;o
+                    </button>
+
+                    <button
+                        type="button"
+                        data-config-destino="config-equipe"
+                    >
+                        Equipe
+                    </button>
+                </nav>
+            </div>
+
             <div>
-                <section class="bloco-config">
+                <section class="bloco-config config-grupo-admin" id="config-marca" data-config-grupo="marca">
                     <h3>Identidade visual da marca 🎨</h3>
 
                     <p class="descricao-bloco">
@@ -696,7 +701,18 @@
                         </div>
                     </div>
 
-                    <div class="form-grid tres">
+
+                    <div
+                        class="config-subgrupo-admin"
+                        id="config-agenda"
+                    >
+                        <div class="config-subgrupo-cabecalho">
+                            <span>Agenda</span>
+                            <strong>Hor&aacute;rios e regras de atendimento</strong>
+                        </div>
+                    </div>
+
+<div class="form-grid tres">
                         <div class="campo">
                             <label>Abre às</label>
                             <input type="number" id="hora-abertura" min="0" max="23">
@@ -738,7 +754,7 @@
                     </div>
                 </section>
 
-                <section class="bloco-config">
+                <section class="bloco-config config-grupo-admin" id="config-comunicacao" data-config-grupo="comunicacao">
                     <h3>Comunicação e localização 📍</h3>
 
                     <p class="descricao-bloco">
@@ -821,7 +837,7 @@
             </div>
 
             <aside>
-                <section class="bloco-config">
+                <section class="bloco-config config-grupo-admin" id="config-equipe" data-config-grupo="equipe">
                     <h3>Equipe de profissionais 💈</h3>
 
                     <p class="descricao-bloco">
@@ -1143,6 +1159,19 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="agenda-consulta-cabecalho-admin">
+                    <div>
+                        <span>Consulta</span>
+                        <strong>Hist&oacute;rico e per&iacute;odo</strong>
+                    </div>
+
+                    <p>
+                        Use os filtros abaixo somente quando precisar
+                        consultar outros dias ou registros anteriores.
+                    </p>
+                </div>
+
 
                 <div class="form-grid tres">
                     <div class="campo">

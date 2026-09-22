@@ -16,6 +16,7 @@ STATUS_FILA_ESPERA = {
     "agendado",
     "cancelado",
     "expirado",
+    "arquivado",
 }
 
 TRANSICOES_STATUS_FILA_ESPERA = {
@@ -23,15 +24,24 @@ TRANSICOES_STATUS_FILA_ESPERA = {
         "chamado",
         "cancelado",
         "expirado",
+        "arquivado",
     },
     "chamado": {
         "aguardando",
         "cancelado",
         "expirado",
+        "arquivado",
     },
-    "agendado": set(),
-    "cancelado": set(),
-    "expirado": set(),
+    "agendado": {
+        "arquivado",
+    },
+    "cancelado": {
+        "arquivado",
+    },
+    "expirado": {
+        "arquivado",
+    },
+    "arquivado": set(),
 }
 
 PERIODOS_PREFERIDOS = {
@@ -243,3 +253,47 @@ def atualizar_status_fila_espera(
     db.refresh(item)
 
     return serializar_item_fila_espera(item)
+
+
+def excluir_item_fila_espera(
+    db: Session,
+    tenant_slug: str,
+    item_id: int,
+) -> dict:
+    item = (
+        db.query(models.FilaEspera)
+        .filter(
+            models.FilaEspera.id == item_id,
+            models.FilaEspera.barbearia_slug == tenant_slug,
+        )
+        .first()
+    )
+
+    if not item:
+        raise HTTPException(
+            status_code=404,
+            detail="Item da fila de espera nao encontrado.",
+        )
+
+    status_atual = str(
+        item.status or ""
+    ).strip().lower()
+
+    if status_atual != "arquivado":
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Somente itens arquivados podem ser "
+                "excluidos definitivamente."
+            ),
+        )
+
+    item_id_excluido = item.id
+
+    db.delete(item)
+    db.commit()
+
+    return {
+        "id": item_id_excluido,
+        "excluido": True,
+    }

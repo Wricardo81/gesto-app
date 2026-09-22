@@ -122,6 +122,42 @@ def atualizar_status_fila_espera_admin(
         ),
     }
 
+
+@router.delete(
+    "/api/{tenant_slug}/admin/fila-espera/{item_id}"
+)
+def excluir_item_fila_espera_admin(
+    tenant_slug: str,
+    item_id: int,
+    db: Session = Depends(get_db),
+    _tenant_autorizado: str = Depends(
+        validar_tenant_logado
+    ),
+    contexto_usuario: dict = Depends(
+        obter_contexto_usuario_logado
+    ),
+):
+    validar_acesso_fila_espera_admin(
+        contexto_usuario,
+        gerenciar=True,
+    )
+
+    return {
+        "mensagem": (
+            "Item da fila de espera excluido "
+            "definitivamente."
+        ),
+        "item": (
+            fila_espera_service
+            .excluir_item_fila_espera(
+                db=db,
+                tenant_slug=tenant_slug,
+                item_id=item_id,
+            )
+        ),
+    }
+
+
 @router.post(
     "/api/{tenant_slug}/admin/fila-espera/{item_id}/agendar",
     status_code=201,

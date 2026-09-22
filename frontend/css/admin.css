@@ -4185,3 +4185,3479 @@ body {
         flex-direction: column;
     }
 }
+
+
+/* =========================================================
+   SPRINT 5.0 - DASHBOARD INTELIGENTE / FATIA 1
+   Compactacao e hierarquia visual
+========================================================= */
+
+#secao-dashboard.dashboard-pro-section {
+    display: grid;
+    gap: 14px;
+}
+
+#secao-dashboard .dashboard-pro-hero {
+    padding: 16px 18px;
+    margin: 0;
+    border-radius: 18px;
+}
+
+#secao-dashboard .dashboard-pro-hero h2 {
+    margin-top: 3px;
+    margin-bottom: 4px;
+    font-size: clamp(20px, 2vw, 26px);
+    line-height: 1.15;
+}
+
+#secao-dashboard .dashboard-pro-hero p {
+    margin: 0;
+    max-width: 720px;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+#secao-dashboard .dashboard-pro-actions {
+    gap: 8px;
+}
+
+#secao-dashboard .dashboard-pro-actions button {
+    min-height: 36px;
+    padding: 8px 12px;
+    font-size: 12px;
+}
+
+
+/* HOJE - BLOCO PRINCIPAL */
+
+#secao-dashboard .dashboard-hoje-card {
+    margin: 0;
+    padding: 15px 16px;
+    border-radius: 18px;
+}
+
+#secao-dashboard .dashboard-hoje-topo {
+    margin-bottom: 10px;
+}
+
+#secao-dashboard .dashboard-hoje-topo h3 {
+    margin: 2px 0 0;
+    font-size: 16px;
+}
+
+#secao-dashboard .dashboard-hoje-topo small {
+    font-size: 11px;
+}
+
+#secao-dashboard .dashboard-hoje-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+}
+
+#secao-dashboard .dashboard-hoje-grid > div {
+    min-height: 78px;
+    padding: 11px 12px;
+    border-radius: 13px;
+}
+
+#secao-dashboard .dashboard-hoje-grid span {
+    font-size: 11px;
+}
+
+#secao-dashboard .dashboard-hoje-grid strong {
+    margin-top: 4px;
+    font-size: clamp(19px, 2vw, 25px);
+}
+
+
+/* ACOES - MAIS COMPACTAS */
+
+#secao-dashboard .dashboard-acoes-card {
+    margin: 0;
+    padding: 14px 16px;
+    border-radius: 18px;
+}
+
+#secao-dashboard .dashboard-acoes-topo {
+    margin-bottom: 10px;
+}
+
+#secao-dashboard .dashboard-acoes-topo h3 {
+    margin: 2px 0 0;
+    font-size: 15px;
+}
+
+#secao-dashboard .dashboard-acoes-topo small {
+    font-size: 11px;
+}
+
+#secao-dashboard .dashboard-acoes-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+}
+
+#secao-dashboard .dashboard-acoes-grid button {
+    min-height: 62px;
+    padding: 10px 12px;
+    border-radius: 12px;
+}
+
+#secao-dashboard .dashboard-acoes-grid button span {
+    font-size: 10px;
+}
+
+#secao-dashboard .dashboard-acoes-grid button strong {
+    margin-top: 2px;
+    font-size: 12px;
+}
+
+
+/* INSIGHT - TRATAR COMO ALERTA COMPACTO */
+
+#secao-dashboard .dashboard-insight-card {
+    margin: 0;
+    padding: 12px 15px;
+    min-height: 0;
+    border-radius: 15px;
+}
+
+#secao-dashboard .dashboard-insight-card strong {
+    display: inline;
+    margin-left: 6px;
+    font-size: 13px;
+}
+
+#secao-dashboard .dashboard-insight-card p {
+    margin: 4px 0 0;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+
+/* METRICAS SECUNDARIAS */
+
+#secao-dashboard .dashboard-grid-pro {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 9px;
+    margin: 0;
+}
+
+#secao-dashboard .dashboard-grid-pro .metric-card {
+    min-height: 102px;
+    padding: 13px 14px;
+    border-radius: 15px;
+}
+
+#secao-dashboard .metric-card p {
+    margin: 0;
+    font-size: 11px;
+}
+
+#secao-dashboard .metric-card strong {
+    margin: 5px 0 3px;
+    font-size: clamp(20px, 2vw, 26px);
+}
+
+#secao-dashboard .metric-card small {
+    font-size: 10px;
+    line-height: 1.35;
+}
+
+
+/* FINANCEIRO */
+
+#secao-dashboard .financeiro-resumo-card {
+    margin: 0;
+    padding: 15px 16px;
+    border-radius: 17px;
+}
+
+#secao-dashboard .financeiro-resumo-topo {
+    margin-bottom: 11px;
+}
+
+#secao-dashboard .financeiro-resumo-topo h3 {
+    font-size: 15px;
+}
+
+#secao-dashboard .financeiro-resumo-topo small {
+    font-size: 10px;
+}
+
+#secao-dashboard .financeiro-resumo-grid {
+    gap: 8px;
+}
+
+#secao-dashboard .financeiro-resumo-grid > div {
+    padding: 10px 11px;
+    border-radius: 12px;
+}
+
+#secao-dashboard .financeiro-resumo-grid span {
+    font-size: 10px;
+}
+
+#secao-dashboard .financeiro-resumo-grid strong {
+    margin-top: 3px;
+    font-size: 17px;
+}
+
+
+/* COMISSOES / REPASSES */
+
+#secao-dashboard .financeiro-repasse-operacao-admin {
+    margin-top: 13px;
+    padding-top: 13px;
+}
+
+#secao-dashboard .lista-comissoes-pendentes-admin {
+    margin-top: 10px;
+    gap: 8px;
+}
+
+#secao-dashboard .grupo-comissoes-profissional-admin {
+    padding: 11px;
+    border-radius: 12px;
+}
+
+#secao-dashboard .comissao-pendente-item-admin {
+    padding: 8px 10px;
+}
+
+#secao-dashboard .financeiro-repasse-selecao-admin {
+    margin-top: 10px;
+}
+
+#secao-dashboard .financeiro-repasse-selecao-admin > div {
+    padding: 8px 10px;
+}
+
+#secao-dashboard .financeiro-resumo-detalhes {
+    margin-top: 12px;
+}
+
+
+/* RESPONSIVO */
+
+@media (max-width: 980px) {
+
+    #secao-dashboard .dashboard-hoje-grid,
+    #secao-dashboard .dashboard-acoes-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #secao-dashboard .dashboard-grid-pro {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+
+    #secao-dashboard.dashboard-pro-section {
+        gap: 11px;
+    }
+
+    #secao-dashboard .dashboard-pro-hero {
+        padding: 14px;
+    }
+
+    #secao-dashboard .dashboard-hoje-card,
+    #secao-dashboard .dashboard-acoes-card,
+    #secao-dashboard .financeiro-resumo-card {
+        padding: 13px;
+    }
+
+    #secao-dashboard .dashboard-hoje-grid,
+    #secao-dashboard .dashboard-acoes-grid,
+    #secao-dashboard .dashboard-grid-pro {
+        grid-template-columns: 1fr;
+    }
+
+    #secao-dashboard .dashboard-hoje-grid > div,
+    #secao-dashboard .dashboard-grid-pro .metric-card {
+        min-height: 0;
+    }
+}
+
+
+/* =========================================================
+   SPRINT 5.0 - DASHBOARD INTELIGENTE / FATIA 2
+   Prioridade por excecao
+========================================================= */
+
+#secao-dashboard .dashboard-insight-card {
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease,
+        box-shadow 0.2s ease,
+        opacity 0.2s ease;
+}
+
+#secao-dashboard .dashboard-insight-card.dashboard-insight-prioridade-alta {
+    border-color: rgba(251, 191, 36, 0.42);
+    background:
+        linear-gradient(
+            135deg,
+            rgba(120, 53, 15, 0.18),
+            rgba(15, 23, 42, 0.88)
+        );
+    box-shadow:
+        0 10px 28px rgba(245, 158, 11, 0.08);
+}
+
+#secao-dashboard
+.dashboard-insight-card.dashboard-insight-prioridade-alta
+span {
+    color: #fbbf24;
+}
+
+#secao-dashboard
+.dashboard-insight-card.dashboard-insight-prioridade-alta
+strong {
+    color: #f8fafc;
+}
+
+#secao-dashboard .dashboard-insight-card.dashboard-insight-prioridade-baixa {
+    opacity: 0.72;
+    padding-top: 9px;
+    padding-bottom: 9px;
+}
+
+#secao-dashboard
+.dashboard-insight-card.dashboard-insight-prioridade-baixa
+p {
+    display: inline;
+    margin-left: 6px;
+}
+
+@media (max-width: 640px) {
+    #secao-dashboard
+    .dashboard-insight-card.dashboard-insight-prioridade-baixa
+    p {
+        display: block;
+        margin-left: 0;
+        margin-top: 4px;
+    }
+}
+
+
+/* =========================================================
+   SPRINT 5.0 - DASHBOARD INTELIGENTE / FATIA 3
+   Estados reais: onboarding e financeiro da equipe
+========================================================= */
+
+
+/* COMISSOES: HA ALGO PARA O GESTOR RESOLVER */
+
+#comissoes-repasses-dashboard.financeiro-equipe-com-pendencias {
+    border-color: rgba(251, 191, 36, 0.34);
+    box-shadow:
+        0 12px 32px rgba(245, 158, 11, 0.07);
+}
+
+#comissoes-repasses-dashboard.financeiro-equipe-com-pendencias
+.financeiro-resumo-topo > div > span {
+    color: #fbbf24;
+}
+
+
+/* COMISSOES: NADA PENDENTE */
+
+#comissoes-repasses-dashboard.financeiro-equipe-sem-pendencias {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    opacity: 0.88;
+}
+
+#comissoes-repasses-dashboard.financeiro-equipe-sem-pendencias
+.financeiro-repasse-operacao-admin {
+    display: none;
+}
+
+#comissoes-repasses-dashboard.financeiro-equipe-sem-pendencias
+.financeiro-resumo-grid {
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+}
+
+#comissoes-repasses-dashboard.financeiro-equipe-sem-pendencias
+.financeiro-resumo-topo {
+    margin-bottom: 8px;
+}
+
+
+/* ONBOARDING: PENDENTE CONTINUA VISIVEL */
+
+#card-onboarding-admin.onboarding-dashboard-pendente {
+    border-color: rgba(100, 255, 218, 0.2);
+}
+
+
+/* ONBOARDING: CONCLUIDO FICA SECUNDARIO */
+
+#card-onboarding-admin.onboarding-dashboard-concluido {
+    padding-top: 11px;
+    padding-bottom: 11px;
+    opacity: 0.72;
+}
+
+#card-onboarding-admin.onboarding-dashboard-concluido
+.onboarding-admin-header p,
+#card-onboarding-admin.onboarding-dashboard-concluido
+.onboarding-admin-progresso {
+    display: none;
+}
+
+#card-onboarding-admin.onboarding-dashboard-concluido
+.onboarding-admin-header {
+    margin-bottom: 6px;
+}
+
+#card-onboarding-admin.onboarding-dashboard-concluido
+.onboarding-admin-lista {
+    gap: 6px;
+}
+
+
+/* RESPONSIVO */
+
+@media (max-width: 760px) {
+
+    #comissoes-repasses-dashboard.financeiro-equipe-sem-pendencias
+    .financeiro-resumo-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 480px) {
+
+    #comissoes-repasses-dashboard.financeiro-equipe-sem-pendencias
+    .financeiro-resumo-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* =========================================================
+   SPRINT 5.0 - DASHBOARD INTELIGENTE / FATIA 4
+   Fila de espera por excecao
+========================================================= */
+
+#dashboard-fila-espera-alerta {
+    margin: 0;
+    padding: 13px 15px;
+    border-radius: 15px;
+
+    border: 1px solid rgba(56, 189, 248, 0.28);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(14, 116, 144, 0.14),
+            rgba(15, 23, 42, 0.88)
+        );
+
+    box-shadow:
+        0 10px 28px rgba(14, 165, 233, 0.06);
+}
+
+#dashboard-fila-espera-alerta[hidden] {
+    display: none !important;
+}
+
+.dashboard-fila-espera-alerta-conteudo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.dashboard-fila-espera-alerta-conteudo > div:first-child {
+    min-width: 0;
+}
+
+.dashboard-fila-espera-alerta-conteudo span {
+    display: block;
+
+    margin-bottom: 3px;
+
+    color: #38bdf8;
+
+    font-size: 10px;
+    font-weight: 900;
+
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+}
+
+.dashboard-fila-espera-alerta-conteudo strong {
+    display: block;
+
+    font-size: 14px;
+    line-height: 1.35;
+
+    color: #f8fafc;
+}
+
+.dashboard-fila-espera-alerta-conteudo p {
+    margin: 3px 0 0;
+
+    color: var(--texto-secundario);
+
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.dashboard-fila-espera-alerta-acoes {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    flex-shrink: 0;
+}
+
+.dashboard-fila-espera-alerta-acoes
+#dashboard-fila-espera-quantidade {
+    min-width: 38px;
+
+    font-size: 24px;
+    line-height: 1;
+
+    text-align: center;
+
+    color: #38bdf8;
+}
+
+.dashboard-fila-espera-alerta-acoes button {
+    min-height: 34px;
+
+    padding: 7px 11px;
+
+    border: 1px solid rgba(56, 189, 248, 0.28);
+    border-radius: 10px;
+
+    background: rgba(56, 189, 248, 0.08);
+
+    color: #e0f2fe;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    cursor: pointer;
+}
+
+.dashboard-fila-espera-alerta-acoes button:hover {
+    background: rgba(56, 189, 248, 0.14);
+}
+
+
+@media (max-width: 640px) {
+
+    .dashboard-fila-espera-alerta-conteudo {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .dashboard-fila-espera-alerta-acoes {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .dashboard-fila-espera-alerta-acoes button {
+        flex: 1;
+    }
+}
+
+
+/* =========================================================
+   SPRINT 5.1 - REFINAMENTO GLOBAL / FATIA 1
+   Trial, agenda publica, agenda, CRM, configuracoes e fila
+========================================================= */
+
+
+/* =========================================================
+   1. TESTE GRATIS
+   Menos destaque quando esta apenas informando status
+========================================================= */
+
+#card-trial-admin.trial-admin-card {
+    grid-template-columns:
+        minmax(0, 1.45fr)
+        auto
+        auto;
+
+    align-items: center;
+
+    gap: 14px;
+
+    margin: 10px 0;
+    padding: 12px 14px;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+#card-trial-admin .trial-admin-info {
+    min-width: 0;
+}
+
+#card-trial-admin .trial-admin-kicker {
+    margin-bottom: 2px;
+
+    font-size: 9px;
+    letter-spacing: 0.9px;
+}
+
+#card-trial-admin .trial-admin-info h3 {
+    margin: 0;
+
+    font-size: 14px;
+    line-height: 1.3;
+}
+
+#card-trial-admin .trial-admin-info p {
+    margin: 3px 0 0;
+
+    max-width: 660px;
+
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+#card-trial-admin .trial-admin-metricas {
+    display: flex;
+
+    gap: 7px;
+}
+
+#card-trial-admin .trial-admin-metricas > div {
+    min-width: 92px;
+
+    padding: 7px 9px;
+
+    border-radius: 11px;
+
+    background: rgba(255, 255, 255, 0.035);
+}
+
+#card-trial-admin .trial-admin-metricas small {
+    display: block;
+
+    margin-bottom: 2px;
+
+    font-size: 9px;
+}
+
+#card-trial-admin .trial-admin-metricas strong {
+    font-size: 17px;
+    line-height: 1;
+}
+
+#card-trial-admin .trial-admin-acoes .btn-add {
+    min-height: 34px;
+
+    padding: 7px 11px;
+
+    font-size: 11px;
+}
+
+
+/* Quando esta perto do fim, continua chamando atencao */
+
+#card-trial-admin.trial-admin-card-alerta,
+#card-trial-admin.trial-admin-card-expirado {
+    padding-top: 14px;
+    padding-bottom: 14px;
+}
+
+
+/* =========================================================
+   2. AGENDA PUBLICA
+   Transformar card grande em faixa utilitaria
+========================================================= */
+
+#card-link-publico-admin.link-publico-admin-card {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        auto;
+
+    gap: 12px;
+
+    align-items: center;
+
+    margin: 10px 0;
+    padding: 12px 14px;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+#card-link-publico-admin .link-publico-admin-info {
+    display: grid;
+
+    grid-template-columns:
+        auto
+        minmax(0, 1fr);
+
+    column-gap: 12px;
+    row-gap: 2px;
+
+    align-items: center;
+}
+
+#card-link-publico-admin .link-publico-admin-kicker {
+    grid-column: 1;
+
+    margin: 0;
+
+    font-size: 9px;
+}
+
+#card-link-publico-admin .link-publico-admin-info h3 {
+    grid-column: 2;
+
+    margin: 0;
+
+    font-size: 13px;
+}
+
+#card-link-publico-admin .link-publico-admin-info p {
+    display: none;
+}
+
+#card-link-publico-admin #link-publico-admin-url {
+    grid-column: 1 / -1;
+
+    margin-top: 5px;
+    padding: 7px 9px;
+
+    border-radius: 9px;
+
+    font-size: 10px;
+    line-height: 1.35;
+
+    background: rgba(255, 255, 255, 0.03);
+}
+
+#card-link-publico-admin .link-publico-admin-acoes {
+    display: flex;
+
+    gap: 7px;
+
+    width: auto;
+}
+
+#card-link-publico-admin .link-publico-admin-acoes button {
+    min-height: 34px;
+
+    padding: 7px 10px;
+
+    font-size: 10px;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   3. AGENDA
+========================================================= */
+
+#secao-agenda.bloco-config {
+    padding: 16px;
+
+    border-radius: 18px;
+}
+
+#secao-agenda > h3 {
+    margin: 0 0 3px;
+
+    font-size: 19px;
+}
+
+#secao-agenda > .descricao-bloco {
+    margin: 0 0 14px;
+
+    max-width: 760px;
+
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+
+/* Agenda visual */
+
+#secao-agenda .agenda-dia-box {
+    padding: 14px;
+
+    border-radius: 16px;
+}
+
+#secao-agenda .agenda-dia-cabecalho {
+    margin-bottom: 11px;
+}
+
+#secao-agenda .agenda-dia-cabecalho h4 {
+    margin: 0 0 2px;
+
+    font-size: 15px;
+}
+
+#secao-agenda .agenda-dia-cabecalho p {
+    margin: 0;
+
+    font-size: 11px;
+}
+
+#secao-agenda .agenda-dia-cabecalho small {
+    font-size: 10px;
+}
+
+#secao-agenda .agenda-dia-cabecalho .btn-add {
+    min-height: 34px;
+
+    padding: 7px 10px;
+
+    font-size: 10px;
+}
+
+
+/* Filtros da agenda */
+
+#secao-agenda .form-grid {
+    gap: 9px;
+}
+
+#secao-agenda .form-grid.tres {
+    align-items: end;
+}
+
+#secao-agenda .campo label {
+    margin-bottom: 4px;
+
+    font-size: 10px;
+}
+
+#secao-agenda .campo input,
+#secao-agenda .campo select {
+    min-height: 36px;
+
+    padding-top: 7px;
+    padding-bottom: 7px;
+}
+
+#secao-agenda .campo button {
+    min-height: 36px;
+}
+
+
+/* Resumo do dia */
+
+#secao-agenda .agenda-resumo-grid {
+    grid-template-columns:
+        repeat(7, minmax(0, 1fr));
+
+    gap: 7px;
+
+    margin: 11px 0;
+}
+
+#secao-agenda .agenda-resumo-card {
+    min-height: 66px;
+
+    padding: 8px 9px;
+
+    border-radius: 11px;
+}
+
+#secao-agenda .agenda-resumo-card span {
+    font-size: 9px;
+}
+
+#secao-agenda .agenda-resumo-card strong {
+    margin-top: 3px;
+
+    font-size: 16px;
+}
+
+
+/* Linha do tempo */
+
+#secao-agenda .agenda-visual-lista {
+    margin-top: 10px;
+}
+
+
+/* Tabelas da agenda */
+
+#secao-agenda .tabela-container {
+    margin-top: 12px;
+
+    border-radius: 14px;
+}
+
+#secao-agenda table {
+    font-size: 11px;
+}
+
+#secao-agenda th {
+    padding: 9px 8px;
+
+    font-size: 9px;
+}
+
+#secao-agenda td {
+    padding: 8px;
+}
+
+
+/* =========================================================
+   4. CLIENTES / CRM
+========================================================= */
+
+#secao-clientes-crm.bloco-config {
+    padding: 16px;
+
+    border-radius: 18px;
+}
+
+#secao-clientes-crm > h3 {
+    margin: 0 0 3px;
+
+    font-size: 19px;
+}
+
+#secao-clientes-crm > .descricao-bloco {
+    margin: 0 0 13px;
+
+    max-width: 760px;
+
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+
+/* Metricas CRM */
+
+#secao-clientes-crm .crm-metricas {
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 8px;
+
+    margin-bottom: 11px;
+}
+
+#secao-clientes-crm .crm-metricas .metric-card {
+    min-height: 88px;
+
+    padding: 11px 12px;
+
+    border-radius: 13px;
+}
+
+#secao-clientes-crm .crm-metricas .metric-card p {
+    font-size: 10px;
+}
+
+#secao-clientes-crm .crm-metricas .metric-card strong {
+    margin: 4px 0 2px;
+
+    font-size: 20px;
+}
+
+#secao-clientes-crm .crm-metricas .metric-card small {
+    font-size: 9px;
+}
+
+
+/* Busca */
+
+#secao-clientes-crm .linha-filtros-crm {
+    display: grid;
+
+    grid-template-columns:
+        minmax(220px, 1fr)
+        auto
+        auto;
+
+    gap: 7px;
+
+    align-items: center;
+
+    margin: 10px 0;
+}
+
+#secao-clientes-crm .linha-filtros-crm input {
+    min-height: 36px;
+
+    padding: 7px 10px;
+}
+
+#secao-clientes-crm .linha-filtros-crm button {
+    min-height: 36px;
+
+    padding: 7px 11px;
+
+    font-size: 10px;
+}
+
+
+/* Tabela CRM */
+
+#secao-clientes-crm .tabela-container {
+    border-radius: 14px;
+}
+
+#secao-clientes-crm table {
+    font-size: 10px;
+}
+
+#secao-clientes-crm th {
+    padding: 8px 7px;
+
+    font-size: 8px;
+
+    white-space: nowrap;
+}
+
+#secao-clientes-crm td {
+    padding: 8px 7px;
+}
+
+#secao-clientes-crm .btn-mini-crm {
+    padding: 6px 8px;
+
+    font-size: 9px;
+}
+
+
+/* =========================================================
+   5. CONFIGURACOES
+========================================================= */
+
+#secao-configuracoes.layout-grid {
+    gap: 14px;
+}
+
+#secao-configuracoes .bloco-config {
+    margin-bottom: 12px;
+
+    padding: 15px 16px;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 7px 20px rgba(0, 0, 0, 0.12);
+}
+
+#secao-configuracoes .bloco-config > h3 {
+    margin: 0 0 4px;
+
+    font-size: 16px;
+}
+
+#secao-configuracoes .descricao-bloco {
+    margin: 0 0 12px;
+
+    max-width: 760px;
+
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+
+/* Preview da marca */
+
+#secao-configuracoes .preview-marca {
+    margin-bottom: 12px;
+
+    padding: 10px;
+
+    border-radius: 12px;
+}
+
+#secao-configuracoes .preview-logo-box {
+    width: 48px;
+    height: 48px;
+}
+
+
+/* Formularios */
+
+#secao-configuracoes .form-grid {
+    gap: 9px 11px;
+}
+
+#secao-configuracoes .campo,
+#secao-configuracoes .campo-form {
+    gap: 4px;
+}
+
+#secao-configuracoes label {
+    font-size: 10px;
+}
+
+#secao-configuracoes input,
+#secao-configuracoes select,
+#secao-configuracoes textarea {
+    min-height: 36px;
+
+    padding: 7px 9px;
+}
+
+#secao-configuracoes textarea {
+    min-height: 76px;
+}
+
+#secao-configuracoes .campo-form small,
+#secao-configuracoes .campo small {
+    font-size: 9px;
+    line-height: 1.35;
+}
+
+
+/* =========================================================
+   6. FILA DE ESPERA
+========================================================= */
+
+#secao-fila-espera {
+    gap: 12px;
+}
+
+#secao-fila-espera .fila-espera-admin-topo {
+    margin-bottom: 10px;
+}
+
+#secao-fila-espera .fila-espera-admin-topo h2,
+#secao-fila-espera .fila-espera-admin-topo h3 {
+    margin: 0;
+
+    font-size: 19px;
+}
+
+#secao-fila-espera .fila-espera-admin-topo p {
+    margin: 3px 0 0;
+
+    font-size: 11px;
+}
+
+
+/* Resumo */
+
+#secao-fila-espera .fila-espera-admin-resumo {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 8px;
+
+    margin-bottom: 11px;
+}
+
+#secao-fila-espera .fila-espera-admin-resumo article {
+    min-height: 72px;
+
+    padding: 9px 11px;
+
+    border-radius: 12px;
+}
+
+#secao-fila-espera .fila-espera-admin-resumo small {
+    font-size: 9px;
+}
+
+#secao-fila-espera .fila-espera-admin-resumo strong {
+    margin-top: 3px;
+
+    font-size: 20px;
+}
+
+
+/* Lista */
+
+#secao-fila-espera .lista-fila-espera-admin {
+    gap: 8px;
+}
+
+#secao-fila-espera .fila-espera-card-admin {
+    padding: 11px 12px;
+
+    border-radius: 13px;
+}
+
+#secao-fila-espera .fila-espera-card-topo h3 {
+    margin: 0;
+
+    font-size: 14px;
+}
+
+#secao-fila-espera .fila-espera-card-topo p {
+    margin: 2px 0 0;
+
+    font-size: 10px;
+}
+
+#secao-fila-espera .badge-fila-espera-admin {
+    padding: 4px 7px;
+
+    font-size: 9px;
+}
+
+#secao-fila-espera .fila-espera-card-detalhes {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 6px 10px;
+
+    margin-top: 9px;
+}
+
+#secao-fila-espera .fila-espera-card-detalhes span {
+    font-size: 10px;
+}
+
+#secao-fila-espera .fila-espera-observacao-admin {
+    margin: 7px 0 0;
+
+    font-size: 10px;
+}
+
+#secao-fila-espera .fila-espera-card-acoes {
+    margin-top: 9px;
+
+    gap: 6px;
+}
+
+#secao-fila-espera .fila-espera-card-acoes button {
+    min-height: 32px;
+
+    padding: 6px 9px;
+
+    font-size: 9px;
+}
+
+
+/* Itens ja finalizados perdem peso visual */
+
+#secao-fila-espera
+.fila-espera-card-admin.status-agendado,
+
+#secao-fila-espera
+.fila-espera-card-admin.status-cancelado,
+
+#secao-fila-espera
+.fila-espera-card-admin.status-expirado {
+    opacity: 0.58;
+}
+
+
+/* Aguardando continua com maior prioridade */
+
+#secao-fila-espera
+.fila-espera-card-admin.status-aguardando {
+    border-color: rgba(56, 189, 248, 0.30);
+}
+
+
+/* =========================================================
+   RESPONSIVIDADE - SPRINT 5.1
+========================================================= */
+
+@media (max-width: 1100px) {
+
+    #secao-agenda .agenda-resumo-grid {
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+    }
+
+    #secao-clientes-crm .crm-metricas {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    #secao-fila-espera .fila-espera-card-detalhes {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+@media (max-width: 760px) {
+
+    #card-trial-admin.trial-admin-card {
+        grid-template-columns: 1fr;
+    }
+
+    #card-trial-admin .trial-admin-metricas {
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+
+    #card-link-publico-admin.link-publico-admin-card {
+        grid-template-columns: 1fr;
+    }
+
+    #card-link-publico-admin .link-publico-admin-info {
+        grid-template-columns: 1fr;
+    }
+
+    #card-link-publico-admin
+    .link-publico-admin-kicker,
+
+    #card-link-publico-admin
+    .link-publico-admin-info h3,
+
+    #card-link-publico-admin
+    #link-publico-admin-url {
+        grid-column: 1;
+    }
+
+    #card-link-publico-admin .link-publico-admin-acoes {
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+
+    #secao-agenda .agenda-resumo-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+
+    #secao-clientes-crm .linha-filtros-crm {
+        grid-template-columns: 1fr;
+    }
+
+
+    #secao-fila-espera .fila-espera-admin-resumo {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+    }
+}
+
+
+@media (max-width: 520px) {
+
+    #card-link-publico-admin .link-publico-admin-acoes {
+        grid-template-columns: 1fr;
+    }
+
+    #secao-agenda .agenda-resumo-grid,
+    #secao-clientes-crm .crm-metricas,
+    #secao-fila-espera .fila-espera-admin-resumo,
+    #secao-fila-espera .fila-espera-card-detalhes {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* =========================================================
+   SPRINT 5.1 - REFINAMENTO GLOBAL / FATIA 2
+   Configuracoes organizadas por contexto
+========================================================= */
+
+#secao-configuracoes {
+    position: relative;
+}
+
+
+/* INTRO */
+
+#secao-configuracoes .configuracoes-intro-admin {
+    grid-column: 1 / -1;
+
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    margin-bottom: 2px;
+    padding: 16px 18px;
+
+    border: 1px solid rgba(100, 255, 218, 0.12);
+    border-radius: 17px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(15, 23, 42, 0.92),
+            rgba(30, 41, 59, 0.72)
+        );
+}
+
+#secao-configuracoes .configuracoes-intro-admin h2 {
+    margin: 3px 0 4px;
+
+    font-size: 20px;
+    line-height: 1.2;
+}
+
+#secao-configuracoes .configuracoes-intro-admin p {
+    margin: 0;
+
+    max-width: 620px;
+
+    color: var(--texto-secundario);
+
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+
+/* NAVEGACAO INTERNA */
+
+#secao-configuracoes .configuracoes-nav-admin {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 6px;
+
+    justify-content: flex-end;
+}
+
+#secao-configuracoes .configuracoes-nav-admin button {
+    min-height: 32px;
+
+    padding: 6px 10px;
+
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 9px;
+
+    background: rgba(255, 255, 255, 0.025);
+
+    color: var(--texto-secundario);
+
+    font-size: 9px;
+    font-weight: 800;
+
+    cursor: pointer;
+
+    transition:
+        border-color 0.18s ease,
+        background 0.18s ease,
+        color 0.18s ease;
+}
+
+#secao-configuracoes .configuracoes-nav-admin button:hover,
+#secao-configuracoes .configuracoes-nav-admin button.ativo {
+    border-color: rgba(100, 255, 218, 0.35);
+
+    background: rgba(100, 255, 218, 0.08);
+
+    color: var(--destaque);
+}
+
+
+/* GRUPOS */
+
+#secao-configuracoes .config-grupo-admin {
+    scroll-margin-top: 18px;
+}
+
+#secao-configuracoes .config-grupo-admin::before {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: rgba(100, 255, 218, 0.72);
+
+    font-size: 8px;
+    font-weight: 900;
+
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+#secao-configuracoes
+.config-grupo-admin[data-config-grupo="marca"]::before {
+    content: "Marca e presen?a digital";
+}
+
+#secao-configuracoes
+.config-grupo-admin[data-config-grupo="comunicacao"]::before {
+    content: "Comunica??o com o cliente";
+}
+
+#secao-configuracoes
+.config-grupo-admin[data-config-grupo="equipe"]::before {
+    content: "Opera??o da equipe";
+}
+
+
+/* SUBGRUPO AGENDA */
+
+#secao-configuracoes .config-subgrupo-admin {
+    margin: 14px 0 8px;
+
+    scroll-margin-top: 18px;
+}
+
+#secao-configuracoes .config-subgrupo-cabecalho {
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+
+    padding: 8px 10px;
+
+    border-left: 2px solid rgba(100, 255, 218, 0.45);
+
+    background: rgba(100, 255, 218, 0.035);
+}
+
+#secao-configuracoes
+.config-subgrupo-cabecalho span {
+    color: var(--destaque);
+
+    font-size: 8px;
+    font-weight: 900;
+
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+}
+
+#secao-configuracoes
+.config-subgrupo-cabecalho strong {
+    color: var(--texto-principal);
+
+    font-size: 11px;
+}
+
+
+/* MELHOR HIERARQUIA DOS TITULOS */
+
+#secao-configuracoes .config-grupo-admin > h3 {
+    font-size: 17px;
+
+    line-height: 1.3;
+}
+
+#secao-configuracoes
+.config-grupo-admin > .descricao-bloco {
+    max-width: 680px;
+}
+
+
+/* CAMPOS FULL MAIS CONTROLADOS */
+
+#secao-configuracoes .campo.full {
+    margin-top: 1px;
+}
+
+
+/* SALVAR COMO ACAO FINAL */
+
+#secao-configuracoes .config-grupo-admin > .btn-add {
+    margin-top: 12px;
+
+    min-height: 36px;
+
+    padding: 8px 13px;
+
+    font-size: 10px;
+}
+
+
+/* MOBILE */
+
+@media (max-width: 800px) {
+
+    #secao-configuracoes .configuracoes-intro-admin {
+        flex-direction: column;
+    }
+
+    #secao-configuracoes .configuracoes-nav-admin {
+        width: 100%;
+
+        justify-content: flex-start;
+    }
+}
+
+
+@media (max-width: 520px) {
+
+    #secao-configuracoes .configuracoes-nav-admin {
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    #secao-configuracoes
+    .configuracoes-nav-admin button {
+        width: 100%;
+    }
+
+    #secao-configuracoes
+    .config-subgrupo-cabecalho {
+        align-items: flex-start;
+        flex-direction: column;
+
+        gap: 2px;
+    }
+}
+
+
+/* =========================================================
+   SPRINT 5.1 - FATIA 3
+   Topo limpo + menu lateral retratil
+========================================================= */
+
+
+/* =========================================================
+   TRIAL - APENAS SINALIZACAO COMPACTA
+========================================================= */
+
+#secao-dashboard #card-trial-admin {
+    margin: 0;
+
+    padding: 9px 12px;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        auto
+        auto;
+
+    gap: 10px;
+
+    border-radius: 13px;
+
+    box-shadow: none;
+}
+
+#secao-dashboard
+#card-trial-admin
+.trial-admin-kicker {
+    font-size: 8px;
+}
+
+#secao-dashboard
+#card-trial-admin
+.trial-admin-info h3 {
+    font-size: 12px;
+}
+
+#secao-dashboard
+#card-trial-admin
+.trial-admin-info p {
+    margin-top: 2px;
+
+    font-size: 9px;
+
+    line-height: 1.35;
+}
+
+#secao-dashboard
+#card-trial-admin
+.trial-admin-metricas > div {
+    min-width: 76px;
+
+    padding: 5px 7px;
+}
+
+#secao-dashboard
+#card-trial-admin
+.trial-admin-metricas small {
+    font-size: 8px;
+}
+
+#secao-dashboard
+#card-trial-admin
+.trial-admin-metricas strong {
+    font-size: 14px;
+}
+
+#secao-dashboard
+#card-trial-admin
+.trial-admin-acoes .btn-add {
+    min-height: 30px;
+
+    padding: 5px 9px;
+
+    font-size: 9px;
+}
+
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+.admin-sidebar {
+    position: sticky;
+}
+
+
+/* Botao X */
+
+.btn-fechar-sidebar-admin {
+    position: absolute;
+
+    top: 12px;
+    right: 12px;
+
+    z-index: 8;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 30px;
+    height: 30px;
+
+    padding: 0;
+
+    border:
+        1px solid rgba(148, 163, 184, 0.20);
+
+    border-radius: 10px;
+
+    background:
+        rgba(255, 255, 255, 0.035);
+
+    color: var(--texto-secundario);
+
+    font-size: 20px;
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition:
+        color 0.18s ease,
+        border-color 0.18s ease,
+        background 0.18s ease;
+}
+
+.btn-fechar-sidebar-admin:hover {
+    color: var(--destaque);
+
+    border-color:
+        rgba(100, 255, 218, 0.35);
+
+    background:
+        rgba(100, 255, 218, 0.07);
+}
+
+
+/* Botao flutuante para reabrir */
+
+.btn-abrir-sidebar-admin {
+    position: fixed;
+
+    top: 18px;
+    left: 18px;
+
+    z-index: 1200;
+
+    display: none;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 42px;
+    height: 42px;
+
+    border:
+        1px solid rgba(100, 255, 218, 0.30);
+
+    border-radius: 13px;
+
+    background:
+        rgba(10, 25, 47, 0.96);
+
+    color: var(--destaque);
+
+    font-size: 20px;
+
+    box-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.24);
+
+    cursor: pointer;
+}
+
+
+/* Recolher sidebar no desktop sem deixar coluna vazia */
+
+body.admin-sidebar-retraida
+.admin-layout-pro {
+    grid-template-columns:
+        minmax(0, 1fr);
+}
+
+body.admin-sidebar-retraida
+.admin-sidebar {
+    display: none;
+}
+
+body.admin-sidebar-retraida
+.btn-abrir-sidebar-admin {
+    display: inline-flex;
+}
+
+
+/* Overlay usado principalmente em telas menores */
+
+.overlay-sidebar-admin {
+    display: none;
+}
+
+
+/* =========================================================
+   TABLET / NOTEBOOK ESTREITO
+========================================================= */
+
+@media (max-width: 1100px) {
+
+    .admin-layout-pro {
+        grid-template-columns:
+            minmax(0, 1fr);
+    }
+
+    .admin-sidebar {
+        position: fixed;
+
+        top: 12px;
+        left: 12px;
+
+        z-index: 1300;
+
+        width: min(
+            320px,
+            calc(100vw - 24px)
+        );
+
+        max-height:
+            calc(100vh - 24px);
+
+        min-height: 0;
+
+        overflow-y: auto;
+
+        transform:
+            translateX(0);
+
+        transition:
+            transform 0.20s ease,
+            opacity 0.20s ease;
+    }
+
+    .overlay-sidebar-admin {
+        position: fixed;
+
+        inset: 0;
+
+        z-index: 1250;
+
+        display: block;
+
+        background:
+            rgba(2, 6, 23, 0.58);
+
+        backdrop-filter:
+            blur(3px);
+    }
+
+    body.admin-sidebar-retraida
+    .admin-sidebar {
+        display: block;
+
+        opacity: 0;
+
+        pointer-events: none;
+
+        transform:
+            translateX(
+                calc(-100% - 30px)
+            );
+    }
+
+    body.admin-sidebar-retraida
+    .overlay-sidebar-admin {
+        display: none;
+    }
+
+    body.admin-sidebar-retraida
+    .btn-abrir-sidebar-admin {
+        display: inline-flex;
+    }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 640px) {
+
+    #secao-dashboard
+    #card-trial-admin {
+        grid-template-columns: 1fr;
+    }
+
+    #secao-dashboard
+    #card-trial-admin
+    .trial-admin-metricas {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .btn-abrir-sidebar-admin {
+        top: 10px;
+        left: 10px;
+
+        width: 38px;
+        height: 38px;
+    }
+}
+
+
+/* =========================================================
+   SPRINT 5.1 - FATIA 4
+   Agenda compacta e hierarquia operacional
+========================================================= */
+
+
+/* =========================================================
+   SECAO AGENDA
+========================================================= */
+
+#secao-agenda {
+    padding: 15px 16px;
+}
+
+
+/* =========================================================
+   OPERACAO DO DIA
+========================================================= */
+
+#secao-agenda .agenda-dia-box {
+    margin-bottom: 14px;
+
+    padding: 13px 14px;
+
+    border-radius: 15px;
+}
+
+
+/* Cabecalho */
+
+#secao-agenda .agenda-dia-cabecalho {
+    align-items: center;
+
+    gap: 12px;
+
+    margin-bottom: 10px;
+}
+
+#secao-agenda .agenda-dia-cabecalho h4 {
+    margin: 0 0 2px;
+
+    font-size: 15px;
+}
+
+#secao-agenda .agenda-dia-cabecalho p {
+    margin: 0;
+
+    font-size: 10px;
+}
+
+#secao-agenda .agenda-dia-cabecalho small {
+    display: block;
+
+    margin-top: 3px;
+
+    font-size: 9px;
+}
+
+#secao-agenda
+.agenda-dia-cabecalho
+button {
+    min-height: 32px;
+
+    padding: 6px 9px;
+
+    font-size: 9px;
+}
+
+
+/* =========================================================
+   FILTRO RAPIDO DA AGENDA DO DIA
+========================================================= */
+
+#secao-agenda
+.agenda-dia-box
+.form-grid.tres {
+    grid-template-columns:
+        minmax(140px, 0.65fr)
+        minmax(180px, 1fr)
+        auto;
+
+    gap: 7px;
+
+    margin-bottom: 8px;
+}
+
+#secao-agenda
+.agenda-dia-box
+.campo label {
+    margin-bottom: 3px;
+
+    font-size: 9px;
+}
+
+#secao-agenda
+.agenda-dia-box
+.campo input,
+
+#secao-agenda
+.agenda-dia-box
+.campo select {
+    min-height: 33px;
+
+    padding: 5px 8px;
+
+    font-size: 10px;
+}
+
+#secao-agenda
+.agenda-dia-box
+.campo button {
+    min-height: 33px;
+
+    padding: 6px 12px;
+
+    font-size: 9px;
+}
+
+
+/* =========================================================
+   RESUMO DO DIA
+========================================================= */
+
+#secao-agenda .agenda-resumo-grid {
+    grid-template-columns:
+        repeat(7, minmax(75px, 1fr));
+
+    gap: 6px;
+
+    margin: 8px 0 9px;
+}
+
+#secao-agenda .agenda-resumo-card {
+    min-height: 54px;
+
+    padding: 7px 8px;
+
+    border-radius: 10px;
+}
+
+#secao-agenda .agenda-resumo-card span {
+    margin: 0;
+
+    font-size: 8px;
+
+    line-height: 1.2;
+}
+
+#secao-agenda .agenda-resumo-card strong {
+    margin-top: 2px;
+
+    font-size: 14px;
+
+    line-height: 1.1;
+}
+
+
+/* =========================================================
+   LINHA DO TEMPO
+========================================================= */
+
+#secao-agenda .agenda-visual-lista {
+    gap: 4px;
+
+    margin-top: 8px;
+}
+
+
+/* Linha inteira */
+
+#secao-agenda .agenda-linha-horario {
+    grid-template-columns:
+        58px
+        minmax(0, 1fr);
+
+    gap: 7px;
+
+    align-items: center;
+}
+
+
+/* Horario */
+
+#secao-agenda .agenda-horario-label {
+    padding-top: 0;
+
+    font-size: 11px;
+
+    text-align: right;
+}
+
+
+/* Slot */
+
+#secao-agenda .agenda-eventos-slot {
+    gap: 5px;
+
+    min-height: 32px;
+
+    padding: 5px 7px;
+
+    border-radius: 9px;
+}
+
+
+/* Slot vazio bem menor */
+
+#secao-agenda .agenda-slot-vazio {
+    padding: 3px 5px;
+
+    font-size: 9px;
+
+    line-height: 1.2;
+
+    opacity: 0.52;
+}
+
+
+/* =========================================================
+   CARD DE AGENDAMENTO
+========================================================= */
+
+#secao-agenda .agenda-evento-card {
+    padding: 8px 9px;
+
+    border-radius: 10px;
+}
+
+#secao-agenda
+.agenda-evento-card.agendamento {
+    border-left-width: 3px;
+}
+
+#secao-agenda
+.agenda-evento-card.bloqueio {
+    border-left-width: 3px;
+}
+
+
+/* Textos internos mais densos */
+
+#secao-agenda .agenda-evento-card h4,
+#secao-agenda .agenda-evento-card h5 {
+    margin: 0 0 2px;
+
+    font-size: 12px;
+
+    line-height: 1.25;
+}
+
+#secao-agenda .agenda-evento-card p {
+    margin: 2px 0;
+
+    font-size: 9px;
+
+    line-height: 1.3;
+}
+
+#secao-agenda .agenda-evento-card strong {
+    font-size: inherit;
+}
+
+
+/* Status */
+
+#secao-agenda .agenda-evento-card .badge-status,
+#secao-agenda .agenda-evento-card [class*="status"] {
+    font-size: 8px;
+}
+
+
+/* Botoes do card */
+
+#secao-agenda
+.agenda-evento-card button {
+    min-height: 28px;
+
+    padding: 4px 7px;
+
+    border-radius: 7px;
+
+    font-size: 8px;
+}
+
+
+/* Se houver container de acoes */
+
+#secao-agenda
+.agenda-evento-card
+.acoes-agendamento,
+
+#secao-agenda
+.agenda-evento-card
+.agenda-evento-acoes {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 4px;
+
+    margin-top: 6px;
+}
+
+
+/* =========================================================
+   CABECALHO CONSULTA / HISTORICO
+========================================================= */
+
+#secao-agenda
+.agenda-consulta-cabecalho-admin {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 14px;
+
+    margin: 14px 0 8px;
+
+    padding: 10px 12px;
+
+    border-top:
+        1px solid rgba(148, 163, 184, 0.12);
+
+    border-bottom:
+        1px solid rgba(148, 163, 184, 0.12);
+}
+
+#secao-agenda
+.agenda-consulta-cabecalho-admin > div {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+}
+
+#secao-agenda
+.agenda-consulta-cabecalho-admin span {
+    color: var(--destaque);
+
+    font-size: 8px;
+    font-weight: 900;
+
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+}
+
+#secao-agenda
+.agenda-consulta-cabecalho-admin strong {
+    font-size: 12px;
+}
+
+#secao-agenda
+.agenda-consulta-cabecalho-admin p {
+    margin: 0;
+
+    max-width: 540px;
+
+    color: var(--texto-secundario);
+
+    font-size: 9px;
+
+    text-align: right;
+}
+
+
+/* =========================================================
+   FILTRO DE HISTORICO
+========================================================= */
+
+#secao-agenda
+> .form-grid.tres {
+    grid-template-columns:
+        minmax(150px, 1fr)
+        minmax(150px, 1fr)
+        minmax(130px, 0.6fr);
+
+    gap: 7px;
+
+    align-items: end;
+
+    margin-bottom: 9px;
+}
+
+#secao-agenda
+> .form-grid.tres
+.campo label {
+    margin-bottom: 3px;
+
+    font-size: 9px;
+}
+
+#secao-agenda
+> .form-grid.tres
+input {
+    min-height: 34px;
+
+    padding: 6px 8px;
+
+    font-size: 10px;
+}
+
+#secao-agenda
+> .form-grid.tres
+button {
+    min-height: 34px;
+
+    padding: 6px 10px;
+
+    font-size: 9px;
+}
+
+
+/* =========================================================
+   TABELA
+========================================================= */
+
+#secao-agenda .tabela-container {
+    margin-top: 8px;
+
+    border-radius: 12px;
+}
+
+#secao-agenda table {
+    font-size: 9px;
+}
+
+#secao-agenda thead th {
+    padding: 7px 6px;
+
+    font-size: 8px;
+
+    white-space: nowrap;
+}
+
+#secao-agenda tbody td {
+    padding: 7px 6px;
+
+    line-height: 1.3;
+}
+
+
+/* Coluna de acoes */
+
+#secao-agenda tbody td:last-child {
+    min-width: 130px;
+}
+
+#secao-agenda tbody td:last-child button {
+    min-height: 27px;
+
+    margin: 2px;
+
+    padding: 4px 6px;
+
+    border-radius: 7px;
+
+    font-size: 8px;
+}
+
+
+/* Detalhes expansivos existentes */
+
+#secao-agenda .linha-detalhes-agendamento {
+    padding: 8px !important;
+
+    font-size: 9px;
+}
+
+
+/* =========================================================
+   NOTEBOOK MENOR
+========================================================= */
+
+@media (max-width: 1180px) {
+
+    #secao-agenda .agenda-resumo-grid {
+        grid-template-columns:
+            repeat(4, minmax(80px, 1fr));
+    }
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 780px) {
+
+    #secao-agenda
+    .agenda-dia-box
+    .form-grid.tres,
+
+    #secao-agenda
+    > .form-grid.tres {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    #secao-agenda
+    .agenda-linha-horario {
+        grid-template-columns:
+            46px
+            minmax(0, 1fr);
+    }
+
+    #secao-agenda
+    .agenda-consulta-cabecalho-admin {
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+    #secao-agenda
+    .agenda-consulta-cabecalho-admin p {
+        text-align: left;
+    }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 520px) {
+
+    #secao-agenda {
+        padding: 12px;
+    }
+
+    #secao-agenda
+    .agenda-dia-box
+    .form-grid.tres,
+
+    #secao-agenda
+    > .form-grid.tres {
+        grid-template-columns: 1fr;
+    }
+
+    #secao-agenda .agenda-resumo-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    #secao-agenda
+    .agenda-linha-horario {
+        grid-template-columns:
+            42px
+            minmax(0, 1fr);
+
+        gap: 5px;
+    }
+
+    #secao-agenda .agenda-horario-label {
+        font-size: 9px;
+    }
+}
+
+
+/* =========================================================
+   SPRINT 5.1 - FATIA 5
+   Acoes principais + Mais acoes
+========================================================= */
+
+
+/* Container de acoes */
+
+#secao-agenda .acoes-agendamento,
+#secao-agenda .agenda-evento-acoes {
+    position: relative;
+
+    display: flex;
+
+    align-items: center;
+
+    flex-wrap: wrap;
+
+    gap: 5px;
+}
+
+
+/* Acao principal */
+
+#secao-agenda .acao-agenda-principal {
+    min-height: 28px;
+
+    padding: 5px 8px;
+
+    border-color:
+        rgba(100, 255, 218, 0.28);
+
+    background:
+        rgba(100, 255, 218, 0.07);
+
+    color: var(--destaque);
+
+    font-size: 8px;
+
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   DETAILS / MAIS ACOES
+========================================================= */
+
+#secao-agenda .agenda-mais-acoes-admin {
+    position: relative;
+}
+
+#secao-agenda
+.agenda-mais-acoes-admin > summary {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 28px;
+
+    padding: 5px 8px;
+
+    border:
+        1px solid rgba(148, 163, 184, 0.20);
+
+    border-radius: 7px;
+
+    background:
+        rgba(255, 255, 255, 0.03);
+
+    color: var(--texto-secundario);
+
+    font-size: 8px;
+
+    font-weight: 800;
+
+    cursor: pointer;
+
+    list-style: none;
+
+    user-select: none;
+}
+
+#secao-agenda
+.agenda-mais-acoes-admin
+> summary::-webkit-details-marker {
+    display: none;
+}
+
+#secao-agenda
+.agenda-mais-acoes-admin
+> summary::after {
+    content: "\25BE";
+
+    margin-left: 5px;
+
+    font-size: 8px;
+}
+
+#secao-agenda
+.agenda-mais-acoes-admin[open]
+> summary {
+    border-color:
+        rgba(100, 255, 218, 0.28);
+
+    color: var(--destaque);
+}
+
+
+/* Menu */
+
+#secao-agenda
+.agenda-mais-acoes-conteudo {
+    position: absolute;
+
+    top: calc(100% + 6px);
+    right: 0;
+
+    z-index: 250;
+
+    display: grid;
+
+    width: 190px;
+
+    gap: 4px;
+
+    padding: 7px;
+
+    border:
+        1px solid rgba(148, 163, 184, 0.18);
+
+    border-radius: 11px;
+
+    background:
+        rgba(10, 25, 47, 0.98);
+
+    box-shadow:
+        0 16px 38px
+        rgba(0, 0, 0, 0.34);
+}
+
+
+/* Botoes secundarios */
+
+#secao-agenda
+.agenda-mais-acoes-conteudo
+.acao-agenda-secundaria {
+    width: 100%;
+
+    min-height: 29px;
+
+    margin: 0;
+
+    padding: 5px 7px;
+
+    border:
+        1px solid transparent;
+
+    border-radius: 7px;
+
+    background:
+        rgba(255, 255, 255, 0.025);
+
+    color: var(--texto-secundario);
+
+    font-size: 8px;
+
+    text-align: left;
+
+    cursor: pointer;
+}
+
+#secao-agenda
+.agenda-mais-acoes-conteudo
+.acao-agenda-secundaria:hover {
+    border-color:
+        rgba(100, 255, 218, 0.20);
+
+    background:
+        rgba(100, 255, 218, 0.055);
+
+    color: var(--texto-principal);
+}
+
+
+/* Cancelar e falta continuam discretos dentro do menu */
+
+#secao-agenda
+.agenda-mais-acoes-conteudo
+button:hover {
+    transform: none;
+}
+
+
+/* =========================================================
+   LINHA DE DETALHES
+========================================================= */
+
+#secao-agenda
+tr:has(.linha-detalhes-agendamento)[hidden] {
+    display: none;
+}
+
+#secao-agenda
+.linha-detalhes-agendamento {
+    padding: 9px 10px !important;
+
+    background:
+        rgba(100, 255, 218, 0.025);
+
+    font-size: 9px;
+
+    line-height: 1.45;
+}
+
+
+/* =========================================================
+   AGENDA VISUAL
+========================================================= */
+
+#secao-agenda
+.agenda-evento-card
+.agenda-mais-acoes-conteudo {
+    right: 0;
+}
+
+#secao-agenda
+.agenda-evento-card
+.agenda-mais-acoes-admin {
+    display: inline-block;
+}
+
+
+/* =========================================================
+   TABLET / MOBILE
+========================================================= */
+
+@media (max-width: 780px) {
+
+    #secao-agenda
+    .agenda-mais-acoes-conteudo {
+        right: auto;
+        left: 0;
+
+        width: min(
+            220px,
+            calc(100vw - 48px)
+        );
+    }
+}
+
+
+@media (max-width: 520px) {
+
+    #secao-agenda
+    .acoes-agendamento,
+
+    #secao-agenda
+    .agenda-evento-acoes {
+        align-items: stretch;
+    }
+
+    #secao-agenda
+    .acao-agenda-principal,
+
+    #secao-agenda
+    .agenda-mais-acoes-admin > summary {
+        min-height: 30px;
+    }
+}
+
+
+/* =========================================================
+   SPRINT 5.1 - FATIA 6
+   CRM + Fila de espera
+========================================================= */
+
+
+/* =========================================================
+   CRM
+========================================================= */
+
+#secao-clientes-crm {
+    padding: 15px 16px;
+}
+
+
+#secao-clientes-crm > h3 {
+    margin-bottom: 3px;
+
+    font-size: 17px;
+}
+
+
+#secao-clientes-crm
+> .descricao-bloco {
+    margin-bottom: 11px;
+
+    max-width: 720px;
+
+    font-size: 10px;
+
+    line-height: 1.4;
+}
+
+
+/* Metricas */
+
+#secao-clientes-crm .crm-metricas {
+    grid-template-columns:
+        repeat(4, minmax(120px, 1fr));
+
+    gap: 7px;
+
+    margin-bottom: 10px;
+}
+
+
+#secao-clientes-crm
+.crm-metricas
+.metric-card {
+    min-height: 74px;
+
+    padding: 10px 11px;
+
+    border-radius: 12px;
+}
+
+
+#secao-clientes-crm
+.crm-metricas
+.metric-card p {
+    margin: 0 0 3px;
+
+    font-size: 8px;
+}
+
+
+#secao-clientes-crm
+.crm-metricas
+.metric-card strong {
+    font-size: 17px;
+
+    line-height: 1.1;
+}
+
+
+#secao-clientes-crm
+.crm-metricas
+.metric-card small {
+    margin-top: 3px;
+
+    font-size: 8px;
+
+    line-height: 1.25;
+}
+
+
+/* Busca */
+
+#secao-clientes-crm
+.linha-filtros-crm {
+    display: grid;
+
+    grid-template-columns:
+        minmax(240px, 1fr)
+        auto
+        auto;
+
+    gap: 6px;
+
+    margin: 8px 0 10px;
+}
+
+
+#secao-clientes-crm
+.linha-filtros-crm input {
+    min-height: 34px;
+
+    padding: 6px 9px;
+
+    font-size: 10px;
+}
+
+
+#secao-clientes-crm
+.linha-filtros-crm button {
+    min-height: 34px;
+
+    padding: 6px 10px;
+
+    font-size: 9px;
+}
+
+
+/* Tabela */
+
+#secao-clientes-crm
+.tabela-container {
+    margin-top: 7px;
+
+    border-radius: 12px;
+}
+
+
+#secao-clientes-crm table {
+    font-size: 9px;
+}
+
+
+#secao-clientes-crm thead th {
+    padding: 7px 6px;
+
+    font-size: 8px;
+
+    white-space: nowrap;
+}
+
+
+#secao-clientes-crm tbody td {
+    padding: 7px 6px;
+
+    line-height: 1.3;
+}
+
+
+#secao-clientes-crm tbody button {
+    min-height: 27px;
+
+    padding: 4px 7px;
+
+    border-radius: 7px;
+
+    font-size: 8px;
+}
+
+
+/* =========================================================
+   FILA DE ESPERA
+========================================================= */
+
+#secao-fila-espera {
+    padding: 15px 16px;
+}
+
+
+/* Cabecalho */
+
+#secao-fila-espera
+.fila-espera-admin-header {
+    gap: 12px;
+
+    margin-bottom: 10px;
+}
+
+
+#secao-fila-espera
+.fila-espera-admin-header h2 {
+    margin: 2px 0;
+
+    font-size: 18px;
+}
+
+
+#secao-fila-espera
+.fila-espera-admin-header p {
+    margin: 0;
+
+    max-width: 680px;
+
+    font-size: 10px;
+
+    line-height: 1.4;
+}
+
+
+#secao-fila-espera
+.fila-espera-admin-header button {
+    min-height: 32px;
+
+    padding: 6px 9px;
+
+    font-size: 9px;
+}
+
+
+/* Resumo */
+
+#secao-fila-espera
+.fila-espera-admin-resumo {
+    grid-template-columns:
+        repeat(3, minmax(100px, 150px));
+
+    justify-content: start;
+
+    gap: 7px;
+
+    margin-bottom: 8px;
+}
+
+
+#secao-fila-espera
+.fila-espera-admin-resumo article {
+    min-height: 58px;
+
+    padding: 8px 10px;
+
+    border-radius: 11px;
+}
+
+
+#secao-fila-espera
+.fila-espera-admin-resumo small {
+    font-size: 8px;
+}
+
+
+#secao-fila-espera
+.fila-espera-admin-resumo strong {
+    font-size: 17px;
+}
+
+
+/* =========================================================
+   FILTROS DE PRIORIDADE
+========================================================= */
+
+#secao-fila-espera
+.fila-espera-filtros-admin {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    margin: 8px 0 10px;
+
+    padding: 8px 10px;
+
+    border:
+        1px solid rgba(148, 163, 184, 0.12);
+
+    border-radius: 11px;
+
+    background:
+        rgba(255, 255, 255, 0.018);
+}
+
+
+#secao-fila-espera
+.fila-espera-filtros-admin > div:first-child {
+    display: grid;
+
+    gap: 1px;
+}
+
+
+#secao-fila-espera
+.fila-espera-filtros-admin span {
+    color: var(--texto-secundario);
+
+    font-size: 8px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.7px;
+}
+
+
+#secao-fila-espera
+.fila-espera-filtros-admin strong {
+    font-size: 10px;
+}
+
+
+#secao-fila-espera
+.fila-espera-filtros-acoes-admin {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 5px;
+}
+
+
+#secao-fila-espera
+.fila-espera-filtros-acoes-admin button {
+    min-height: 28px;
+
+    padding: 4px 8px;
+
+    border:
+        1px solid rgba(148, 163, 184, 0.18);
+
+    border-radius: 8px;
+
+    background:
+        rgba(255, 255, 255, 0.025);
+
+    color: var(--texto-secundario);
+
+    font-size: 8px;
+
+    font-weight: 800;
+
+    cursor: pointer;
+}
+
+
+#secao-fila-espera
+.fila-espera-filtros-acoes-admin
+button.ativo {
+    border-color:
+        rgba(100, 255, 218, 0.30);
+
+    background:
+        rgba(100, 255, 218, 0.07);
+
+    color: var(--destaque);
+}
+
+
+/* =========================================================
+   LISTA / CARDS
+========================================================= */
+
+#secao-fila-espera
+.lista-fila-espera-admin {
+    display: grid;
+
+    gap: 7px;
+}
+
+
+#secao-fila-espera
+.fila-espera-card-admin {
+    padding: 10px 11px;
+
+    border-radius: 12px;
+}
+
+
+#secao-fila-espera
+.fila-espera-card-topo {
+    gap: 10px;
+
+    margin-bottom: 5px;
+}
+
+
+#secao-fila-espera
+.fila-espera-card-topo h3 {
+    margin: 0 0 2px;
+
+    font-size: 12px;
+}
+
+
+#secao-fila-espera
+.fila-espera-card-topo p {
+    margin: 0;
+
+    font-size: 9px;
+}
+
+
+#secao-fila-espera
+.badge-fila-espera-admin {
+    padding: 4px 6px;
+
+    font-size: 8px;
+}
+
+
+/* Pendentes ganham prioridade visual */
+
+#secao-fila-espera
+.fila-espera-card-admin.status-aguardando,
+
+#secao-fila-espera
+.fila-espera-card-admin.status-chamado {
+    border-color:
+        rgba(100, 255, 218, 0.22);
+}
+
+
+/* Finalizados ficam discretos */
+
+#secao-fila-espera
+.fila-espera-card-admin.status-agendado,
+
+#secao-fila-espera
+.fila-espera-card-admin.status-cancelado,
+
+#secao-fila-espera
+.fila-espera-card-admin.status-expirado {
+    opacity: 0.62;
+}
+
+
+/* =========================================================
+   DETALHES RECOLHIVEIS
+========================================================= */
+
+#secao-fila-espera
+.fila-espera-detalhes-retraiveis-admin {
+    margin: 5px 0;
+}
+
+
+#secao-fila-espera
+.fila-espera-detalhes-retraiveis-admin
+> summary {
+    display: inline-flex;
+
+    align-items: center;
+
+    min-height: 26px;
+
+    padding: 4px 7px;
+
+    border:
+        1px solid rgba(148, 163, 184, 0.16);
+
+    border-radius: 7px;
+
+    background:
+        rgba(255, 255, 255, 0.02);
+
+    color: var(--texto-secundario);
+
+    font-size: 8px;
+
+    font-weight: 800;
+
+    cursor: pointer;
+
+    list-style: none;
+}
+
+
+#secao-fila-espera
+.fila-espera-detalhes-retraiveis-admin
+> summary::-webkit-details-marker {
+    display: none;
+}
+
+
+#secao-fila-espera
+.fila-espera-detalhes-retraiveis-admin
+> summary::after {
+    content: "\25BE";
+
+    margin-left: 5px;
+}
+
+
+#secao-fila-espera
+.fila-espera-detalhes-retraiveis-admin[open]
+> summary {
+    color: var(--destaque);
+
+    border-color:
+        rgba(100, 255, 218, 0.24);
+}
+
+
+#secao-fila-espera
+.fila-espera-detalhes-conteudo-admin {
+    margin-top: 6px;
+
+    padding: 7px 8px;
+
+    border-radius: 9px;
+
+    background:
+        rgba(255, 255, 255, 0.018);
+}
+
+
+#secao-fila-espera
+.fila-espera-card-detalhes {
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 5px;
+}
+
+
+#secao-fila-espera
+.fila-espera-card-detalhes span {
+    font-size: 8px;
+
+    line-height: 1.35;
+}
+
+
+#secao-fila-espera
+.fila-espera-observacao-admin {
+    margin: 6px 0 0;
+
+    font-size: 8px;
+
+    line-height: 1.4;
+}
+
+
+/* Acoes */
+
+#secao-fila-espera
+.fila-espera-card-acoes {
+    gap: 5px;
+
+    margin-top: 6px;
+}
+
+
+#secao-fila-espera
+.fila-espera-card-acoes button {
+    min-height: 29px;
+
+    padding: 5px 8px;
+
+    font-size: 8px;
+}
+
+
+/* =========================================================
+   RESPONSIVO
+========================================================= */
+
+@media (max-width: 900px) {
+
+    #secao-clientes-crm
+    .crm-metricas {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+
+    #secao-fila-espera
+    .fila-espera-card-detalhes {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+@media (max-width: 620px) {
+
+    #secao-clientes-crm
+    .linha-filtros-crm {
+        grid-template-columns: 1fr 1fr;
+    }
+
+
+    #secao-clientes-crm
+    .linha-filtros-crm input {
+        grid-column: 1 / -1;
+    }
+
+
+    #secao-fila-espera
+    .fila-espera-filtros-admin {
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+
+    #secao-fila-espera
+    .fila-espera-admin-resumo {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+
+        width: 100%;
+    }
+}
+
+
+@media (max-width: 480px) {
+
+    #secao-clientes-crm
+    .crm-metricas {
+        grid-template-columns: 1fr;
+    }
+
+
+    #secao-fila-espera
+    .fila-espera-card-detalhes {
+        grid-template-columns: 1fr;
+    }
+
+
+    #secao-fila-espera
+    .fila-espera-admin-resumo {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* =========================================================
+   SPRINT 5.2 - FATIA 2
+   Arquivamento da fila de espera
+========================================================= */
+
+#secao-fila-espera
+.fila-espera-card-admin.status-arquivado {
+    opacity: 0.54;
+
+    border-style: dashed;
+}
+
+
+#secao-fila-espera
+.fila-espera-card-admin.status-arquivado
+.badge-fila-espera-admin {
+    border-color:
+        rgba(148, 163, 184, 0.22);
+
+    background:
+        rgba(148, 163, 184, 0.06);
+
+    color: var(--texto-secundario);
+}
+
+
+#secao-fila-espera
+.btn-arquivar-fila-admin {
+    border-color:
+        rgba(148, 163, 184, 0.18);
+
+    color: var(--texto-secundario);
+}
+
+
+/* =========================================================
+   SPRINT 5.2 - FATIA 3
+   Exclusao definitiva da fila
+========================================================= */
+
+#secao-fila-espera
+.btn-excluir-fila-admin {
+    min-height: 29px;
+
+    padding: 5px 8px;
+
+    border:
+        1px solid rgba(248, 113, 113, 0.28);
+
+    border-radius: 8px;
+
+    background:
+        rgba(248, 113, 113, 0.06);
+
+    color:
+        rgb(248, 113, 113);
+
+    font-size: 8px;
+
+    font-weight: 800;
+
+    cursor: pointer;
+}
+
+
+#secao-fila-espera
+.btn-excluir-fila-admin:hover {
+    border-color:
+        rgba(248, 113, 113, 0.50);
+
+    background:
+        rgba(248, 113, 113, 0.10);
+}

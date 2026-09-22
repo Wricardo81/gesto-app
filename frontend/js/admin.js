@@ -560,7 +560,16 @@ function renderizarCardTrialAdmin(config = {}) {
   const trialExpirado = Boolean(config.trial_expirado);
   const acessoLiberado = Boolean(config.acesso_liberado);
 
-  if (!trialAtivo && !trialExpirado) {
+  const assinaturaAtiva =
+    assinaturaAdminEstaAtiva(config);
+
+  const deveMostrarTrial =
+    trialAtivo
+    && !trialExpirado
+    && acessoLiberado
+    && !assinaturaAtiva;
+
+  if (!deveMostrarTrial) {
     card.style.display = "none";
     return;
   }
@@ -3032,8 +3041,42 @@ async function atualizarResumoAdminAposMudanca() {
 }
 
 
+
+function atualizarEstadoOnboardingDashboardAdmin(
+    resumo = {}
+) {
+    const card = document.getElementById(
+        "card-onboarding-admin"
+    );
+
+    if (!card || !usuarioAdminEhGestor()) {
+        return;
+    }
+
+    const proximoPasso =
+        definirProximoPassoOnboardingAdmin(resumo);
+
+    const concluido = !proximoPasso;
+
+    card.classList.toggle(
+        "onboarding-dashboard-concluido",
+        concluido
+    );
+
+    card.classList.toggle(
+        "onboarding-dashboard-pendente",
+        !concluido
+    );
+
+    card.dataset.estadoOnboarding = concluido
+        ? "concluido"
+        : "pendente";
+}
+
+
 function renderizarOnboardingAdminComResumo(resumo) {
     renderizarProximoPassoOnboardingAdmin(resumo);
+    atualizarEstadoOnboardingDashboardAdmin(resumo);
   const card = document.getElementById("card-onboarding-admin");
   const lista = document.getElementById("onboarding-admin-lista");
   const progresso = document.getElementById("onboarding-admin-progresso");
@@ -5898,6 +5941,52 @@ window.fecharDetalheRepasseAdmin =
     fecharDetalheRepasseAdmin;
 
 
+
+function atualizarEstadoComissoesDashboardAdmin(
+    quantidadePendentes,
+    totalPendente
+) {
+    const card = document.getElementById(
+        "comissoes-repasses-dashboard"
+    );
+
+    if (!card) {
+        return;
+    }
+
+    const quantidade = Number(
+        quantidadePendentes || 0
+    );
+
+    const total = Number(
+        totalPendente || 0
+    );
+
+    card.classList.remove(
+        "financeiro-equipe-com-pendencias",
+        "financeiro-equipe-sem-pendencias"
+    );
+
+    if (quantidade > 0 || total > 0) {
+        card.classList.add(
+            "financeiro-equipe-com-pendencias"
+        );
+
+        card.dataset.estadoFinanceiroEquipe =
+            "pendente";
+
+        return;
+    }
+
+    card.classList.add(
+        "financeiro-equipe-sem-pendencias"
+    );
+
+    card.dataset.estadoFinanceiroEquipe =
+        "regular";
+}
+
+
 async function carregarResumoComissoesRepassesAdmin() {
     const card = document.getElementById(
         "comissoes-repasses-dashboard"
@@ -5957,6 +6046,11 @@ async function carregarResumoComissoesRepassesAdmin() {
 
         renderizarComissoesPendentesRepasseAdmin(
             pendentes?.comissoes || []
+        );
+
+        atualizarEstadoComissoesDashboardAdmin(
+            Number(pendentes?.quantidade || 0),
+            Number(pendentes?.total_pendente || 0)
         );
 
         if (visorQuantidadePendentes) {
@@ -8020,6 +8114,120 @@ async function atualizarPainelAdmin() {
 }
 
 
+
+function atualizarPrioridadeInsightDashboardAdmin() {
+    const card = document.getElementById(
+        "dashboard-insight-dia"
+    );
+
+    const titulo = document.getElementById(
+        "dashboard-insight-titulo"
+    );
+
+    const texto = document.getElementById(
+        "dashboard-insight-texto"
+    );
+
+    if (!card || !titulo || !texto) {
+        return;
+    }
+
+    const conteudo = (
+        `${titulo.textContent || ""} ${texto.textContent || ""}`
+    )
+        .trim()
+        .toLowerCase();
+
+    const termosCriticos = [
+        "cancelamento pendente",
+        "cancelamentos pendentes",
+        "cliente faltou",
+        "clientes faltaram",
+        "atrasado",
+        "atrasados",
+        "pagamento pendente",
+        "pagamentos pendentes",
+        "comiss\u00e3o pendente",
+        "comiss\u00f5es pendentes",
+        "agenda lotada",
+        "sem hor\u00e1rio dispon\u00edvel",
+        "erro",
+        "risco",
+    ];
+
+    const termosPositivos = [
+        "tudo certo",
+        "sem pend",
+        "agenda tranquila",
+        "opera\u00e7\u00e3o normal",
+        "sem alerta",
+    ];
+
+    const temCritico = termosCriticos.some(
+        (termo) => conteudo.includes(termo)
+    );
+
+    const temPositivo = termosPositivos.some(
+        (termo) => conteudo.includes(termo)
+    );
+
+    card.classList.remove(
+        "dashboard-insight-prioridade-alta",
+        "dashboard-insight-prioridade-baixa"
+    );
+
+    if (temCritico) {
+        card.classList.add(
+            "dashboard-insight-prioridade-alta"
+        );
+        return;
+    }
+
+    if (temPositivo) {
+        card.classList.add(
+            "dashboard-insight-prioridade-baixa"
+        );
+    }
+}
+
+
+function iniciarObservacaoInsightDashboardAdmin() {
+    const titulo = document.getElementById(
+        "dashboard-insight-titulo"
+    );
+
+    const texto = document.getElementById(
+        "dashboard-insight-texto"
+    );
+
+    if (!titulo || !texto) {
+        return;
+    }
+
+    atualizarPrioridadeInsightDashboardAdmin();
+
+    const observer = new MutationObserver(() => {
+        atualizarPrioridadeInsightDashboardAdmin();
+    });
+
+    observer.observe(titulo, {
+        childList: true,
+        characterData: true,
+        subtree: true,
+    });
+
+    observer.observe(texto, {
+        childList: true,
+        characterData: true,
+        subtree: true,
+    });
+}
+
+
+window.atualizarPrioridadeInsightDashboardAdmin =
+    atualizarPrioridadeInsightDashboardAdmin;
+
+
 window.onload = iniciarPainel;
 window.dispensarAvisoAdmin = dispensarAvisoAdmin;
 window.abrirModalChamadoAdmin = abrirModalChamadoAdmin;
@@ -8036,11 +8244,1356 @@ window.assinarPlanoMercadoPagoAdmin = assinarPlanoMercadoPagoAdmin;
 window.atualizarAvisoBloqueioAdmin = atualizarAvisoBloqueioAdmin;
 
 
+
+function iniciarNavegacaoConfiguracoesAdmin() {
+    const navegacao = document.querySelector(
+        ".configuracoes-nav-admin"
+    );
+
+    if (!navegacao) {
+        return;
+    }
+
+    navegacao.addEventListener("click", (event) => {
+        const botao = event.target.closest(
+            "[data-config-destino]"
+        );
+
+        if (!botao) {
+            return;
+        }
+
+        const destinoId =
+            botao.dataset.configDestino;
+
+        const destino =
+            document.getElementById(destinoId);
+
+        if (!destino) {
+            return;
+        }
+
+        destino.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+        });
+
+        navegacao
+            .querySelectorAll("[data-config-destino]")
+            .forEach((item) => {
+                item.classList.toggle(
+                    "ativo",
+                    item === botao
+                );
+            });
+    });
+}
+
+
+
+function configurarMenuLateralRetratilAdmin() {
+    const sidebar = document.querySelector(
+        ".admin-sidebar"
+    );
+
+    if (!sidebar) {
+        return;
+    }
+
+    if (
+        document.getElementById(
+            "btn-fechar-sidebar-admin"
+        )
+    ) {
+        return;
+    }
+
+    const btnFechar =
+        document.createElement("button");
+
+    btnFechar.type = "button";
+    btnFechar.id =
+        "btn-fechar-sidebar-admin";
+    btnFechar.className =
+        "btn-fechar-sidebar-admin";
+    btnFechar.setAttribute(
+        "aria-label",
+        "Fechar menu lateral"
+    );
+    btnFechar.innerHTML = "&times;";
+
+
+    const btnAbrir =
+        document.createElement("button");
+
+    btnAbrir.type = "button";
+    btnAbrir.id =
+        "btn-abrir-sidebar-admin";
+    btnAbrir.className =
+        "btn-abrir-sidebar-admin";
+    btnAbrir.setAttribute(
+        "aria-label",
+        "Abrir menu lateral"
+    );
+    btnAbrir.innerHTML = "&#9776;";
+
+
+    const overlay =
+        document.createElement("div");
+
+    overlay.id =
+        "overlay-sidebar-admin";
+    overlay.className =
+        "overlay-sidebar-admin";
+
+
+    sidebar.prepend(btnFechar);
+    document.body.appendChild(btnAbrir);
+    document.body.appendChild(overlay);
+
+
+    function fecharSidebarAdmin() {
+        document.body.classList.add(
+            "admin-sidebar-retraida"
+        );
+
+        btnAbrir.setAttribute(
+            "aria-expanded",
+            "false"
+        );
+    }
+
+
+    function abrirSidebarAdmin() {
+        document.body.classList.remove(
+            "admin-sidebar-retraida"
+        );
+
+        btnAbrir.setAttribute(
+            "aria-expanded",
+            "true"
+        );
+    }
+
+
+    btnFechar.addEventListener(
+        "click",
+        fecharSidebarAdmin
+    );
+
+    btnAbrir.addEventListener(
+        "click",
+        abrirSidebarAdmin
+    );
+
+    overlay.addEventListener(
+        "click",
+        fecharSidebarAdmin
+    );
+
+
+    document.addEventListener(
+        "keydown",
+        (event) => {
+            if (event.key === "Escape") {
+                fecharSidebarAdmin();
+            }
+        }
+    );
+
+
+    sidebar.addEventListener(
+        "click",
+        (event) => {
+            const item = event.target.closest(
+                ".admin-nav-item"
+            );
+
+            if (
+                item
+                && window.innerWidth <= 1100
+            ) {
+                fecharSidebarAdmin();
+            }
+        }
+    );
+
+
+    document.addEventListener(
+        "click",
+        (event) => {
+            if (
+                window.innerWidth > 1100
+                || document.body.classList.contains(
+                    "admin-sidebar-retraida"
+                )
+            ) {
+                return;
+            }
+
+            const clicouSidebar =
+                sidebar.contains(event.target);
+
+            const clicouAbrir =
+                btnAbrir.contains(event.target);
+
+            if (
+                !clicouSidebar
+                && !clicouAbrir
+            ) {
+                fecharSidebarAdmin();
+            }
+        }
+    );
+
+
+    window.fecharSidebarAdmin =
+        fecharSidebarAdmin;
+
+    window.abrirSidebarAdmin =
+        abrirSidebarAdmin;
+}
+
+
+
+function normalizarTextoAcaoAgendaAdmin(valor) {
+    return String(valor || "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+}
+
+
+function criarMenuMaisAcoesAgendaAdmin() {
+    const detalhes = document.createElement(
+        "details"
+    );
+
+    detalhes.className =
+        "agenda-mais-acoes-admin";
+
+    const resumo = document.createElement(
+        "summary"
+    );
+
+    resumo.textContent = "Mais a\u00e7\u00f5es";
+
+    const conteudo = document.createElement(
+        "div"
+    );
+
+    conteudo.className =
+        "agenda-mais-acoes-conteudo";
+
+    detalhes.appendChild(resumo);
+    detalhes.appendChild(conteudo);
+
+    return {
+        detalhes,
+        conteudo,
+    };
+}
+
+
+function fecharMenusAcoesAgendaAdmin(
+    excecao = null
+) {
+    document
+        .querySelectorAll(
+            ".agenda-mais-acoes-admin[open]"
+        )
+        .forEach((menu) => {
+            if (menu !== excecao) {
+                menu.removeAttribute("open");
+            }
+        });
+}
+
+
+function alternarDetalhesLinhaAgendaAdmin(
+    botao
+) {
+    const linha =
+        botao?.closest("tr");
+
+    if (!linha) {
+        return;
+    }
+
+    const linhaDetalhes =
+        linha.nextElementSibling;
+
+    if (
+        !linhaDetalhes
+        || !linhaDetalhes.querySelector(
+            ".linha-detalhes-agendamento"
+        )
+    ) {
+        return;
+    }
+
+    const vaiAbrir =
+        linhaDetalhes.hidden;
+
+    linhaDetalhes.hidden = !vaiAbrir;
+
+    botao.textContent = vaiAbrir
+        ? "Ocultar detalhes"
+        : "Detalhes";
+}
+
+
+function organizarAcoesTabelaAgendaAdmin() {
+    const tbody = document.getElementById(
+        "lista-agendamentos"
+    );
+
+    if (!tbody) {
+        return;
+    }
+
+    const linhas = Array.from(
+        tbody.querySelectorAll("tr")
+    );
+
+    for (const linha of linhas) {
+
+        if (
+            linha.dataset.acoesCompactadas === "1"
+        ) {
+            continue;
+        }
+
+        const container =
+            linha.querySelector(
+                ".acoes-agendamento"
+            );
+
+        if (!container) {
+            continue;
+        }
+
+        const botoes = Array.from(
+            container.querySelectorAll(
+                ":scope > button"
+            )
+        );
+
+        const wrappersWhatsapp =
+            Array.from(
+                container.querySelectorAll(
+                    ":scope > .acoes-whatsapp-agendamento"
+                )
+            );
+
+        if (
+            !botoes.length
+            && !wrappersWhatsapp.length
+        ) {
+            continue;
+        }
+
+        const principais = [];
+        const secundarias = [];
+
+        botoes.forEach((botao) => {
+            const texto =
+                normalizarTextoAcaoAgendaAdmin(
+                    botao.textContent
+                );
+
+            if (
+                texto === "confirmar"
+                || texto === "concluir"
+            ) {
+                principais.push(botao);
+            } else {
+                secundarias.push(botao);
+            }
+        });
+
+
+        const proximaLinha =
+            linha.nextElementSibling;
+
+        const possuiDetalhes =
+            Boolean(
+                proximaLinha
+                && proximaLinha.querySelector(
+                    ".linha-detalhes-agendamento"
+                )
+            );
+
+
+        if (possuiDetalhes) {
+            proximaLinha.hidden = true;
+        }
+
+
+        container.innerHTML = "";
+
+        principais.forEach((botao) => {
+            botao.classList.add(
+                "acao-agenda-principal"
+            );
+
+            container.appendChild(botao);
+        });
+
+
+        const {
+            detalhes,
+            conteudo,
+        } = criarMenuMaisAcoesAgendaAdmin();
+
+
+        secundarias.forEach((botao) => {
+            botao.classList.add(
+                "acao-agenda-secundaria"
+            );
+
+            conteudo.appendChild(botao);
+        });
+
+
+        wrappersWhatsapp.forEach(
+            (wrapper) => {
+
+                const botoesWhatsapp =
+                    Array.from(
+                        wrapper.querySelectorAll(
+                            "button"
+                        )
+                    );
+
+                botoesWhatsapp.forEach(
+                    (botao) => {
+
+                        botao.classList.add(
+                            "acao-agenda-secundaria"
+                        );
+
+                        conteudo.appendChild(
+                            botao
+                        );
+                    }
+                );
+            }
+        );
+
+
+        if (possuiDetalhes) {
+            const btnDetalhes =
+                document.createElement(
+                    "button"
+                );
+
+            btnDetalhes.type = "button";
+            btnDetalhes.className =
+                "acao-agenda-secundaria";
+
+            btnDetalhes.textContent =
+                "Detalhes";
+
+            btnDetalhes.addEventListener(
+                "click",
+                () => {
+                    alternarDetalhesLinhaAgendaAdmin(
+                        btnDetalhes
+                    );
+
+                    detalhes.removeAttribute(
+                        "open"
+                    );
+                }
+            );
+
+            conteudo.appendChild(
+                btnDetalhes
+            );
+        }
+
+
+        if (conteudo.children.length) {
+
+            detalhes.addEventListener(
+                "toggle",
+                () => {
+                    if (detalhes.open) {
+                        fecharMenusAcoesAgendaAdmin(
+                            detalhes
+                        );
+                    }
+                }
+            );
+
+            container.appendChild(
+                detalhes
+            );
+        }
+
+
+        linha.dataset.acoesCompactadas =
+            "1";
+    }
+}
+
+
+function organizarAcoesAgendaVisualAdmin() {
+    const container = document.getElementById(
+        "agenda-visual-lista"
+    );
+
+    if (!container) {
+        return;
+    }
+
+    const cards = container.querySelectorAll(
+        ".agenda-evento-card.agendamento"
+    );
+
+    cards.forEach((card) => {
+
+        if (
+            card.dataset.acoesCompactadas === "1"
+        ) {
+            return;
+        }
+
+        const botoes = Array.from(
+            card.querySelectorAll("button")
+        );
+
+        if (botoes.length <= 2) {
+            card.dataset.acoesCompactadas = "1";
+            return;
+        }
+
+        const principais = [];
+        const secundarias = [];
+
+        botoes.forEach((botao) => {
+            const texto =
+                normalizarTextoAcaoAgendaAdmin(
+                    botao.textContent
+                );
+
+            if (
+                texto === "confirmar"
+                || texto === "concluir"
+            ) {
+                principais.push(botao);
+            } else {
+                secundarias.push(botao);
+            }
+        });
+
+
+        if (!secundarias.length) {
+            card.dataset.acoesCompactadas = "1";
+            return;
+        }
+
+
+        let containerOriginal =
+            botoes[0]?.parentElement;
+
+        if (
+            !containerOriginal
+            || containerOriginal === card
+        ) {
+            containerOriginal =
+                document.createElement("div");
+
+            containerOriginal.className =
+                "agenda-evento-acoes";
+
+            card.appendChild(
+                containerOriginal
+            );
+        }
+
+
+        containerOriginal.innerHTML = "";
+
+
+        principais.forEach((botao) => {
+            botao.classList.add(
+                "acao-agenda-principal"
+            );
+
+            containerOriginal.appendChild(
+                botao
+            );
+        });
+
+
+        const {
+            detalhes,
+            conteudo,
+        } = criarMenuMaisAcoesAgendaAdmin();
+
+
+        secundarias.forEach((botao) => {
+            botao.classList.add(
+                "acao-agenda-secundaria"
+            );
+
+            conteudo.appendChild(botao);
+        });
+
+
+        detalhes.addEventListener(
+            "toggle",
+            () => {
+                if (detalhes.open) {
+                    fecharMenusAcoesAgendaAdmin(
+                        detalhes
+                    );
+                }
+            }
+        );
+
+
+        containerOriginal.appendChild(
+            detalhes
+        );
+
+
+        card.dataset.acoesCompactadas =
+            "1";
+    });
+}
+
+
+function iniciarOrganizacaoAcoesAgendaAdmin() {
+    const tabela = document.getElementById(
+        "lista-agendamentos"
+    );
+
+    const visual = document.getElementById(
+        "agenda-visual-lista"
+    );
+
+
+    if (tabela) {
+        const observerTabela =
+            new MutationObserver(() => {
+                organizarAcoesTabelaAgendaAdmin();
+            });
+
+        observerTabela.observe(
+            tabela,
+            {
+                childList: true,
+                subtree: true,
+            }
+        );
+    }
+
+
+    if (visual) {
+        const observerVisual =
+            new MutationObserver(() => {
+                organizarAcoesAgendaVisualAdmin();
+            });
+
+        observerVisual.observe(
+            visual,
+            {
+                childList: true,
+                subtree: true,
+            }
+        );
+    }
+
+
+    organizarAcoesTabelaAgendaAdmin();
+    organizarAcoesAgendaVisualAdmin();
+
+
+    document.addEventListener(
+        "click",
+        (event) => {
+
+            if (
+                !event.target.closest(
+                    ".agenda-mais-acoes-admin"
+                )
+            ) {
+                fecharMenusAcoesAgendaAdmin();
+            }
+        }
+    );
+}
+
+
+window.organizarAcoesTabelaAgendaAdmin =
+    organizarAcoesTabelaAgendaAdmin;
+
+window.organizarAcoesAgendaVisualAdmin =
+    organizarAcoesAgendaVisualAdmin;
+
+
+
+let filtroFilaEsperaAdminAtual = "pendentes";
+
+
+function cardFilaEsperaEhFinalizadoAdmin(card) {
+    return (
+        card.classList.contains("status-agendado")
+        || card.classList.contains("status-cancelado")
+        || card.classList.contains("status-expirado")
+    );
+}
+
+
+
+function cardFilaEsperaEhArquivadoAdmin(card) {
+    return card.classList.contains(
+        "status-arquivado"
+    );
+}
+
+
+function aplicarFiltroFilaEsperaAdmin(
+    filtro = filtroFilaEsperaAdminAtual
+) {
+    filtroFilaEsperaAdminAtual = filtro;
+
+    const container = document.getElementById(
+        "lista-fila-espera-admin"
+    );
+
+    if (!container) {
+        return;
+    }
+
+    const cards = container.querySelectorAll(
+        ".fila-espera-card-admin"
+    );
+
+    cards.forEach((card) => {
+        const finalizado =
+            cardFilaEsperaEhFinalizadoAdmin(card);
+
+        let mostrar = true;
+
+        if (filtro === "pendentes") {
+            mostrar = !finalizado;
+        }
+
+        const arquivado =
+            cardFilaEsperaEhArquivadoAdmin(card);
+
+        if (filtro === "pendentes") {
+            mostrar =
+                !finalizado
+                && !arquivado;
+        }
+
+        if (filtro === "finalizados") {
+            mostrar =
+                finalizado
+                && !arquivado;
+        }
+
+        if (filtro === "arquivados") {
+            mostrar = arquivado;
+        }
+
+        if (filtro === "todos") {
+            mostrar = true;
+        }
+
+        card.hidden = !mostrar;
+    });
+
+
+    document
+        .querySelectorAll(
+            "[data-fila-filtro-admin]"
+        )
+        .forEach((botao) => {
+            const ativo =
+                botao.dataset.filaFiltroAdmin
+                === filtro;
+
+            botao.classList.toggle(
+                "ativo",
+                ativo
+            );
+
+            botao.setAttribute(
+                "aria-pressed",
+                String(ativo)
+            );
+        });
+}
+
+
+
+
+function garantirBotaoExcluirFilaEsperaAdmin(card) {
+    if (!card) {
+        return;
+    }
+
+    if (
+        !card.classList.contains(
+            "status-arquivado"
+        )
+    ) {
+        return;
+    }
+
+    if (
+        card.querySelector(
+            ".btn-excluir-fila-admin"
+        )
+    ) {
+        return;
+    }
+
+    const acoes = card.querySelector(
+        ".fila-espera-card-acoes"
+    );
+
+    if (!acoes) {
+        return;
+    }
+
+    const itemId = Number(
+        card.dataset.filaItemId || 0
+    );
+
+    if (!itemId) {
+        return;
+    }
+
+    const botao =
+        document.createElement(
+            "button"
+        );
+
+    botao.type = "button";
+
+    botao.className =
+        "btn-excluir-fila-admin";
+
+    botao.textContent =
+        "Excluir definitivamente";
+
+    botao.addEventListener(
+        "click",
+        () => {
+            excluirItemFilaEsperaAdmin(
+                itemId
+            );
+        }
+    );
+
+    acoes.appendChild(botao);
+}
+
+
+function garantirBotaoArquivarFilaEsperaAdmin(card) {
+    if (!card) {
+        return;
+    }
+
+    if (
+        card.classList.contains(
+            "status-arquivado"
+        )
+    ) {
+        return;
+    }
+
+    if (
+        card.querySelector(
+            ".btn-arquivar-fila-admin"
+        )
+    ) {
+        return;
+    }
+
+    const acoes = card.querySelector(
+        ".fila-espera-card-acoes"
+    );
+
+    if (!acoes) {
+        return;
+    }
+
+    const itemId = Number(
+        card.dataset.filaItemId || 0
+    );
+
+    if (!itemId) {
+        return;
+    }
+
+    const botao =
+        document.createElement("button");
+
+    botao.type = "button";
+
+    botao.className =
+        "btn-secundario btn-arquivar-fila-admin";
+
+    botao.textContent =
+        "Arquivar";
+
+    botao.addEventListener(
+        "click",
+        () => {
+            arquivarItemFilaEsperaAdmin(
+                itemId
+            );
+        }
+    );
+
+    acoes.appendChild(botao);
+}
+
+
+function organizarDetalhesFilaEsperaAdmin() {
+    const container = document.getElementById(
+        "lista-fila-espera-admin"
+    );
+
+    if (!container) {
+        return;
+    }
+
+    container
+        .querySelectorAll(
+            ".fila-espera-card-admin"
+        )
+        .forEach((card) => {
+
+            garantirBotaoArquivarFilaEsperaAdmin(
+                card
+            );
+
+            garantirBotaoExcluirFilaEsperaAdmin(
+                card
+            );
+
+            if (
+                card.dataset.detalhesOrganizados
+                === "1"
+            ) {
+                return;
+            }
+
+            const blocoDetalhes =
+                card.querySelector(
+                    ".fila-espera-card-detalhes"
+                );
+
+            const observacao =
+                card.querySelector(
+                    ".fila-espera-observacao-admin"
+                );
+
+            const acoes =
+                card.querySelector(
+                    ".fila-espera-card-acoes"
+                );
+
+
+            if (!blocoDetalhes) {
+                card.dataset.detalhesOrganizados =
+                    "1";
+
+                return;
+            }
+
+
+            const detalhes =
+                document.createElement(
+                    "details"
+                );
+
+            detalhes.className =
+                "fila-espera-detalhes-retraiveis-admin";
+
+
+            const resumo =
+                document.createElement(
+                    "summary"
+                );
+
+            resumo.textContent =
+                "Ver detalhes";
+
+
+            const conteudo =
+                document.createElement(
+                    "div"
+                );
+
+            conteudo.className =
+                "fila-espera-detalhes-conteudo-admin";
+
+
+            conteudo.appendChild(
+                blocoDetalhes
+            );
+
+
+            if (observacao) {
+                conteudo.appendChild(
+                    observacao
+                );
+            }
+
+
+            detalhes.appendChild(
+                resumo
+            );
+
+            detalhes.appendChild(
+                conteudo
+            );
+
+
+            if (acoes) {
+                card.insertBefore(
+                    detalhes,
+                    acoes
+                );
+            } else {
+                card.appendChild(
+                    detalhes
+                );
+            }
+
+
+            card.dataset.detalhesOrganizados =
+                "1";
+        });
+}
+
+
+function garantirFiltrosFilaEsperaAdmin() {
+    const secao = document.getElementById(
+        "secao-fila-espera"
+    );
+
+    if (!secao) {
+        return false;
+    }
+
+
+    const resumo = secao.querySelector(
+        ".fila-espera-admin-resumo"
+    );
+
+    if (
+        resumo
+        && !document.getElementById(
+            "fila-espera-filtros-admin"
+        )
+    ) {
+        const filtros =
+            document.createElement("div");
+
+        filtros.id =
+            "fila-espera-filtros-admin";
+
+        filtros.className =
+            "fila-espera-filtros-admin";
+
+        filtros.innerHTML = `
+            <div>
+                <span>Visualizar</span>
+                <strong>
+                    Priorize quem ainda precisa de atendimento
+                </strong>
+            </div>
+
+            <div class="fila-espera-filtros-acoes-admin">
+                <button
+                    type="button"
+                    data-fila-filtro-admin="pendentes"
+                    class="ativo"
+                    aria-pressed="true"
+                >
+                    Pendentes
+                </button>
+
+                <button
+                    type="button"
+                    data-fila-filtro-admin="finalizados"
+                    aria-pressed="false"
+                >
+                    Finalizados
+                </button>
+
+                <button
+                    type="button"
+                    data-fila-filtro-admin="arquivados"
+                    aria-pressed="false"
+                >
+                    Arquivados
+                </button>
+
+                <button
+                    type="button"
+                    data-fila-filtro-admin="todos"
+                    aria-pressed="false"
+                >
+                    Todos
+                </button>
+            </div>
+        `;
+
+
+        resumo.insertAdjacentElement(
+            "afterend",
+            filtros
+        );
+
+
+        filtros.addEventListener(
+            "click",
+            (event) => {
+                const botao =
+                    event.target.closest(
+                        "[data-fila-filtro-admin]"
+                    );
+
+                if (!botao) {
+                    return;
+                }
+
+                aplicarFiltroFilaEsperaAdmin(
+                    botao.dataset.filaFiltroAdmin
+                );
+            }
+        );
+    }
+
+
+    const lista = document.getElementById(
+        "lista-fila-espera-admin"
+    );
+
+
+    if (
+        lista
+        && lista.dataset.refinoObservado !== "1"
+    ) {
+        const observer =
+            new MutationObserver(() => {
+                organizarDetalhesFilaEsperaAdmin();
+
+                aplicarFiltroFilaEsperaAdmin();
+            });
+
+
+        observer.observe(
+            lista,
+            {
+                childList: true,
+                subtree: true,
+            }
+        );
+
+
+        lista.dataset.refinoObservado =
+            "1";
+    }
+
+
+    organizarDetalhesFilaEsperaAdmin();
+
+    aplicarFiltroFilaEsperaAdmin();
+
+    return true;
+}
+
+
+function iniciarRefinoFilaEsperaAdmin() {
+    let tentativas = 0;
+
+    const timer = window.setInterval(
+        () => {
+            tentativas += 1;
+
+            const pronto =
+                garantirFiltrosFilaEsperaAdmin();
+
+            if (
+                pronto
+                || tentativas >= 40
+            ) {
+                window.clearInterval(
+                    timer
+                );
+            }
+        },
+        250
+    );
+}
+
+
+window.aplicarFiltroFilaEsperaAdmin =
+    aplicarFiltroFilaEsperaAdmin;
+
+
 document.addEventListener("DOMContentLoaded", () => {
+    iniciarRefinoFilaEsperaAdmin();
+    iniciarOrganizacaoAcoesAgendaAdmin();
+    configurarMenuLateralRetratilAdmin();
+    iniciarNavegacaoConfiguracoesAdmin();
+    iniciarObservacaoInsightDashboardAdmin();
+
     setTimeout(() => {
         exibirBannerFuncionalidadesAdmin();
     }, 700);
 });
+
+
+
+function garantirAlertaFilaEsperaDashboardAdmin() {
+    let card = document.getElementById(
+        "dashboard-fila-espera-alerta"
+    );
+
+    if (card) {
+        return card;
+    }
+
+    const referencia = document.getElementById(
+        "dashboard-insight-dia"
+    );
+
+    if (!referencia || !referencia.parentElement) {
+        return null;
+    }
+
+    card = document.createElement("section");
+
+    card.id = "dashboard-fila-espera-alerta";
+    card.className =
+        "dashboard-fila-espera-alerta";
+    card.hidden = true;
+    card.setAttribute("aria-hidden", "true");
+
+    card.innerHTML = `
+        <div class="dashboard-fila-espera-alerta-conteudo">
+            <div>
+                <span>Fila de espera</span>
+
+                <strong id="dashboard-fila-espera-titulo">
+                    Existem clientes aguardando
+                </strong>
+
+                <p id="dashboard-fila-espera-texto">
+                    Verifique oportunidades para preencher horarios vagos.
+                </p>
+            </div>
+
+            <div class="dashboard-fila-espera-alerta-acoes">
+                <strong id="dashboard-fila-espera-quantidade">
+                    0
+                </strong>
+
+                <button
+                    type="button"
+                    onclick="mostrarSecaoAdmin('secao-fila-espera')"
+                >
+                    Ver fila
+                </button>
+            </div>
+        </div>
+    `;
+
+    referencia.insertAdjacentElement(
+        "afterend",
+        card
+    );
+
+    return card;
+}
+
+
+function atualizarAlertaFilaEsperaDashboardAdmin(
+    itens = []
+) {
+    const card =
+        garantirAlertaFilaEsperaDashboardAdmin();
+
+    if (!card) {
+        return;
+    }
+
+    if (
+        typeof usuarioAdminPodeVerFilaEspera === "function"
+        && !usuarioAdminPodeVerFilaEspera()
+    ) {
+        card.hidden = true;
+        card.setAttribute("aria-hidden", "true");
+        return;
+    }
+
+    const lista = Array.isArray(itens)
+        ? itens
+        : [];
+
+    const aguardando = lista.filter(
+        (item) =>
+            String(item?.status || "")
+                .trim()
+                .toLowerCase() === "aguardando"
+    ).length;
+
+    const quantidade = document.getElementById(
+        "dashboard-fila-espera-quantidade"
+    );
+
+    const titulo = document.getElementById(
+        "dashboard-fila-espera-titulo"
+    );
+
+    const texto = document.getElementById(
+        "dashboard-fila-espera-texto"
+    );
+
+    if (quantidade) {
+        quantidade.textContent = String(aguardando);
+    }
+
+    if (aguardando <= 0) {
+        card.hidden = true;
+        card.setAttribute("aria-hidden", "true");
+        return;
+    }
+
+    card.hidden = false;
+    card.setAttribute("aria-hidden", "false");
+
+    if (titulo) {
+        titulo.textContent = (
+            aguardando === 1
+                ? "1 cliente aguardando oportunidade"
+                : `${aguardando} clientes aguardando oportunidade`
+        );
+    }
+
+    if (texto) {
+        texto.textContent =
+            "Confira a fila e aproveite horarios vagos para converter espera em agendamento.";
+    }
+}
+
+
+window.atualizarAlertaFilaEsperaDashboardAdmin =
+    atualizarAlertaFilaEsperaDashboardAdmin;
 
 
 /* Fila de espera - Sprint 4.7B */
@@ -8069,6 +9622,7 @@ function traduzirStatusFilaEsperaAdmin(status) {
         agendado: "Agendado",
         cancelado: "Cancelado",
         expirado: "Expirado",
+        arquivado: "Arquivado",
     };
 
     return mapa[String(status || "").toLowerCase()] || status || "Aguardando";
@@ -8217,6 +9771,7 @@ function renderizarFilaEsperaAdmin(itens) {
     const lista = Array.isArray(itens) ? itens : [];
 
     atualizarResumoFilaEsperaAdmin(lista);
+    atualizarAlertaFilaEsperaDashboardAdmin(lista);
 
     if (!lista.length) {
         container.innerHTML = `
@@ -8229,10 +9784,18 @@ function renderizarFilaEsperaAdmin(itens) {
 
     container.innerHTML = lista.map((item) => {
         const status = String(item.status || "aguardando").toLowerCase();
-        const acoesDesabilitadas = ["agendado", "cancelado", "expirado"].includes(status);
+        const acoesDesabilitadas = [
+            "agendado",
+            "cancelado",
+            "expirado",
+            "arquivado",
+        ].includes(status);
 
         return `
-            <article class="fila-espera-card-admin status-${status}">
+            <article
+                class="fila-espera-card-admin status-${status}"
+                data-fila-item-id="${item.id}"
+            >
                 <div class="fila-espera-card-topo">
                     <div>
                         <h3>${item.cliente_nome || "Cliente sem nome"}</h3>
@@ -8328,6 +9891,87 @@ async function carregarFilaEsperaAdmin() {
         }
     }
 }
+
+
+
+async function excluirItemFilaEsperaAdmin(itemId) {
+    if (!usuarioAdminPodeVerFilaEspera()) {
+        alert(
+            "Seu perfil nao tem permissao para gerenciar a fila de espera."
+        );
+
+        return;
+    }
+
+    const confirmacao = window.prompt(
+        "Esta exclusao e permanente.\n\n"
+        + "Digite EXCLUIR para confirmar."
+    );
+
+    if (
+        String(confirmacao || "")
+            .trim()
+            .toUpperCase()
+        !== "EXCLUIR"
+    ) {
+        return;
+    }
+
+    try {
+        await apiRequest(
+            `/api/${tenantSlugLogado}/admin/fila-espera/${itemId}`,
+            {
+                method: "DELETE",
+                auth: true,
+            }
+        );
+
+        await carregarFilaEsperaAdmin();
+
+    } catch (erro) {
+        console.error(
+            "Erro ao excluir item da fila de espera:",
+            erro
+        );
+
+        alert(
+            erro.message
+            || "Nao foi possivel excluir o item da fila de espera."
+        );
+    }
+}
+
+
+window.excluirItemFilaEsperaAdmin =
+    excluirItemFilaEsperaAdmin;
+
+
+async function arquivarItemFilaEsperaAdmin(itemId) {
+    if (!usuarioAdminPodeVerFilaEspera()) {
+        alert(
+            "Seu perfil nao tem permissao para gerenciar a fila de espera."
+        );
+        return;
+    }
+
+    const confirmou = window.confirm(
+        "Arquivar este item da fila de espera?"
+    );
+
+    if (!confirmou) {
+        return;
+    }
+
+    await atualizarStatusFilaEsperaAdmin(
+        itemId,
+        "arquivado"
+    );
+}
+
+
+window.arquivarItemFilaEsperaAdmin =
+    arquivarItemFilaEsperaAdmin;
+
 
 async function atualizarStatusFilaEsperaAdmin(itemId, status) {
     if (!usuarioAdminPodeVerFilaEspera()) {

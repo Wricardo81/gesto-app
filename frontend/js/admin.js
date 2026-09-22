@@ -7325,6 +7325,20 @@ function renderizarFilaEsperaAdmin(itens) {
                 ${item.observacao ? `<p class="fila-espera-observacao-admin">${item.observacao}</p>` : ""}
 
                 <div class="fila-espera-card-acoes">
+                    ${
+                        !acoesDesabilitadas
+                            ? `
+                    <button
+                        type="button"
+                        class="btn-primario"
+                        onclick="abrirConversaoFilaEsperaAdmin(${item.id})"
+                    >
+                        Criar agendamento
+                    </button>
+                    `
+                            : ""
+                    }
+
                     <button
                         type="button"
                         class="btn-secundario"
@@ -7439,6 +7453,345 @@ function iniciarFilaEsperaAdminQuandoDisponivel() {
         }
     }, 300);
 }
+
+
+let itemFilaConversaoAdmin = null;
+
+
+function fecharConversaoFilaEsperaAdmin() {
+    const modal = document.getElementById("modal-conversao-fila-admin");
+
+    if (modal) {
+        modal.remove();
+    }
+
+    itemFilaConversaoAdmin = null;
+}
+
+
+async function carregarHorariosConversaoFilaAdmin() {
+    const selectHorario = document.getElementById("fila-conversao-horario");
+    const campoData = document.getElementById("fila-conversao-data");
+    const selectProfissional = document.getElementById("fila-conversao-profissional");
+
+    if (!selectHorario || !campoData || !selectProfissional || !itemFilaConversaoAdmin) {
+        return;
+    }
+
+    const data = campoData.value;
+    const profissional = selectProfissional.value;
+
+    selectHorario.innerHTML = `
+        <option value="">Carregando horarios...</option>
+    `;
+
+    if (!data || !profissional) {
+        selectHorario.innerHTML = `
+            <option value="">Selecione data e profissional</option>
+        `;
+        return;
+    }
+
+    try {
+        const servicosResposta = await apiRequest(
+            `/api/${tenantSlugLogado}/servicos`,
+            {
+                method: "GET",
+                auth: true,
+            }
+        );
+
+        const servicos = Array.isArray(servicosResposta)
+            ? servicosResposta
+            : servicosResposta?.servicos || [];
+
+        const servico = servicos.find(
+            (item) =>
+                String(item.nome || "").trim().toLowerCase()
+                === String(itemFilaConversaoAdmin.servico || "").trim().toLowerCase()
+        );
+
+        if (!servico) {
+            throw new Error("Servico da fila nao encontrado no catalogo.");
+        }
+
+        const duracao = Number(servico.duracao || 0);
+
+        if (!duracao) {
+            throw new Error("Duracao do servico nao informada.");
+        }
+
+        const resposta = await apiRequest(
+            `/api/${tenantSlugLogado}/horarios/${encodeURIComponent(data)}/${duracao}/${encodeURIComponent(profissional)}`
+        );
+
+        const horarios = resposta?.horarios_disponiveis || [];
+
+        if (!horarios.length) {
+            selectHorario.innerHTML = `
+                <option value="">Nenhum horario disponivel</option>
+            `;
+            return;
+        }
+
+        selectHorario.innerHTML = `
+            <option value="">Selecione um horario</option>
+            ${horarios
+                .map(
+                    (horario) =>
+                        `<option value="${horario}">${horario}</option>`
+                )
+                .join("")}
+        `;
+    } catch (erro) {
+        selectHorario.innerHTML = `
+            <option value="">Erro ao carregar horarios</option>
+        `;
+
+        exibirMensagemAdmin(
+            erro?.message || "Nao foi possivel carregar os horarios."
+        );
+    }
+}
+
+
+async function abrirConversaoFilaEsperaAdmin(itemId) {
+    try {
+        const resposta = await apiRequest(
+            `/api/${tenantSlugLogado}/admin/fila-espera`,
+            {
+                auth: true,
+            }
+        );
+
+        const lista = Array.isArray(resposta?.fila_espera)
+            ? resposta.fila_espera
+            : [];
+
+        const item = lista.find(
+            (registro) => Number(registro.id) === Number(itemId)
+        );
+
+        if (!item) {
+            exibirMensagemAdmin("Item da fila nao encontrado.");
+            return;
+        }
+
+        itemFilaConversaoAdmin = item;
+
+        fecharConversaoFilaEsperaAdmin();
+        itemFilaConversaoAdmin = item;
+
+        const modal = document.createElement("div");
+
+        modal.id = "modal-conversao-fila-admin";
+        modal.className = "modal-conversao-fila-admin";
+
+        modal.innerHTML = `
+            <div class="modal-conversao-fila-conteudo">
+                <div class="modal-conversao-fila-topo">
+                    <div>
+                        <span class="admin-kicker">Fila de espera</span>
+                        <h3>Criar agendamento</h3>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="btn-secundario"
+                        onclick="fecharConversaoFilaEsperaAdmin()"
+                    >
+                        Fechar
+                    </button>
+                </div>
+
+                <div class="modal-conversao-fila-resumo">
+                    <p><strong>Cliente:</strong> ${item.cliente_nome || "-"}</p>
+                    <p><strong>Telefone:</strong> ${item.telefone_cliente || "-"}</p>
+                    <p><strong>Servico:</strong> ${item.servico || "-"}</p>
+                </div>
+
+                <form
+                    id="form-conversao-fila-admin"
+                    onsubmit="confirmarConversaoFilaEsperaAdmin(event)"
+                >
+                    <label>
+                        Data
+                        <input
+                            id="fila-conversao-data"
+                            type="date"
+                            value="${item.data_desejada || ""}"
+                            required
+                        >
+                    </label>
+
+                    <label>
+                        Profissional
+                        <select
+                            id="fila-conversao-profissional"
+                            required
+                        >
+                            <option value="">Carregando...</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        Horario
+                        <select
+                            id="fila-conversao-horario"
+                            required
+                        >
+                            <option value="">Selecione data e profissional</option>
+                        </select>
+                    </label>
+
+                    <div class="modal-conversao-fila-acoes">
+                        <button
+                            type="button"
+                            class="btn-secundario"
+                            onclick="fecharConversaoFilaEsperaAdmin()"
+                        >
+                            Cancelar
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="btn-primario"
+                        >
+                            Confirmar agendamento
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        const respostaProfissionais = await apiRequest(
+            `/api/${tenantSlugLogado}/profissionais`,
+            {
+                auth: true,
+            }
+        );
+
+        const profissionais = Array.isArray(respostaProfissionais)
+            ? respostaProfissionais
+            : respostaProfissionais?.profissionais || [];
+
+        const selectProfissional = document.getElementById(
+            "fila-conversao-profissional"
+        );
+
+        selectProfissional.innerHTML = `
+            <option value="">Selecione um profissional</option>
+            ${profissionais
+                .map((profissional) => {
+                    const nome =
+                        profissional.nome
+                        || profissional.nome_profissional
+                        || "";
+
+                    return `<option value="${nome}">${nome}</option>`;
+                })
+                .join("")}
+        `;
+
+        if (item.profissional_preferido) {
+            selectProfissional.value = item.profissional_preferido;
+        }
+
+        document
+            .getElementById("fila-conversao-data")
+            ?.addEventListener(
+                "change",
+                carregarHorariosConversaoFilaAdmin
+            );
+
+        selectProfissional.addEventListener(
+            "change",
+            carregarHorariosConversaoFilaAdmin
+        );
+
+        await carregarHorariosConversaoFilaAdmin();
+    } catch (erro) {
+        tratarErro(erro);
+    }
+}
+
+
+async function confirmarConversaoFilaEsperaAdmin(event) {
+    event.preventDefault();
+
+    if (!itemFilaConversaoAdmin) {
+        exibirMensagemAdmin("Item da fila nao selecionado.");
+        return;
+    }
+
+    const data =
+        document.getElementById("fila-conversao-data")?.value || "";
+
+    const profissional =
+        document.getElementById("fila-conversao-profissional")?.value || "";
+
+    const horario =
+        document.getElementById("fila-conversao-horario")?.value || "";
+
+    if (!data || !profissional || !horario) {
+        exibirMensagemAdmin(
+            "Selecione data, profissional e horario."
+        );
+        return;
+    }
+
+    try {
+        const resposta = await apiRequest(
+            `/api/${tenantSlugLogado}/admin/fila-espera/${itemFilaConversaoAdmin.id}/agendar`,
+            {
+                method: "POST",
+                auth: true,
+                body: {
+                    data,
+                    profissional,
+                    horario,
+                },
+            }
+        );
+
+        fecharConversaoFilaEsperaAdmin();
+
+        exibirMensagemAdmin(
+            resposta?.mensagem
+            || "Agendamento criado com sucesso."
+        );
+
+        await carregarFilaEsperaAdmin();
+
+        if (typeof carregarAgendamentos === "function") {
+            await carregarAgendamentos();
+        }
+
+        if (typeof carregarAgendaVisualDia === "function") {
+            await carregarAgendaVisualDia({
+                forcar: true,
+            });
+        }
+    } catch (erro) {
+        tratarErro(erro);
+    }
+}
+
+
+window.abrirConversaoFilaEsperaAdmin =
+    abrirConversaoFilaEsperaAdmin;
+
+window.fecharConversaoFilaEsperaAdmin =
+    fecharConversaoFilaEsperaAdmin;
+
+window.confirmarConversaoFilaEsperaAdmin =
+    confirmarConversaoFilaEsperaAdmin;
+
+window.carregarHorariosConversaoFilaAdmin =
+    carregarHorariosConversaoFilaAdmin;
+
 
 window.carregarFilaEsperaAdmin = carregarFilaEsperaAdmin;
 window.atualizarStatusFilaEsperaAdmin = atualizarStatusFilaEsperaAdmin;

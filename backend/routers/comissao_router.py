@@ -77,3 +77,51 @@ def registrar_repasse_profissional(
             status_code=422,
             detail=str(exc),
         )
+
+
+@router.get("/api/{tenant_slug}/repasses")
+def listar_repasses_profissionais(
+    tenant_slug: str,
+    profissional_nome: Optional[str] = Query(default=None),
+    db: Session = Depends(get_db),
+    _tenant_autorizado: str = Depends(
+        validar_tenant_logado
+    ),
+    _contexto_usuario: dict = Depends(
+        obter_contexto_usuario_logado
+    ),
+):
+    return comissao_service.listar_repasses_profissionais(
+        db=db,
+        tenant_slug=tenant_slug,
+        profissional_nome=profissional_nome,
+    )
+
+
+@router.get("/api/{tenant_slug}/repasses/{repasse_id}")
+def obter_repasse_profissional(
+    tenant_slug: str,
+    repasse_id: int,
+    db: Session = Depends(get_db),
+    _tenant_autorizado: str = Depends(
+        validar_tenant_logado
+    ),
+    _contexto_usuario: dict = Depends(
+        obter_contexto_usuario_logado
+    ),
+):
+    repasse = comissao_service.obter_repasse_profissional(
+        db=db,
+        tenant_slug=tenant_slug,
+        repasse_id=repasse_id,
+    )
+
+    if not repasse:
+        from fastapi import HTTPException
+
+        raise HTTPException(
+            status_code=404,
+            detail="Repasse nao encontrado.",
+        )
+
+    return repasse

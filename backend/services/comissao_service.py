@@ -312,3 +312,183 @@ def registrar_repasse_profissional(
         ],
         "quantidade_comissoes": len(comissoes),
     }
+
+
+def listar_repasses_profissionais(
+    db: Session,
+    tenant_slug: str,
+    profissional_nome: str | None = None,
+) -> dict:
+    consulta = (
+        db.query(models.RepasseProfissional)
+        .filter(
+            models.RepasseProfissional.barbearia_slug
+            == tenant_slug
+        )
+    )
+
+    if profissional_nome:
+        consulta = consulta.filter(
+            models.RepasseProfissional.profissional_nome
+            == profissional_nome
+        )
+
+    repasses = (
+        consulta
+        .order_by(
+            models.RepasseProfissional.pago_em.desc(),
+            models.RepasseProfissional.id.desc(),
+        )
+        .all()
+    )
+
+    itens = []
+
+    for repasse in repasses:
+        quantidade_comissoes = (
+            db.query(models.ComissaoAtendimento)
+            .filter(
+                models.ComissaoAtendimento.barbearia_slug
+                == tenant_slug,
+                models.ComissaoAtendimento.repasse_id
+                == repasse.id,
+            )
+            .count()
+        )
+
+        itens.append(
+            {
+                "id": repasse.id,
+                "profissional_nome": repasse.profissional_nome,
+                "valor": float(repasse.valor or 0),
+                "periodo_inicio": (
+                    repasse.periodo_inicio.isoformat()
+                    if repasse.periodo_inicio
+                    else None
+                ),
+                "periodo_fim": (
+                    repasse.periodo_fim.isoformat()
+                    if repasse.periodo_fim
+                    else None
+                ),
+                "observacao": repasse.observacao,
+                "registrado_por": repasse.registrado_por,
+                "pago_em": (
+                    repasse.pago_em.isoformat()
+                    if repasse.pago_em
+                    else None
+                ),
+                "quantidade_comissoes": quantidade_comissoes,
+            }
+        )
+
+    total_pago = round(
+        sum(
+            float(repasse.valor or 0)
+            for repasse in repasses
+        ),
+        2,
+    )
+
+    return {
+        "tenant_slug": tenant_slug,
+        "profissional_nome": profissional_nome,
+        "quantidade": len(itens),
+        "total_pago": total_pago,
+        "repasses": itens,
+    }
+
+
+def obter_repasse_profissional(
+    db: Session,
+    tenant_slug: str,
+    repasse_id: int,
+) -> dict | None:
+    repasse = (
+        db.query(models.RepasseProfissional)
+        .filter(
+            models.RepasseProfissional.id == repasse_id,
+            models.RepasseProfissional.barbearia_slug
+            == tenant_slug,
+        )
+        .first()
+    )
+
+    if not repasse:
+        return None
+
+    comissoes = (
+        db.query(models.ComissaoAtendimento)
+        .filter(
+            models.ComissaoAtendimento.barbearia_slug
+            == tenant_slug,
+            models.ComissaoAtendimento.repasse_id
+            == repasse.id,
+        )
+        .order_by(
+            models.ComissaoAtendimento.id.asc()
+        )
+        .all()
+    )
+
+    itens_comissoes = [
+        {
+            "id": comissao.id,
+            "agendamento_id": comissao.agendamento_id,
+            "profissional_nome": comissao.profissional_nome,
+            "servico": comissao.servico,
+            "valor_atendimento": float(
+                comissao.valor_atendimento or 0
+            ),
+            "comissao_tipo": comissao.comissao_tipo,
+            "comissao_regra_valor": float(
+                comissao.comissao_regra_valor or 0
+            ),
+            "valor_comissao": float(
+                comissao.valor_comissao or 0
+            ),
+            "status": comissao.status,
+            "gerado_em": (
+                comissao.gerado_em.isoformat()
+                if comissao.gerado_em
+                else None
+            ),
+            "pago_em": (
+                comissao.pago_em.isoformat()
+                if comissao.pago_em
+                else None
+            ),
+        }
+        for comissao in comissoes
+    ]
+
+    return {
+        "id": repasse.id,
+        "tenant_slug": repasse.barbearia_slug,
+        "profissional_nome": repasse.profissional_nome,
+        "valor": float(repasse.valor or 0),
+        "periodo_inicio": (
+            repasse.periodo_inicio.isoformat()
+            if repasse.periodo_inicio
+            else None
+        ),
+        "periodo_fim": (
+            repasse.periodo_fim.isoformat()
+            if repasse.periodo_fim
+            else None
+        ),
+        "observacao": repasse.observacao,
+        "registrado_por": repasse.registrado_por,
+        "pago_em": (
+            repasse.pago_em.isoformat()
+            if repasse.pago_em
+            else None
+        ),
+        "criado_em": (
+            repasse.criado_em.isoformat()
+            if repasse.criado_em
+            else None
+        ),
+        "quantidade_comissoes": len(itens_comissoes),
+        "comissoes": itens_comissoes,
+    }

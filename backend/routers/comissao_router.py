@@ -40,3 +40,40 @@ def listar_comissoes_pendentes(
         tenant_slug=tenant_slug,
         profissional_nome=profissional_nome,
     )
+
+
+@router.post("/api/{tenant_slug}/repasses")
+def registrar_repasse_profissional(
+    tenant_slug: str,
+    dados: comissao_service.NovoRepasseProfissional,
+    db: Session = Depends(get_db),
+    _tenant_autorizado: str = Depends(
+        validar_tenant_logado
+    ),
+    contexto_usuario: dict = Depends(
+        obter_contexto_usuario_logado
+    ),
+):
+    registrado_por = (
+        contexto_usuario.get("email")
+        or contexto_usuario.get("nome")
+        or contexto_usuario.get("sub")
+    )
+
+    try:
+        return comissao_service.registrar_repasse_profissional(
+            db=db,
+            tenant_slug=tenant_slug,
+            dados=dados,
+            registrado_por=registrado_por,
+        )
+
+    except ValueError as exc:
+        db.rollback()
+
+        from fastapi import HTTPException
+
+        raise HTTPException(
+            status_code=422,
+            detail=str(exc),
+        )

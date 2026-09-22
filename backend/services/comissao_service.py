@@ -163,3 +163,152 @@ def listar_comissoes_pendentes(
         "total_pendente": total_pendente,
         "comissoes": itens,
     }
+
+from datetime import datetime
+from pydantic import BaseModel, Field
+
+
+class NovoRepasseProfissional(BaseModel):
+    comissoes_ids: list[int] = Field(min_length=1)
+    observacao: str | None = None
+
+
+def registrar_repasse_profissional(
+    db: Session,
+    tenant_slug: str,
+    dados: NovoRepasseProfissional,
+    registrado_por: str | None = None,
+) -> dict:
+    ids_unicos = list(dict.fromkeys(dados.comissoes_ids))
+
+    comissoes = (
+        db.query(models.ComissaoAtendimento)
+        .filter(
+            models.ComissaoAtendimento.barbearia_slug
+            == tenant_slug,
+            models.ComissaoAtendimento.id.in_(ids_unicos),
+        )
+        .order_by(models.ComissaoAtendimento.id.asc())
+        .all()
+    )
+
+    if len(comissoes) != len(ids_unicos):
+        raise ValueError(
+            "Uma ou mais comissoes nao foram encontradas para este tenant."
+        )
+
+    comissoes_nao_pendentes = [
+        comissao.id
+        for comissao in comissoes
+        if comissao.status != "pendente"
+        or comissao.repasse_id is not None
+    ]
+
+    if comissoes_nao_pendentes:
+        raise ValueError(
+            "Uma ou mais comissoes ja foram pagas ou vinculadas a outro repasse."
+        )
+
+    profissionais = {
+        comissao.profissional_nome
+        for comissao in comissoes
+    }
+
+    if len(profissionais) != 1:
+        raise ValueError(
+            "Todas as comissoes do repasse devem pertencer ao mesmo profissional."
+        )
+
+    profissional_nome = next(iter(profissionais))
+
+    total = round(
+        sum(
+            float(comissao.valor_comissao or 0)
+            for comissao in comissoes
+        ),
+        2,
+    )
+
+    datas_atendimentos = []
+
+    for comissao in comissoes:
+        agendamento = (
+            db.query(models.Agendamento)
+            .filter(
+                models.Agendamento.id
+                == comissao.agendamento_id,
+                models.Agendamento.barbearia_slug
+                == tenant_slug,
+            )
+            .first()
+        )
+
+        if agendamento and agendamento.data:
+            datas_atendimentos.append(
+                agendamento.data
+            )
+
+    agora = datetime.utcnow()
+
+    repasse = models.RepasseProfissional(
+        barbearia_slug=tenant_slug,
+        profissional_nome=profissional_nome,
+        valor=total,
+        periodo_inicio=(
+            min(datas_atendimentos)
+            if datas_atendimentos
+            else None
+        ),
+        periodo_fim=(
+            max(datas_atendimentos)
+            if datas_atendimentos
+            else None
+        ),
+        observacao=(
+            dados.observacao.strip()
+            if dados.observacao
+            else None
+        ),
+        registrado_por=registrado_por,
+        pago_em=agora,
+    )
+
+    db.add(repasse)
+    db.flush()
+
+    for comissao in comissoes:
+        comissao.repasse_id = repasse.id
+        comissao.status = "pago"
+        comissao.pago_em = agora
+
+    db.commit()
+    db.refresh(repasse)
+
+    return {
+        "id": repasse.id,
+        "tenant_slug": repasse.barbearia_slug,
+        "profissional_nome": repasse.profissional_nome,
+        "valor": float(repasse.valor or 0),
+        "periodo_inicio": (
+            repasse.periodo_inicio.isoformat()
+            if repasse.periodo_inicio
+            else None
+        ),
+        "periodo_fim": (
+            repasse.periodo_fim.isoformat()
+            if repasse.periodo_fim
+            else None
+        ),
+        "observacao": repasse.observacao,
+        "registrado_por": repasse.registrado_por,
+        "pago_em": (
+            repasse.pago_em.isoformat()
+            if repasse.pago_em
+            else None
+        ),
+        "comissoes_ids": [
+            comissao.id
+            for comissao in comissoes
+        ],
+        "quantidade_comissoes": len(comissoes),
+    }

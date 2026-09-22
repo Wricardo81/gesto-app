@@ -186,6 +186,142 @@ class Profissional(Base):
 
 
 
+class ComissaoAtendimento(Base):
+    __tablename__ = "comissoes_atendimentos"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "barbearia_slug",
+            "agendamento_id",
+            name="uq_comissao_atendimento_tenant_agendamento",
+        ),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    barbearia_slug = Column(
+        String,
+        index=True,
+        nullable=False,
+    )
+
+    agendamento_id = Column(
+        Integer,
+        index=True,
+        nullable=False,
+    )
+
+    profissional_nome = Column(
+        String,
+        index=True,
+        nullable=False,
+    )
+
+    servico = Column(
+        String,
+        nullable=True,
+    )
+
+    valor_atendimento = Column(
+        Float,
+        nullable=False,
+    )
+
+    comissao_tipo = Column(
+        String,
+        nullable=False,
+    )
+
+    comissao_regra_valor = Column(
+        Float,
+        nullable=False,
+    )
+
+    valor_comissao = Column(
+        Float,
+        nullable=False,
+    )
+
+    status = Column(
+        String,
+        default="pendente",
+        nullable=False,
+        index=True,
+    )
+
+    repasse_id = Column(
+        Integer,
+        nullable=True,
+        index=True,
+    )
+
+    gerado_em = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )
+
+    pago_em = Column(
+        DateTime,
+        nullable=True,
+    )
+
+
+class RepasseProfissional(Base):
+    __tablename__ = "repasses_profissionais"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    barbearia_slug = Column(
+        String,
+        index=True,
+        nullable=False,
+    )
+
+    profissional_nome = Column(
+        String,
+        index=True,
+        nullable=False,
+    )
+
+    valor = Column(
+        Float,
+        nullable=False,
+    )
+
+    periodo_inicio = Column(
+        Date,
+        nullable=True,
+    )
+
+    periodo_fim = Column(
+        Date,
+        nullable=True,
+    )
+
+    observacao = Column(
+        String,
+        nullable=True,
+    )
+
+    registrado_por = Column(
+        String,
+        nullable=True,
+    )
+
+    pago_em = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )
+
+    criado_em = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )
+
+
 class ServicoProfissional(Base):
     __tablename__ = "servico_profissionais"
 

@@ -9,6 +9,7 @@ import models
 from database import SessaoLocal
 from security import validar_tenant_logado, obter_contexto_usuario_logado
 from services import agendamento_service
+from services import comissao_service
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -412,12 +413,25 @@ def atualizar_status_agendamento_admin(
                 detail="Prestador so pode concluir atendimentos proprios.",
             )
 
+    status_anterior = (
+        agendamento.status or "confirmado"
+    )
+
     agendamento.status = novo_status
 
     if novo_status != "cancelado":
         agendamento.motivo_cancelamento = None
         agendamento.cancelado_por = None
         agendamento.cancelado_em = None
+
+    if (
+        novo_status == "concluido"
+        and status_anterior != "concluido"
+    ):
+        comissao_service.gerar_comissao_atendimento_se_necessario(
+            db,
+            agendamento,
+        )
 
     db.commit()
     db.refresh(agendamento)

@@ -1,4 +1,4 @@
-﻿name: Backend Tests
+name: Backend Tests
 
 on:
   pull_request:
@@ -20,7 +20,6 @@ jobs:
 
     env:
       APP_ENV: test
-      JWT_SECRET_KEY: ci-test-secret-not-production
       WHATSAPP_TRANSPORT_MODE: fake
 
     steps:
@@ -53,8 +52,16 @@ jobs:
             services/whatsapp_webhook_service.py \
             scripts/executar_outbox_whatsapp.py
 
-      - name: Run backend test suite
+      - name: Run JWT settings contract
         env:
           PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
         run: |
-          python -m pytest tests -q
+          unset JWT_SECRET_KEY
+          python -m pytest tests/test_settings_jwt_contract.py -q
+
+      - name: Run backend test suite
+        env:
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+          JWT_SECRET_KEY: ci-test-secret-not-production-0123456789abcdef
+        run: |
+          python -m pytest tests --ignore=tests/test_settings_jwt_contract.py -q

@@ -9039,6 +9039,11 @@ function garantirBotaoExcluirFilaEsperaAdmin(card) {
         return;
     }
 
+
+    if (!usuarioAdminPodeGerenciarFilaEspera()) {
+        return;
+    }
+
     if (
         !card.classList.contains(
             "status-arquivado"
@@ -9099,6 +9104,11 @@ function garantirBotaoExcluirFilaEsperaAdmin(card) {
 
 function garantirBotaoArquivarFilaEsperaAdmin(card) {
     if (!card) {
+        return;
+    }
+
+
+    if (!usuarioAdminPodeGerenciarFilaEspera()) {
         return;
     }
 
@@ -9615,6 +9625,24 @@ function usuarioAdminPodeVerFilaEspera() {
         );
 }
 
+
+function usuarioAdminPodeGerenciarFilaEspera() {
+    if (
+        usuarioAdminEhGestor
+        && usuarioAdminEhGestor()
+    ) {
+        return true;
+    }
+
+    return Boolean(
+        usuarioAdminTemPermissao
+        && usuarioAdminTemPermissao(
+            "gerenciar_fila_espera"
+        )
+    );
+}
+
+
 function traduzirStatusFilaEsperaAdmin(status) {
     const mapa = {
         aguardando: "Aguardando",
@@ -9782,6 +9810,9 @@ function renderizarFilaEsperaAdmin(itens) {
         return;
     }
 
+    const podeGerenciar =
+        usuarioAdminPodeGerenciarFilaEspera();
+
     container.innerHTML = lista.map((item) => {
         const status = String(item.status || "aguardando").toLowerCase();
         const acoesDesabilitadas = [
@@ -9814,6 +9845,7 @@ function renderizarFilaEsperaAdmin(itens) {
 
                 ${item.observacao ? `<p class="fila-espera-observacao-admin">${item.observacao}</p>` : ""}
 
+                ${podeGerenciar ? `
                 <div class="fila-espera-card-acoes">
                     ${
                         !acoesDesabilitadas
@@ -9856,6 +9888,8 @@ function renderizarFilaEsperaAdmin(itens) {
                         Expirar
                     </button>
                 </div>
+                ` : ""}
+
             </article>
         `;
     }).join("");
@@ -9895,7 +9929,7 @@ async function carregarFilaEsperaAdmin() {
 
 
 async function excluirItemFilaEsperaAdmin(itemId) {
-    if (!usuarioAdminPodeVerFilaEspera()) {
+    if (!usuarioAdminPodeGerenciarFilaEspera()) {
         alert(
             "Seu perfil nao tem permissao para gerenciar a fila de espera."
         );
@@ -9947,7 +9981,7 @@ window.excluirItemFilaEsperaAdmin =
 
 
 async function arquivarItemFilaEsperaAdmin(itemId) {
-    if (!usuarioAdminPodeVerFilaEspera()) {
+    if (!usuarioAdminPodeGerenciarFilaEspera()) {
         alert(
             "Seu perfil nao tem permissao para gerenciar a fila de espera."
         );
@@ -9974,7 +10008,7 @@ window.arquivarItemFilaEsperaAdmin =
 
 
 async function atualizarStatusFilaEsperaAdmin(itemId, status) {
-    if (!usuarioAdminPodeVerFilaEspera()) {
+    if (!usuarioAdminPodeGerenciarFilaEspera()) {
         alert("Seu perfil nao tem permissao para gerenciar a fila de espera.");
         return;
     }

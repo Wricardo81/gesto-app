@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from typing import Iterable
 
 from fastapi import HTTPException
@@ -237,7 +237,7 @@ def atualizar_status_fila_espera(
             ),
         )
 
-    agora = datetime.utcnow()
+    agora = datetime.now(UTC).replace(tzinfo=None)
     item.status = status
 
     if status == "chamado":

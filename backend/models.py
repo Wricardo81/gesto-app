@@ -588,6 +588,21 @@ class FilaEspera(Base):
     cancelado_em = Column(DateTime, nullable=True)
     expirado_em = Column(DateTime, nullable=True)
 
-    criado_em = Column(DateTime, default=datetime.utcnow, nullable=False)
-    atualizado_em = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    criado_em = Column(
+        DateTime,
+        default=lambda: datetime.now(UTC).replace(
+            tzinfo=None
+        ),
+        nullable=False,
+    )
+    atualizado_em = Column(
+        DateTime,
+        default=lambda: datetime.now(UTC).replace(
+            tzinfo=None
+        ),
+        onupdate=lambda: datetime.now(UTC).replace(
+            tzinfo=None
+        ),
+        nullable=False,
+    )
 

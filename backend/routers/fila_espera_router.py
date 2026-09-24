@@ -39,7 +39,7 @@ def validar_acesso_fila_espera_admin(
     if "*" in permissoes:
         return
 
-    if papel in {"gestor", "recepcao"}:
+    if papel == "gestor":
         return
 
     permissao_necessaria = (
@@ -198,7 +198,11 @@ def converter_fila_espera_em_agendamento(
             detail="Este item da fila ja foi convertido em agendamento.",
         )
 
-    if status_atual in {"cancelado", "expirado"}:
+    if status_atual in {
+        "cancelado",
+        "expirado",
+        "arquivado",
+    }:
         raise HTTPException(
             status_code=409,
             detail="Este item da fila nao esta mais ativo.",

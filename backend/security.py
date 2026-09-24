@@ -11,7 +11,25 @@ from passlib.context import CryptContext
 from settings import settings
 
 
-SECRET_KEY = settings.jwt_secret_key
+def validar_jwt_secret_key(
+    valor: str | None,
+) -> str:
+    segredo = str(
+        valor or ""
+    ).strip()
+
+    if not segredo:
+        raise RuntimeError(
+            "JWT_SECRET_KEY nao configurado."
+        )
+
+    return segredo
+
+
+SECRET_KEY = validar_jwt_secret_key(
+    settings.jwt_secret_key
+)
+
 ALGORITHM = settings.jwt_algorithm
 ACCESS_TOKEN_EXPIRE_MINUTES = (
     settings.access_token_expire_minutes

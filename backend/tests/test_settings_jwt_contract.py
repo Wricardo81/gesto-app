@@ -104,8 +104,42 @@ def test_security_declara_validador_jwt():
     )
 
 
-def test_validador_rejeita_none():
-    import security
+def carregar_security_com_jwt(
+    monkeypatch,
+):
+    monkeypatch.setenv(
+        "JWT_SECRET_KEY",
+        "segredo-teste-importacao-0123456789abcdef",
+    )
+
+    spec = (
+        importlib.util
+        .spec_from_file_location(
+            "security_contract_test",
+            SECURITY_PATH,
+        )
+    )
+
+    modulo = (
+        importlib.util
+        .module_from_spec(
+            spec
+        )
+    )
+
+    spec.loader.exec_module(
+        modulo
+    )
+
+    return modulo
+
+
+def test_validador_rejeita_none(
+    monkeypatch,
+):
+    security = carregar_security_com_jwt(
+        monkeypatch
+    )
 
     with pytest.raises(
         RuntimeError,
@@ -116,8 +150,12 @@ def test_validador_rejeita_none():
         )
 
 
-def test_validador_rejeita_vazio():
-    import security
+def test_validador_rejeita_vazio(
+    monkeypatch,
+):
+    security = carregar_security_com_jwt(
+        monkeypatch
+    )
 
     with pytest.raises(
         RuntimeError,
@@ -128,8 +166,12 @@ def test_validador_rejeita_vazio():
         )
 
 
-def test_validador_aceita_segredo():
-    import security
+def test_validador_aceita_segredo(
+    monkeypatch,
+):
+    security = carregar_security_com_jwt(
+        monkeypatch
+    )
 
     assert (
         security.validar_jwt_secret_key(

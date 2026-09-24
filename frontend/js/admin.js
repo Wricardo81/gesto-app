@@ -560,7 +560,16 @@ function renderizarCardTrialAdmin(config = {}) {
   const trialExpirado = Boolean(config.trial_expirado);
   const acessoLiberado = Boolean(config.acesso_liberado);
 
-  if (!trialAtivo && !trialExpirado) {
+  const assinaturaAtiva =
+    assinaturaAdminEstaAtiva(config);
+
+  const deveMostrarTrial =
+    trialAtivo
+    && !trialExpirado
+    && acessoLiberado
+    && !assinaturaAtiva;
+
+  if (!deveMostrarTrial) {
     card.style.display = "none";
     return;
   }
@@ -1461,8 +1470,85 @@ async function realizarLogin(event) {
     }
 }
 
-function alternarMenuAdmin() {
-  document.body.classList.toggle("admin-menu-aberto");
+function alternarMenuAdmin(evento = null) {
+    /*
+     * O botao principal de menu usa a sidebar retratil.
+     *
+     * stopPropagation evita que o mesmo clique que abre
+     * a sidebar chegue ao listener global e a feche
+     * imediatamente.
+     */
+
+    if (evento) {
+        evento.preventDefault();
+        evento.stopPropagation();
+    }
+
+    document.body.classList.remove(
+        "admin-menu-aberto"
+    );
+
+    const sidebar =
+        document.querySelector(
+            ".admin-sidebar"
+        );
+
+    if (!sidebar) {
+        return;
+    }
+
+    const sidebarEstaFechada =
+        document.body.classList.contains(
+            "admin-sidebar-retraida"
+        );
+
+    if (sidebarEstaFechada) {
+        if (
+            typeof window.abrirSidebarAdmin
+            === "function"
+        ) {
+            window.abrirSidebarAdmin();
+            return;
+        }
+
+        const botaoAbrir =
+            document.querySelector(
+                ".btn-abrir-sidebar-admin"
+            );
+
+        if (botaoAbrir) {
+            botaoAbrir.click();
+            return;
+        }
+
+        document.body.classList.remove(
+            "admin-sidebar-retraida"
+        );
+
+        return;
+    }
+
+    if (
+        typeof window.fecharSidebarAdmin
+        === "function"
+    ) {
+        window.fecharSidebarAdmin();
+        return;
+    }
+
+    const botaoFechar =
+        sidebar.querySelector(
+            ".btn-fechar-sidebar-admin"
+        );
+
+    if (botaoFechar) {
+        botaoFechar.click();
+        return;
+    }
+
+    document.body.classList.add(
+        "admin-sidebar-retraida"
+    );
 }
 
 
@@ -3032,8 +3118,42 @@ async function atualizarResumoAdminAposMudanca() {
 }
 
 
+
+function atualizarEstadoOnboardingDashboardAdmin(
+    resumo = {}
+) {
+    const card = document.getElementById(
+        "card-onboarding-admin"
+    );
+
+    if (!card || !usuarioAdminEhGestor()) {
+        return;
+    }
+
+    const proximoPasso =
+        definirProximoPassoOnboardingAdmin(resumo);
+
+    const concluido = !proximoPasso;
+
+    card.classList.toggle(
+        "onboarding-dashboard-concluido",
+        concluido
+    );
+
+    card.classList.toggle(
+        "onboarding-dashboard-pendente",
+        !concluido
+    );
+
+    card.dataset.estadoOnboarding = concluido
+        ? "concluido"
+        : "pendente";
+}
+
+
 function renderizarOnboardingAdminComResumo(resumo) {
     renderizarProximoPassoOnboardingAdmin(resumo);
+    atualizarEstadoOnboardingDashboardAdmin(resumo);
   const card = document.getElementById("card-onboarding-admin");
   const lista = document.getElementById("onboarding-admin-lista");
   const progresso = document.getElementById("onboarding-admin-progresso");
@@ -3241,6 +3361,8 @@ async function iniciarPainel() {
   await carregarContextoUsuarioAdmin();
   await carregarCatalogoPerfisOperacionaisAdmin();
 
+  criarEstruturaFilaEsperaAdmin();
+
   atualizarLinkPublico();
   registrarListenersDePreview();
   registrarListenersCRM();
@@ -3266,6 +3388,11 @@ async function iniciarPainel() {
   }
 
   aplicarDashboardLimpoPorPerfilAdmin();
+
+  if (usuarioAdminPodeVerFinanceiroGeral()) {
+    await carregarResumoComissoesRepassesAdmin();
+  }
+
   iniciarMonitorNovosAgendamentos();
 }
 
@@ -3295,6 +3422,11 @@ async function iniciarPainel() {
             );
 
             await carregarAgendamentos();
+
+            if (usuarioAdminPodeVerFinanceiroGeral()) {
+                await carregarResumoComissoesRepassesAdmin();
+            }
+
             await carregarAgendaVisualDia({
                 forcar: true,
             });
@@ -4448,7 +4580,7 @@ async function carregarServicos(opcoes = {}) {
     carregandoServicosAdmin = true;
 
     area.innerHTML = criarEstadoVazioAdmin({
-        icone: "??",
+        icone: "\u23F3",
         titulo: "Carregando servicos",
         descricao: "Buscando servicos e profissionais aptos.",
     });
@@ -4473,7 +4605,7 @@ async function carregarServicos(opcoes = {}) {
 
         if (!servicos.length) {
             area.innerHTML = criarEstadoVazioAdmin({
-                icone: "??",
+                icone: "\u23F3",
                 titulo: "Nenhum servico cadastrado ainda",
                 descricao: "Cadastre os servicos para que os clientes possam agendar.",
                 textoBotao: "Cadastrar servico",
@@ -5148,6 +5280,969 @@ async function renderizarResumoProducaoPrestadorAdmin(agendamentos) {
 
 
 window.renderizarResumoProducaoPrestadorAdmin = renderizarResumoProducaoPrestadorAdmin;
+
+
+
+
+let comissoesPendentesRepasseAdminCache = [];
+
+
+function renderizarComissoesPendentesRepasseAdmin(comissoes) {
+    const container = document.getElementById(
+        "lista-comissoes-pendentes-admin"
+    );
+
+    if (!container) {
+        return;
+    }
+
+    comissoesPendentesRepasseAdminCache = Array.isArray(comissoes)
+        ? comissoes
+        : [];
+
+    if (!comissoesPendentesRepasseAdminCache.length) {
+        container.innerHTML = `
+            <div class="financeiro-repasse-vazio-admin">
+                Nenhuma comissão pendente de repasse.
+            </div>
+        `;
+
+        atualizarSelecaoRepasseAdmin();
+        return;
+    }
+
+    const grupos = {};
+
+    comissoesPendentesRepasseAdminCache.forEach((comissao) => {
+        const profissional =
+            comissao?.profissional_nome
+            || "Profissional não informado";
+
+        if (!grupos[profissional]) {
+            grupos[profissional] = [];
+        }
+
+        grupos[profissional].push(comissao);
+    });
+
+    container.innerHTML = Object.entries(grupos)
+        .map(([profissional, itens]) => {
+            const totalProfissional = itens.reduce(
+                (total, item) =>
+                    total + Number(item?.valor_comissao || 0),
+                0
+            );
+
+            const itensHtml = itens
+                .map((comissao) => {
+                    const id = Number(comissao?.id || 0);
+
+                    const servico = escaparHtmlAdmin(
+                        comissao?.servico || "Serviço não informado"
+                    );
+
+                    const profissionalSeguro = escaparHtmlAdmin(
+                        profissional
+                    );
+
+                    const valorComissao = Number(
+                        comissao?.valor_comissao || 0
+                    );
+
+                    const valorAtendimento = Number(
+                        comissao?.valor_atendimento || 0
+                    );
+
+                    return `
+                        <label class="comissao-pendente-item-admin">
+                            <input
+                                type="checkbox"
+                                class="checkbox-comissao-repasse-admin"
+                                value="${id}"
+                                data-profissional="${profissionalSeguro}"
+                                data-valor="${valorComissao}"
+                                onchange="atualizarSelecaoRepasseAdmin()"
+                            >
+
+                            <div>
+                                <strong>
+                                    ${servico}
+                                </strong>
+
+                                <span>
+                                    Atendimento #${Number(
+                                        comissao?.agendamento_id || 0
+                                    )}
+                                    ? ${formatarMoeda(
+                                        valorAtendimento
+                                    )}
+                                </span>
+                            </div>
+
+                            <strong class="comissao-pendente-valor-admin">
+                                ${formatarMoeda(valorComissao)}
+                            </strong>
+                        </label>
+                    `;
+                })
+                .join("");
+
+            return `
+                <section class="grupo-comissoes-profissional-admin">
+                    <div class="grupo-comissoes-profissional-topo-admin">
+                        <div>
+                            <span>Profissional</span>
+                            <strong>
+                                ${escaparHtmlAdmin(profissional)}
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Total pendente</span>
+                            <strong>
+                                ${formatarMoeda(totalProfissional)}
+                            </strong>
+                        </div>
+                    </div>
+
+                    <div class="grupo-comissoes-itens-admin">
+                        ${itensHtml}
+                    </div>
+                </section>
+            `;
+        })
+        .join("");
+
+    atualizarSelecaoRepasseAdmin();
+}
+
+
+function obterCheckboxesComissaoRepasseAdmin() {
+    return Array.from(
+        document.querySelectorAll(
+            ".checkbox-comissao-repasse-admin"
+        )
+    );
+}
+
+
+function atualizarSelecaoRepasseAdmin() {
+    const checkboxes =
+        obterCheckboxesComissaoRepasseAdmin();
+
+    const selecionados = checkboxes.filter(
+        (checkbox) => checkbox.checked
+    );
+
+    const profissionalSelecionado =
+        selecionados[0]?.dataset.profissional || "";
+
+    checkboxes.forEach((checkbox) => {
+        const outroProfissional = (
+            profissionalSelecionado
+            && checkbox.dataset.profissional
+                !== profissionalSelecionado
+        );
+
+        checkbox.disabled = (
+            outroProfissional
+            && !checkbox.checked
+        );
+    });
+
+    const totalSelecionado = selecionados.reduce(
+        (total, checkbox) =>
+            total + Number(checkbox.dataset.valor || 0),
+        0
+    );
+
+    const visorQuantidade = document.getElementById(
+        "repasse-selecionadas-quantidade"
+    );
+
+    const visorTotal = document.getElementById(
+        "repasse-selecionadas-total"
+    );
+
+    const botao = document.getElementById(
+        "btn-registrar-repasse-admin"
+    );
+
+    if (visorQuantidade) {
+        visorQuantidade.textContent = String(
+            selecionados.length
+        );
+    }
+
+    if (visorTotal) {
+        visorTotal.textContent = formatarMoeda(
+            totalSelecionado
+        );
+    }
+
+    if (botao) {
+        botao.disabled = selecionados.length === 0;
+    }
+}
+
+
+async function registrarRepasseSelecionadoAdmin() {
+    if (!usuarioAdminPodeVerFinanceiroGeral()) {
+        exibirMensagemAdmin(
+            "Apenas o gestor pode registrar repasses.",
+            "erro"
+        );
+        return;
+    }
+
+    const selecionados =
+        obterCheckboxesComissaoRepasseAdmin()
+            .filter((checkbox) => checkbox.checked);
+
+    if (!selecionados.length) {
+        exibirMensagemAdmin(
+            "Selecione ao menos uma comissão.",
+            "aviso"
+        );
+        return;
+    }
+
+    const profissionais = new Set(
+        selecionados.map(
+            (checkbox) => checkbox.dataset.profissional
+        )
+    );
+
+    if (profissionais.size !== 1) {
+        exibirMensagemAdmin(
+            "Selecione comissões de apenas um profissional.",
+            "aviso"
+        );
+        return;
+    }
+
+    const profissional =
+        selecionados[0].dataset.profissional;
+
+    const ids = selecionados.map(
+        (checkbox) => Number(checkbox.value)
+    );
+
+    const total = selecionados.reduce(
+        (soma, checkbox) =>
+            soma + Number(checkbox.dataset.valor || 0),
+        0
+    );
+
+    const observacao = (
+        document.getElementById(
+            "repasse-observacao-admin"
+        )?.value || ""
+    ).trim();
+
+    const confirmado = confirm(
+        `Registrar repasse de ${formatarMoeda(total)} `
+        + `para ${profissional}?`
+    );
+
+    if (!confirmado) {
+        return;
+    }
+
+    const botao = document.getElementById(
+        "btn-registrar-repasse-admin"
+    );
+
+    const textoOriginal = botao?.textContent
+        || "Registrar repasse";
+
+    if (botao) {
+        botao.disabled = true;
+        botao.textContent = "Registrando...";
+    }
+
+    try {
+        const resposta = await apiRequest(
+            `/api/${tenantSlugLogado}/repasses`,
+            {
+                method: "POST",
+                auth: true,
+                body: {
+                    comissoes_ids: ids,
+                    observacao: observacao || null,
+                },
+            }
+        );
+
+        const campoObservacao = document.getElementById(
+            "repasse-observacao-admin"
+        );
+
+        if (campoObservacao) {
+            campoObservacao.value = "";
+        }
+
+        exibirMensagemAdmin(
+            `Repasse de ${formatarMoeda(
+                resposta?.valor || total
+            )} registrado para ${profissional}.`
+        );
+
+        await carregarResumoComissoesRepassesAdmin();
+
+    } catch (erro) {
+        tratarErro(erro);
+
+    } finally {
+        if (botao) {
+            botao.textContent = textoOriginal;
+        }
+
+        atualizarSelecaoRepasseAdmin();
+    }
+}
+
+
+window.renderizarComissoesPendentesRepasseAdmin =
+    renderizarComissoesPendentesRepasseAdmin;
+
+window.atualizarSelecaoRepasseAdmin =
+    atualizarSelecaoRepasseAdmin;
+
+window.registrarRepasseSelecionadoAdmin =
+    registrarRepasseSelecionadoAdmin;
+
+
+
+function formatarDataRepasseAdmin(valor) {
+    if (!valor) {
+        return "-";
+    }
+
+    const texto = String(valor);
+
+    const match = texto.match(
+        /^(\d{4})-(\d{2})-(\d{2})$/
+    );
+
+    if (match) {
+        return `${match[3]}/${match[2]}/${match[1]}`;
+    }
+
+    return texto;
+}
+
+
+function formatarRegraComissaoRepasseAdmin(
+    tipo,
+    valor
+) {
+    const tipoNormalizado = String(
+        tipo || ""
+    ).toLowerCase();
+
+    const numero = Number(valor || 0);
+
+    if (tipoNormalizado === "percentual") {
+        return `${numero}%`;
+    }
+
+    if (tipoNormalizado === "fixo") {
+        return formatarMoeda(numero);
+    }
+
+    return "-";
+}
+
+
+function garantirModalDetalheRepasseAdmin() {
+    let modal = document.getElementById(
+        "modal-detalhe-repasse-admin"
+    );
+
+    if (modal) {
+        return modal;
+    }
+
+    modal = document.createElement("div");
+
+    modal.id = "modal-detalhe-repasse-admin";
+    modal.className =
+        "modal-historico-cliente modal-detalhe-repasse-admin";
+
+    modal.style.display = "none";
+
+    modal.innerHTML = `
+        <div
+            class="modal-historico-overlay"
+            onclick="fecharDetalheRepasseAdmin()"
+        ></div>
+
+        <div class="modal-historico-card modal-repasse-card-admin">
+
+            <div class="modal-historico-header">
+                <div>
+                    <span class="admin-kicker">
+                        Financeiro da equipe
+                    </span>
+
+                    <h2 id="detalhe-repasse-titulo-admin">
+                        Detalhes do repasse
+                    </h2>
+
+                    <p id="detalhe-repasse-resumo-admin">
+                        Carregando informa\u00e7\u00f5es...
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    class="btn-fechar-modal"
+                    onclick="fecharDetalheRepasseAdmin()"
+                    aria-label="Fechar"
+                >
+                    \u00d7
+                </button>
+            </div>
+
+            <div
+                id="detalhe-repasse-conteudo-admin"
+                class="detalhe-repasse-conteudo-admin"
+            >
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    return modal;
+}
+
+
+function fecharDetalheRepasseAdmin() {
+    const modal = document.getElementById(
+        "modal-detalhe-repasse-admin"
+    );
+
+    if (modal) {
+        modal.style.display = "none";
+    }
+}
+
+
+async function abrirDetalheRepasseAdmin(repasseId) {
+    if (!usuarioAdminPodeVerFinanceiroGeral()) {
+        exibirMensagemAdmin(
+            "Apenas o gestor pode acessar os detalhes financeiros.",
+            "erro"
+        );
+        return;
+    }
+
+    const id = Number(repasseId);
+
+    if (!Number.isInteger(id) || id <= 0) {
+        exibirMensagemAdmin(
+            "Repasse inv\u00e1lido.",
+            "erro"
+        );
+        return;
+    }
+
+    const modal = garantirModalDetalheRepasseAdmin();
+
+    const titulo = document.getElementById(
+        "detalhe-repasse-titulo-admin"
+    );
+
+    const resumo = document.getElementById(
+        "detalhe-repasse-resumo-admin"
+    );
+
+    const conteudo = document.getElementById(
+        "detalhe-repasse-conteudo-admin"
+    );
+
+    modal.style.display = "flex";
+
+    titulo.textContent = `Repasse #${id}`;
+
+    resumo.textContent =
+        "Carregando informa\u00e7\u00f5es...";
+
+    conteudo.innerHTML = `
+        <div class="financeiro-repasse-vazio-admin">
+            Carregando detalhes do repasse...
+        </div>
+    `;
+
+    try {
+        const dados = await apiRequest(
+            `/api/${tenantSlugLogado}/repasses/${id}`,
+            {
+                auth: true,
+            }
+        );
+
+        const profissional = escaparHtmlAdmin(
+            dados?.profissional_nome
+            || "Profissional n\u00e3o informado"
+        );
+
+        const registradoPor = escaparHtmlAdmin(
+            dados?.registrado_por
+            || "N\u00e3o informado"
+        );
+
+        const observacao = escaparHtmlAdmin(
+            dados?.observacao
+            || "Nenhuma observa\u00e7\u00e3o"
+        );
+
+        const valorTotal = formatarMoeda(
+            dados?.valor || 0
+        );
+
+        const periodoInicio =
+            formatarDataRepasseAdmin(
+                dados?.periodo_inicio
+            );
+
+        const periodoFim =
+            formatarDataRepasseAdmin(
+                dados?.periodo_fim
+            );
+
+        const periodo = (
+            periodoInicio === periodoFim
+                ? periodoInicio
+                : `${periodoInicio} a ${periodoFim}`
+        );
+
+        const pagoEm = dados?.pago_em
+            ? formatarDataHoraBR(dados.pago_em)
+            : "-";
+
+        const comissoes = Array.isArray(
+            dados?.comissoes
+        )
+            ? dados.comissoes
+            : [];
+
+        const quantidade = Number(
+            dados?.quantidade_comissoes
+            || comissoes.length
+            || 0
+        );
+
+        const textoQuantidade = (
+            quantidade === 1
+                ? "1 comiss\u00e3o"
+                : `${quantidade} comiss\u00f5es`
+        );
+
+        resumo.textContent =
+            `${profissional} \u00b7 ${valorTotal} `
+            + `\u00b7 ${textoQuantidade}`;
+
+        const itensHtml = comissoes.length
+            ? comissoes.map((comissao) => {
+
+                const servico = escaparHtmlAdmin(
+                    comissao?.servico
+                    || "Servi\u00e7o n\u00e3o informado"
+                );
+
+                const status = String(
+                    comissao?.status || ""
+                ).toLowerCase();
+
+                const statusTexto = (
+                    status === "pago"
+                        ? "Pago"
+                        : escaparHtmlAdmin(
+                            comissao?.status || "-"
+                        )
+                );
+
+                const regra =
+                    formatarRegraComissaoRepasseAdmin(
+                        comissao?.comissao_tipo,
+                        comissao?.comissao_regra_valor
+                    );
+
+                return `
+                    <article class="detalhe-repasse-item-admin">
+
+                        <div class="detalhe-repasse-item-topo-admin">
+                            <div>
+                                <span>
+                                    Atendimento
+                                    #${Number(
+                                        comissao?.agendamento_id
+                                        || 0
+                                    )}
+                                </span>
+
+                                <strong>
+                                    ${servico}
+                                </strong>
+                            </div>
+
+                            <span
+                                class="detalhe-repasse-status-admin status-${status}"
+                            >
+                                ${statusTexto}
+                            </span>
+                        </div>
+
+                        <div class="detalhe-repasse-item-grid-admin">
+
+                            <div>
+                                <small>
+                                    Valor do atendimento
+                                </small>
+
+                                <strong>
+                                    ${formatarMoeda(
+                                        comissao?.valor_atendimento
+                                        || 0
+                                    )}
+                                </strong>
+                            </div>
+
+                            <div>
+                                <small>
+                                    Regra
+                                </small>
+
+                                <strong>
+                                    ${regra}
+                                </strong>
+                            </div>
+
+                            <div>
+                                <small>
+                                    Comiss\u00e3o
+                                </small>
+
+                                <strong>
+                                    ${formatarMoeda(
+                                        comissao?.valor_comissao
+                                        || 0
+                                    )}
+                                </strong>
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join("")
+            : `
+                <div class="financeiro-repasse-vazio-admin">
+                    Nenhuma comiss\u00e3o vinculada
+                    a este repasse.
+                </div>
+            `;
+
+        conteudo.innerHTML = `
+            <div class="detalhe-repasse-resumo-grid-admin">
+
+                <div>
+                    <small>Profissional</small>
+                    <strong>${profissional}</strong>
+                </div>
+
+                <div>
+                    <small>Total pago</small>
+                    <strong>${valorTotal}</strong>
+                </div>
+
+                <div>
+                    <small>Per\u00edodo</small>
+                    <strong>${periodo}</strong>
+                </div>
+
+                <div>
+                    <small>Pago em</small>
+                    <strong>${pagoEm}</strong>
+                </div>
+
+                <div>
+                    <small>Registrado por</small>
+                    <strong>${registradoPor}</strong>
+                </div>
+
+                <div>
+                    <small>Comiss\u00f5es</small>
+                    <strong>${textoQuantidade}</strong>
+                </div>
+            </div>
+
+            <div class="detalhe-repasse-observacao-admin">
+                <small>Observa\u00e7\u00e3o</small>
+                <p>${observacao}</p>
+            </div>
+
+            <div class="detalhe-repasse-lista-admin">
+                <div class="detalhe-repasse-lista-topo-admin">
+                    <div>
+                        <span class="admin-kicker">
+                            Rastreabilidade
+                        </span>
+
+                        <h3>
+                            Comiss\u00f5es inclu\u00eddas
+                        </h3>
+                    </div>
+
+                    <strong>
+                        ${textoQuantidade}
+                    </strong>
+                </div>
+
+                ${itensHtml}
+            </div>
+        `;
+
+    } catch (erro) {
+        tratarErro(erro);
+        fecharDetalheRepasseAdmin();
+    }
+}
+
+
+window.abrirDetalheRepasseAdmin =
+    abrirDetalheRepasseAdmin;
+
+window.fecharDetalheRepasseAdmin =
+    fecharDetalheRepasseAdmin;
+
+
+
+function atualizarEstadoComissoesDashboardAdmin(
+    quantidadePendentes,
+    totalPendente
+) {
+    const card = document.getElementById(
+        "comissoes-repasses-dashboard"
+    );
+
+    if (!card) {
+        return;
+    }
+
+    const quantidade = Number(
+        quantidadePendentes || 0
+    );
+
+    const total = Number(
+        totalPendente || 0
+    );
+
+    card.classList.remove(
+        "financeiro-equipe-com-pendencias",
+        "financeiro-equipe-sem-pendencias"
+    );
+
+    if (quantidade > 0 || total > 0) {
+        card.classList.add(
+            "financeiro-equipe-com-pendencias"
+        );
+
+        card.dataset.estadoFinanceiroEquipe =
+            "pendente";
+
+        return;
+    }
+
+    card.classList.add(
+        "financeiro-equipe-sem-pendencias"
+    );
+
+    card.dataset.estadoFinanceiroEquipe =
+        "regular";
+}
+
+
+async function carregarResumoComissoesRepassesAdmin() {
+    const card = document.getElementById(
+        "comissoes-repasses-dashboard"
+    );
+
+    if (!card) {
+        return;
+    }
+
+    if (!usuarioAdminPodeVerFinanceiroGeral()) {
+        card.hidden = true;
+        card.setAttribute("aria-hidden", "true");
+        return;
+    }
+
+    card.hidden = false;
+    card.setAttribute("aria-hidden", "false");
+
+    const visorQuantidadePendentes = document.getElementById(
+        "visor-comissoes-pendentes-quantidade"
+    );
+
+    const visorTotalPendente = document.getElementById(
+        "visor-comissoes-pendentes-total"
+    );
+
+    const visorQuantidadeRepasses = document.getElementById(
+        "visor-repasses-quantidade"
+    );
+
+    const visorTotalRepasses = document.getElementById(
+        "visor-repasses-total"
+    );
+
+    const listaRepasses = document.getElementById(
+        "lista-repasses-recentes-admin"
+    );
+
+    try {
+        const [
+            pendentes,
+            historico,
+        ] = await Promise.all([
+            apiRequest(
+                `/api/${tenantSlugLogado}/comissoes/pendentes`,
+                {
+                    auth: true,
+                }
+            ),
+            apiRequest(
+                `/api/${tenantSlugLogado}/repasses`,
+                {
+                    auth: true,
+                }
+            ),
+        ]);
+
+        renderizarComissoesPendentesRepasseAdmin(
+            pendentes?.comissoes || []
+        );
+
+        atualizarEstadoComissoesDashboardAdmin(
+            Number(pendentes?.quantidade || 0),
+            Number(pendentes?.total_pendente || 0)
+        );
+
+        if (visorQuantidadePendentes) {
+            visorQuantidadePendentes.textContent = String(
+                Number(pendentes?.quantidade || 0)
+            );
+        }
+
+        if (visorTotalPendente) {
+            visorTotalPendente.textContent = formatarMoeda(
+                pendentes?.total_pendente || 0
+            );
+        }
+
+        if (visorQuantidadeRepasses) {
+            visorQuantidadeRepasses.textContent = String(
+                Number(historico?.quantidade || 0)
+            );
+        }
+
+        if (visorTotalRepasses) {
+            visorTotalRepasses.textContent = formatarMoeda(
+                historico?.total_pago || 0
+            );
+        }
+
+        if (!listaRepasses) {
+            return;
+        }
+
+        const repasses = Array.isArray(historico?.repasses)
+            ? historico.repasses
+            : [];
+
+        if (!repasses.length) {
+            listaRepasses.innerHTML = `
+                <li>
+                    Nenhum repasse registrado ainda.
+                </li>
+            `;
+
+            return;
+        }
+
+        listaRepasses.innerHTML = repasses
+            .slice(0, 5)
+            .map((repasse) => {
+                const profissional = escaparHtmlAdmin(
+                    repasse?.profissional_nome
+                    || "Profissional não informado"
+                );
+
+                const quantidadeComissoes = Number(
+                    repasse?.quantidade_comissoes || 0
+                );
+
+                const valor = formatarMoeda(
+                    repasse?.valor || 0
+                );
+
+                const pagoEm = repasse?.pago_em
+                    ? formatarDataHoraBR(repasse.pago_em)
+                    : "-";
+
+                const textoComissoes = (
+                    quantidadeComissoes === 1
+                        ? "1 comiss\u00e3o"
+                        : `${quantidadeComissoes} comiss\u00f5es`
+                );
+
+                return `
+                    <li>
+                        <strong>${profissional}</strong>
+
+                        <span>
+                            ${valor}
+                            \u00b7 ${textoComissoes}
+                            \u00b7 ${pagoEm}
+                        </span>
+
+                        <button
+                            type="button"
+                            class="btn-detalhe-repasse-admin"
+                            onclick="abrirDetalheRepasseAdmin(
+                                ${Number(repasse?.id || 0)}
+                            )"
+                        >
+                            Ver detalhes
+                        </button>
+                    </li>
+                `;
+            })
+            .join("");
+
+    } catch (erro) {
+        console.error(
+            "Erro ao carregar comissoes e repasses:",
+            erro
+        );
+
+        if (listaRepasses) {
+            listaRepasses.innerHTML = `
+                <li>
+                    Não foi poss\u00edvel carregar os dados financeiros.
+                </li>
+            `;
+        }
+
+        tratarErro(erro);
+    }
+}
+
+
+window.carregarResumoComissoesRepassesAdmin =
+    carregarResumoComissoesRepassesAdmin;
 
 
 function usuarioPodeConcluirAgendamentoAdmin(agendamento) {
@@ -5863,97 +6958,393 @@ function fecharHistoricoCliente() {
 }
 
 
+function obterTimestampAgendamentoHistoricoCRM(
+    agendamento
+) {
+    const data =
+        String(
+            agendamento?.data || ""
+        ).trim();
+
+    if (!data) {
+        return 0;
+    }
+
+    const horario =
+        String(
+            agendamento?.horario || "00:00"
+        ).trim();
+
+    const dataHora = new Date(
+        `${data}T${horario}:00`
+    );
+
+    if (Number.isNaN(dataHora.getTime())) {
+        return 0;
+    }
+
+    return dataHora.getTime();
+}
+
+
+function obterTimestampInteracaoHistoricoCRM(
+    interacao
+) {
+    const valor =
+        normalizarDataHoraUTCClienteCRM(
+            interacao?.criado_em
+        );
+
+    if (!valor) {
+        return 0;
+    }
+
+    const dataHora = new Date(valor);
+
+    if (Number.isNaN(dataHora.getTime())) {
+        return 0;
+    }
+
+    return dataHora.getTime();
+}
+
+
+function formatarTipoInteracaoHistoricoCRM(
+    tipo
+) {
+    const mapa = {
+        reativacao_risco:
+            "Reativa\u00e7\u00e3o de cliente em risco",
+
+        reativacao_inativo:
+            "Reativa\u00e7\u00e3o de cliente inativo",
+    };
+
+    return (
+        mapa[String(tipo || "").trim()]
+        || "Intera\u00e7\u00e3o CRM"
+    );
+}
+
+
+function formatarDataHoraInteracaoHistoricoCRM(
+    criadoEm
+) {
+    const valor =
+        normalizarDataHoraUTCClienteCRM(
+            criadoEm
+        );
+
+    if (!valor) {
+        return "-";
+    }
+
+    const dataHora = new Date(valor);
+
+    if (Number.isNaN(dataHora.getTime())) {
+        return String(criadoEm || "-");
+    }
+
+    return dataHora.toLocaleString(
+        "pt-BR",
+        {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        }
+    );
+}
+
+
+function montarCardInteracaoHistoricoCRM(
+    interacao
+) {
+    const titulo =
+        formatarTipoInteracaoHistoricoCRM(
+            interacao?.tipo
+        );
+
+    const quando =
+        formatarDataHoraInteracaoHistoricoCRM(
+            interacao?.criado_em
+        );
+
+    const usuario =
+        String(
+            interacao?.usuario_nome
+            || interacao?.usuario_email
+            || "Usu\u00e1rio do painel"
+        ).trim();
+
+    const canal =
+        String(
+            interacao?.canal || "whatsapp"
+        ).trim();
+
+    return `
+        <div
+            class="card-historico-cliente card-historico-interacao-crm"
+        >
+            <div class="card-historico-topo">
+                <strong>
+                    ${escaparHtmlAdmin(titulo)}
+                </strong>
+
+                <span
+                    class="badge-historico-interacao-crm"
+                >
+                    CRM
+                </span>
+            </div>
+
+            <p>
+                <strong>Registrado em:</strong>
+                ${escaparHtmlAdmin(quando)}
+            </p>
+
+            <p>
+                <strong>Canal:</strong>
+                ${escaparHtmlAdmin(canal)}
+            </p>
+
+            <p>
+                <strong>Respons\u00e1vel:</strong>
+                ${escaparHtmlAdmin(usuario)}
+            </p>
+
+            <p class="historico-interacao-observacao">
+                Contato de reativa\u00e7\u00e3o iniciado pelo painel.
+                Este registro n\u00e3o confirma entrega ou leitura
+                da mensagem no WhatsApp.
+            </p>
+        </div>
+    `;
+}
+
+
+function montarCardAgendamentoHistoricoCRM(
+    agendamento
+) {
+    const status =
+        agendamento?.status || "confirmado";
+
+    return `
+        <div class="card-historico-cliente">
+            <div class="card-historico-topo">
+                <strong>
+                    ${agendamento?.servico || "-"}
+                </strong>
+
+                <span
+                    class="badge-status ${classeStatusAgendamento(status)}"
+                >
+                    ${traduzirStatusAgendamento(status)}
+                </span>
+            </div>
+
+            <p>
+                <strong>Data:</strong>
+                ${formatarDataBR(agendamento?.data)}
+                \u00e0s ${agendamento?.horario || "-"}
+            </p>
+
+            <p>
+                <strong>Profissional:</strong>
+                ${agendamento?.profissional || "-"}
+            </p>
+
+            <p>
+                <strong>Valor:</strong>
+                ${formatarMoeda(agendamento?.valor)}
+            </p>
+
+            ${
+                agendamento?.motivo_cancelamento
+                    ? `
+                        <p>
+                            <strong>
+                                Motivo do cancelamento:
+                            </strong>
+                            ${agendamento.motivo_cancelamento}
+                        </p>
+                    `
+                    : ""
+            }
+
+            ${
+                agendamento?.cancelado_em
+                    ? `
+                        <p>
+                            <strong>Cancelado em:</strong>
+                            ${formatarDataHoraBR(
+                                agendamento.cancelado_em
+                            )}
+                        </p>
+                    `
+                    : ""
+            }
+
+            ${
+                agendamento?.observacao_interna
+                    ? `
+                        <p>
+                            <strong>
+                                Observa\u00e7\u00e3o interna:
+                            </strong>
+                            ${agendamento.observacao_interna}
+                        </p>
+                    `
+                    : ""
+            }
+        </div>
+    `;
+}
+
+
 async function abrirHistoricoCliente(telefone) {
-    const telefoneNormalizado = normalizarTelefoneCliente(telefone);
+    const telefoneNormalizado =
+        normalizarTelefoneCliente(
+            telefone
+        );
 
     if (!telefoneNormalizado) {
-        exibirMensagemAdmin("Este agendamento não possui telefone válido.");
+        exibirMensagemAdmin(
+            "Este cliente n\u00e3o possui telefone v\u00e1lido."
+        );
+
         return;
     }
 
-    const modal = garantirModalHistoricoCliente();
-    const resumo = document.getElementById("historico-cliente-resumo");
-    const conteudo = document.getElementById("historico-cliente-conteudo");
+    const modal =
+        garantirModalHistoricoCliente();
+
+    const resumo =
+        document.getElementById(
+            "historico-cliente-resumo"
+        );
+
+    const conteudo =
+        document.getElementById(
+            "historico-cliente-conteudo"
+        );
 
     modal.style.display = "flex";
-    resumo.textContent = "Carregando histórico...";
+
+    resumo.textContent =
+        "Carregando hist\u00f3rico...";
+
     conteudo.innerHTML = "";
 
     try {
-        const dados = await apiRequest(
-            `/api/${tenantSlugLogado}/admin/clientes/historico?telefone=${telefoneNormalizado}`,
-            {
-                auth: true,
-            }
-        );
+        const [
+            dados,
+            dadosInteracoes,
+        ] = await Promise.all([
+            apiRequest(
+                `/api/${tenantSlugLogado}/admin/clientes/historico?telefone=${encodeURIComponent(telefoneNormalizado)}`,
+                {
+                    auth: true,
+                }
+            ),
+
+            apiRequest(
+                `/api/${tenantSlugLogado}/admin/clientes/${encodeURIComponent(telefoneNormalizado)}/interacoes?limite=100`,
+                {
+                    auth: true,
+                }
+            ),
+        ]);
+
+        const agendamentos =
+            Array.isArray(
+                dados?.agendamentos
+            )
+                ? dados.agendamentos
+                : [];
+
+        const interacoes =
+            Array.isArray(
+                dadosInteracoes?.interacoes
+            )
+                ? dadosInteracoes.interacoes
+                : [];
 
         resumo.textContent = `
             Telefone: ${dados.telefone}
-            • ${dados.total_agendamentos} agendamento(s)
-            • ${dados.total_cancelamentos} cancelamento(s)
-            • ${formatarMoeda(dados.faturamento_total_concluido)} concluído(s)
+            \u2022 ${dados.total_agendamentos} agendamento(s)
+            \u2022 ${dados.total_cancelamentos} cancelamento(s)
+            \u2022 ${interacoes.length} intera\u00e7\u00e3o(\u00f5es) CRM
+            \u2022 ${formatarMoeda(
+                dados.faturamento_total_concluido
+            )} conclu\u00eddo(s)
         `;
 
-        if (!dados.agendamentos || !dados.agendamentos.length) {
+        const eventosAgendamento =
+            agendamentos.map(
+                (agendamento) => ({
+                    tipo: "agendamento",
+                    timestamp:
+                        obterTimestampAgendamentoHistoricoCRM(
+                            agendamento
+                        ),
+                    dados: agendamento,
+                })
+            );
+
+        const eventosInteracao =
+            interacoes.map(
+                (interacao) => ({
+                    tipo: "interacao_crm",
+                    timestamp:
+                        obterTimestampInteracaoHistoricoCRM(
+                            interacao
+                        ),
+                    dados: interacao,
+                })
+            );
+
+        const eventos = [
+            ...eventosAgendamento,
+            ...eventosInteracao,
+        ].sort(
+            (a, b) =>
+                b.timestamp - a.timestamp
+        );
+
+        if (!eventos.length) {
             conteudo.innerHTML = `
                 <p class="mensagem-vazia">
-                    Nenhum histórico encontrado para este cliente.
+                    Nenhum hist\u00f3rico encontrado
+                    para este cliente.
                 </p>
             `;
+
             return;
         }
 
-        conteudo.innerHTML = dados.agendamentos
-            .map((agendamento) => {
-                const status = agendamento.status || "confirmado";
+        conteudo.innerHTML =
+            eventos
+                .map((evento) => {
+                    if (
+                        evento.tipo
+                        === "interacao_crm"
+                    ) {
+                        return (
+                            montarCardInteracaoHistoricoCRM(
+                                evento.dados
+                            )
+                        );
+                    }
 
-                return `
-                    <div class="card-historico-cliente">
-                        <div class="card-historico-topo">
-                            <strong>${agendamento.servico || "-"}</strong>
-
-                            <span class="badge-status ${classeStatusAgendamento(status)}">
-                                ${traduzirStatusAgendamento(status)}
-                            </span>
-                        </div>
-
-                        <p>
-                            <strong>Data:</strong>
-                            ${formatarDataBR(agendamento.data)}
-                            às ${agendamento.horario || "-"}
-                        </p>
-
-                        <p>
-                            <strong>Profissional:</strong>
-                            ${agendamento.profissional || "-"}
-                        </p>
-
-                        <p>
-                            <strong>Valor:</strong>
-                            ${formatarMoeda(agendamento.valor)}
-                        </p>
-
-                        ${
-                            agendamento.motivo_cancelamento
-                                ? `<p><strong>Motivo do cancelamento:</strong> ${agendamento.motivo_cancelamento}</p>`
-                                : ""
-                        }
-
-                        ${
-                            agendamento.cancelado_em
-                                ? `<p><strong>Cancelado em:</strong> ${formatarDataHoraBR(agendamento.cancelado_em)}</p>`
-                                : ""
-                        }
-
-                        ${
-                            agendamento.observacao_interna
-                                ? `<p><strong>Observação interna:</strong> ${agendamento.observacao_interna}</p>`
-                                : ""
-                        }
-                    </div>
-                `;
-            })
-            .join("");
+                    return (
+                        montarCardAgendamentoHistoricoCRM(
+                            evento.dados
+                        )
+                    );
+                })
+                .join("");
 
     } catch (erro) {
         tratarErro(erro);
@@ -5965,12 +7356,936 @@ async function abrirHistoricoCliente(telefone) {
 window.abrirHistoricoCliente = abrirHistoricoCliente;
 window.fecharHistoricoCliente = fecharHistoricoCliente;
 
+
+
+function calcularDiasDesdeDataCRM(dataValor) {
+    if (!dataValor) {
+        return null;
+    }
+
+    const partes =
+        String(dataValor)
+            .slice(0, 10)
+            .split("-")
+            .map(Number);
+
+    if (
+        partes.length !== 3
+        || partes.some(
+            (parte) => !Number.isFinite(parte)
+        )
+    ) {
+        return null;
+    }
+
+    const [ano, mes, dia] = partes;
+
+    const dataUTC =
+        Date.UTC(
+            ano,
+            mes - 1,
+            dia
+        );
+
+    const agora = new Date();
+
+    const hojeUTC =
+        Date.UTC(
+            agora.getFullYear(),
+            agora.getMonth(),
+            agora.getDate()
+        );
+
+    const diferenca =
+        Math.floor(
+            (hojeUTC - dataUTC)
+            / 86400000
+        );
+
+    return Math.max(
+        diferenca,
+        0
+    );
+}
+
+
+function classificarClienteCRM(cliente) {
+    const totalAgendamentos =
+        Number(
+            cliente?.total_agendamentos
+            || 0
+        );
+
+    const possuiProximoAgendamento =
+        Boolean(
+            cliente?.proximo_agendamento
+        );
+
+    const diasDesdeUltimaVisita =
+        calcularDiasDesdeDataCRM(
+            cliente?.ultima_visita
+        );
+
+    if (
+        !possuiProximoAgendamento
+        && diasDesdeUltimaVisita !== null
+        && diasDesdeUltimaVisita > 60
+    ) {
+        return {
+            codigo: "inativo",
+            rotulo: "Inativo",
+            descricao:
+                `Sem pr\u00f3ximo agendamento e `
+                + `sem visita h\u00e1 `
+                + `${diasDesdeUltimaVisita} dias.`,
+        };
+    }
+
+    if (
+        !possuiProximoAgendamento
+        && diasDesdeUltimaVisita !== null
+        && diasDesdeUltimaVisita > 30
+    ) {
+        return {
+            codigo: "risco",
+            rotulo: "Em risco",
+            descricao:
+                `Sem pr\u00f3ximo agendamento e `
+                + `sem visita h\u00e1 `
+                + `${diasDesdeUltimaVisita} dias.`,
+        };
+    }
+
+    if (totalAgendamentos >= 2) {
+        return {
+            codigo: "recorrente",
+            rotulo: "Recorrente",
+            descricao:
+                `${totalAgendamentos} agendamentos `
+                + "registrados.",
+        };
+    }
+
+    return {
+        codigo: "novo",
+        rotulo: "Novo",
+        descricao:
+            "Cliente em fase inicial de relacionamento.",
+    };
+}
+
+
+function montarMensagemWhatsAppClienteCRM(
+    nomeCliente,
+    tipo = "conversa"
+) {
+    const nome =
+        String(nomeCliente || "").trim()
+        || "cliente";
+
+    const nomeEmpresa =
+        configuracoesAdminCache?.nome_publico
+        || configuracoesAdminCache?.nome_empresa
+        || tenantSlugLogado
+        || "nossa empresa";
+
+    if (
+        tipo === "reativacao_risco"
+        || tipo === "reativacao_inativo"
+    ) {
+        const linkAgenda =
+            obterUrlPublicaTenantAdmin();
+
+        if (tipo === "reativacao_inativo") {
+            return (
+                `Ol\u00e1, ${nome}! Aqui \u00e9 da ${nomeEmpresa}.\n\n`
+                + "Faz um tempinho que n\u00e3o vemos voc\u00ea "
+                + "por aqui e gostar\u00edamos de receber voc\u00ea "
+                + "novamente.\n\n"
+                + "Quando quiser voltar, voc\u00ea pode consultar "
+                + "os hor\u00e1rios dispon\u00edveis e escolher "
+                + "o melhor pelo link:\n"
+                + `${linkAgenda}\n\n`
+                + "Se preferir, podemos ajudar com o "
+                + "agendamento por aqui."
+            );
+        }
+
+        return (
+            `Ol\u00e1, ${nome}! Aqui \u00e9 da ${nomeEmpresa}.\n\n`
+            + "Passando para saber se podemos ajudar com "
+            + "seu pr\u00f3ximo agendamento.\n\n"
+            + "Voc\u00ea pode consultar os hor\u00e1rios "
+            + "dispon\u00edveis pelo link:\n"
+            + `${linkAgenda}\n\n`
+            + "Se preferir, podemos encontrar um "
+            + "hor\u00e1rio para voc\u00ea por aqui."
+        );
+    }
+
+    if (tipo === "agendamento") {
+        const linkAgenda =
+            obterUrlPublicaTenantAdmin();
+
+        return (
+            `Ol\u00e1, ${nome}! Aqui \u00e9 da ${nomeEmpresa}.\n\n`
+            + "Queremos facilitar seu pr\u00f3ximo agendamento.\n\n"
+            + "Voc\u00ea pode consultar os hor\u00e1rios "
+            + "dispon\u00edveis e escolher o melhor pelo link:\n"
+            + `${linkAgenda}\n\n`
+            + "Se preferir, tamb\u00e9m podemos ajudar por aqui."
+        );
+    }
+
+    return (
+        `Ol\u00e1, ${nome}! Aqui \u00e9 da ${nomeEmpresa}.`
+    );
+}
+
+
+function normalizarDataHoraUTCClienteCRM(
+    dataHora
+) {
+    const valor =
+        String(dataHora || "").trim();
+
+    if (!valor) {
+        return "";
+    }
+
+    if (
+        valor.endsWith("Z")
+        || /[+-]\d{2}:\d{2}$/.test(valor)
+    ) {
+        return valor;
+    }
+
+    return `${valor}Z`;
+}
+
+
+function formatarUltimaInteracaoCRM(
+    dataHora
+) {
+    const valor =
+        normalizarDataHoraUTCClienteCRM(
+            dataHora
+        );
+
+    if (!valor) {
+        return "-";
+    }
+
+    const data = new Date(valor);
+
+    if (Number.isNaN(data.getTime())) {
+        return String(dataHora || "-");
+    }
+
+    const agora = new Date();
+
+    const inicioHoje = new Date(
+        agora.getFullYear(),
+        agora.getMonth(),
+        agora.getDate()
+    );
+
+    const inicioData = new Date(
+        data.getFullYear(),
+        data.getMonth(),
+        data.getDate()
+    );
+
+    const diferencaDias =
+        Math.round(
+            (
+                inicioHoje.getTime()
+                - inicioData.getTime()
+            )
+            / 86400000
+        );
+
+    const horario =
+        data.toLocaleTimeString(
+            "pt-BR",
+            {
+                hour: "2-digit",
+                minute: "2-digit",
+            }
+        );
+
+    if (diferencaDias === 0) {
+        return `hoje \u00e0s ${horario}`;
+    }
+
+    if (diferencaDias === 1) {
+        return `ontem \u00e0s ${horario}`;
+    }
+
+    return data.toLocaleString(
+        "pt-BR",
+        {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        }
+    );
+}
+
+
+function montarResumoUltimaInteracaoCRM(
+    cliente
+) {
+    const interacao =
+        cliente?.ultima_interacao_crm;
+
+    if (!interacao?.criado_em) {
+        return "";
+    }
+
+    const quando =
+        formatarUltimaInteracaoCRM(
+            interacao.criado_em
+        );
+
+    const usuario =
+        String(
+            interacao.usuario_nome || ""
+        ).trim();
+
+    const titulo =
+        usuario
+            ? `Reativa\u00e7\u00e3o registrada por ${usuario}`
+            : "Reativa\u00e7\u00e3o registrada no CRM";
+
+    return `
+        <span
+            class="cliente-detalhe-crm crm-ultima-interacao"
+            title="${escaparHtmlAdmin(titulo)}"
+        >
+            \u00daltima reativa\u00e7\u00e3o:
+            ${escaparHtmlAdmin(quando)}
+        </span>
+    `;
+}
+
+
+async function registrarInteracaoReativacaoClienteCRM(
+    telefone,
+    nomeCliente,
+    tipo
+) {
+    return apiRequest(
+        `/api/${tenantSlugLogado}/admin/clientes/${encodeURIComponent(telefone)}/interacoes`,
+        {
+            method: "POST",
+            auth: true,
+            body: {
+                tipo,
+                cliente_nome:
+                    nomeCliente || null,
+            },
+        }
+    );
+}
+
+
+async function abrirWhatsAppClienteCRM(
+    telefoneCodificado,
+    nomeCodificado,
+    tipo = "conversa"
+) {
+    const telefoneOriginal =
+        decodeURIComponent(
+            String(
+                telefoneCodificado || ""
+            )
+        );
+
+    const nomeCliente =
+        decodeURIComponent(
+            String(
+                nomeCodificado || ""
+            )
+        );
+
+    const telefone =
+        normalizarTelefoneWhatsApp(
+            telefoneOriginal
+        );
+
+    if (!telefone) {
+        exibirMensagemAdmin(
+            "Este cliente n\u00e3o possui telefone v\u00e1lido."
+        );
+
+        return;
+    }
+
+    const mensagem =
+        montarMensagemWhatsAppClienteCRM(
+            nomeCliente,
+            tipo
+        );
+
+    const url =
+        `https://wa.me/${telefone}`
+        + `?text=${encodeURIComponent(mensagem)}`;
+
+    window.open(
+        url,
+        "_blank",
+        "noopener,noreferrer"
+    );
+
+    const ehReativacao =
+        tipo === "reativacao_risco"
+        || tipo === "reativacao_inativo";
+
+    if (!ehReativacao) {
+        return;
+    }
+
+    try {
+        await registrarInteracaoReativacaoClienteCRM(
+            telefoneOriginal,
+            nomeCliente,
+            tipo
+        );
+
+        exibirMensagemAdmin(
+            "Reativa\u00e7\u00e3o registrada no CRM."
+        );
+
+        const buscaAtual =
+            document.getElementById(
+                "busca-clientes-crm"
+            )?.value || "";
+
+        await carregarClientesCRM(
+            buscaAtual
+        );
+
+    } catch (erro) {
+        console.error(
+            "Falha ao registrar reativa\u00e7\u00e3o CRM:",
+            erro
+        );
+
+        exibirMensagemAdmin(
+            "O WhatsApp foi aberto, mas n\u00e3o foi poss\u00edvel registrar a reativa\u00e7\u00e3o no CRM.",
+            "erro"
+        );
+    }
+}
+
+
+window.abrirWhatsAppClienteCRM =
+    abrirWhatsAppClienteCRM;
+
+
+const DIAS_COOLDOWN_REATIVACAO_CRM = 7;
+
+
+function calcularDiasDesdeUltimaInteracaoCRM(
+    cliente
+) {
+    const criadoEm =
+        cliente?.ultima_interacao_crm?.criado_em;
+
+    if (!criadoEm) {
+        return null;
+    }
+
+    const valor =
+        normalizarDataHoraUTCClienteCRM(
+            criadoEm
+        );
+
+    if (!valor) {
+        return null;
+    }
+
+    const data = new Date(valor);
+
+    if (Number.isNaN(data.getTime())) {
+        return null;
+    }
+
+    const agora = new Date();
+
+    const inicioHoje = new Date(
+        agora.getFullYear(),
+        agora.getMonth(),
+        agora.getDate()
+    );
+
+    const inicioInteracao = new Date(
+        data.getFullYear(),
+        data.getMonth(),
+        data.getDate()
+    );
+
+    return Math.max(
+        0,
+        Math.floor(
+            (
+                inicioHoje.getTime()
+                - inicioInteracao.getTime()
+            )
+            / 86400000
+        )
+    );
+}
+
+
+function obterEstadoCooldownReativacaoCRM(
+    cliente
+) {
+    const dias =
+        calcularDiasDesdeUltimaInteracaoCRM(
+            cliente
+        );
+
+    if (
+        dias === null
+        || dias >= DIAS_COOLDOWN_REATIVACAO_CRM
+    ) {
+        return {
+            ativo: false,
+            dias,
+            texto: "",
+            titulo: "",
+        };
+    }
+
+    if (dias === 0) {
+        return {
+            ativo: true,
+            dias,
+            texto: "Reativado hoje",
+            titulo:
+                "Este cliente ja teve uma reativacao registrada hoje.",
+        };
+    }
+
+    if (dias === 1) {
+        return {
+            ativo: true,
+            dias,
+            texto: "Reativado ontem",
+            titulo:
+                "Este cliente teve uma reativacao registrada ontem.",
+        };
+    }
+
+    return {
+        ativo: true,
+        dias,
+        texto: `Reativado ha ${dias} dias`,
+        titulo:
+            `Este cliente teve uma reativacao registrada ha ${dias} dias.`,
+    };
+}
+
+
+function usuarioAdminPodeRegistrarInteracaoCRM() {
+    return (
+        usuarioAdminEhGestor()
+        || (
+            usuarioAdminTemPermissao
+            && usuarioAdminTemPermissao(
+                "editar_cliente"
+            )
+        )
+    );
+}
+
+
+function montarAcaoReativacaoClienteCRM(
+    cliente
+) {
+    if (!usuarioAdminPodeRegistrarInteracaoCRM()) {
+        return "";
+    }
+
+    const segmentacao =
+        classificarClienteCRM(cliente);
+
+    if (
+        !["risco", "inativo"].includes(
+            segmentacao.codigo
+        )
+    ) {
+        return "";
+    }
+
+    const cooldown =
+        obterEstadoCooldownReativacaoCRM(
+            cliente
+        );
+
+    if (cooldown.ativo) {
+        return `
+            <button
+                type="button"
+                class="btn-mini-crm crm-acao-reativar crm-acao-reativar-cooldown"
+                title="${escaparHtmlAdmin(cooldown.titulo)}"
+                disabled
+                aria-disabled="true"
+            >
+                ${escaparHtmlAdmin(cooldown.texto)}
+            </button>
+        `;
+    }
+
+    const tipoMensagem =
+        segmentacao.codigo === "inativo"
+            ? "reativacao_inativo"
+            : "reativacao_risco";
+
+    const telefone =
+        encodeURIComponent(
+            cliente?.telefone || ""
+        );
+
+    const nome =
+        encodeURIComponent(
+            cliente?.nome || "Cliente"
+        );
+
+    const titulo =
+        segmentacao.codigo === "inativo"
+            ? "Reativar cliente inativo"
+            : "Reativar cliente em risco";
+
+    return `
+        <button
+            type="button"
+            class="btn-mini-crm crm-acao-reativar"
+            title="${titulo}"
+            onclick="abrirWhatsAppClienteCRM(
+                '${telefone}',
+                '${nome}',
+                '${tipoMensagem}'
+            )"
+        >
+            Reativar
+        </button>
+    `;
+}
+
+
+let filtroSegmentoCRMAtivo = "todos";
+
+
+function atualizarEstadoBotoesFiltroSegmentoCRM() {
+    const botoes =
+        document.querySelectorAll(
+            "[data-filtro-segmento-crm]"
+        );
+
+    botoes.forEach((botao) => {
+        const filtro =
+            String(
+                botao.dataset.filtroSegmentoCrm
+                || ""
+            );
+
+        const ativo =
+            filtro === filtroSegmentoCRMAtivo;
+
+        botao.classList.toggle(
+            "ativo",
+            ativo
+        );
+
+        botao.setAttribute(
+            "aria-pressed",
+            ativo
+                ? "true"
+                : "false"
+        );
+    });
+}
+
+
+function atualizarResumoFiltroSegmentoCRM(
+    visiveis,
+    total
+) {
+    const resumo =
+        document.getElementById(
+            "crm-filtro-segmento-status"
+        );
+
+    if (!resumo) {
+        return;
+    }
+
+    if (
+        filtroSegmentoCRMAtivo
+        === "todos"
+    ) {
+        resumo.textContent =
+            `${total} cliente`
+            + `${total === 1 ? "" : "s"} exibido`
+            + `${total === 1 ? "" : "s"}.`;
+
+        return;
+    }
+
+    resumo.textContent =
+        `${visiveis} de ${total} cliente`
+        + `${total === 1 ? "" : "s"} `
+        + "neste segmento.";
+}
+
+
+function aplicarFiltroSegmentoCRM(
+    filtro = filtroSegmentoCRMAtivo
+) {
+    const tbody =
+        document.getElementById(
+            "lista-clientes-crm"
+        );
+
+    if (!tbody) {
+        return;
+    }
+
+    const filtroNormalizado =
+        String(
+            filtro || "todos"
+        )
+            .trim()
+            .toLowerCase();
+
+    const filtrosPermitidos =
+        new Set([
+            "todos",
+            "novo",
+            "recorrente",
+            "risco",
+            "inativo",
+        ]);
+
+    filtroSegmentoCRMAtivo =
+        filtrosPermitidos.has(
+            filtroNormalizado
+        )
+            ? filtroNormalizado
+            : "todos";
+
+    const linhas =
+        Array.from(
+            tbody.querySelectorAll(
+                "tr[data-segmento-crm]"
+            )
+        );
+
+    let visiveis = 0;
+
+    linhas.forEach((linha) => {
+        const segmento =
+            String(
+                linha.dataset.segmentoCrm
+                || ""
+            )
+                .trim()
+                .toLowerCase();
+
+        const mostrar =
+            filtroSegmentoCRMAtivo
+                === "todos"
+            || segmento
+                === filtroSegmentoCRMAtivo;
+
+        linha.hidden =
+            !mostrar;
+
+        if (mostrar) {
+            visiveis += 1;
+        }
+    });
+
+    atualizarEstadoBotoesFiltroSegmentoCRM();
+
+    atualizarResumoFiltroSegmentoCRM(
+        visiveis,
+        linhas.length
+    );
+}
+
+
+function selecionarFiltroSegmentoCRM(
+    filtro
+) {
+    aplicarFiltroSegmentoCRM(
+        filtro
+    );
+}
+
+
+function garantirFiltrosSegmentoCRM() {
+    const linhaBusca =
+        document.querySelector(
+            "#secao-clientes-crm "
+            + ".linha-filtros-crm"
+        );
+
+    if (!linhaBusca) {
+        return;
+    }
+
+    if (
+        document.getElementById(
+            "crm-filtros-segmento"
+        )
+    ) {
+        aplicarFiltroSegmentoCRM();
+
+        return;
+    }
+
+    const area =
+        document.createElement(
+            "div"
+        );
+
+    area.id =
+        "crm-filtros-segmento";
+
+    area.className =
+        "crm-filtros-segmento";
+
+    area.innerHTML = `
+        <div class="crm-filtros-segmento-botoes">
+            <button
+                type="button"
+                class="crm-filtro-segmento"
+                data-filtro-segmento-crm="todos"
+                onclick="selecionarFiltroSegmentoCRM('todos')"
+                aria-pressed="true"
+            >
+                Todos
+            </button>
+
+            <button
+                type="button"
+                class="crm-filtro-segmento"
+                data-filtro-segmento-crm="novo"
+                onclick="selecionarFiltroSegmentoCRM('novo')"
+                aria-pressed="false"
+            >
+                Novos
+            </button>
+
+            <button
+                type="button"
+                class="crm-filtro-segmento"
+                data-filtro-segmento-crm="recorrente"
+                onclick="selecionarFiltroSegmentoCRM('recorrente')"
+                aria-pressed="false"
+            >
+                Recorrentes
+            </button>
+
+            <button
+                type="button"
+                class="crm-filtro-segmento"
+                data-filtro-segmento-crm="risco"
+                onclick="selecionarFiltroSegmentoCRM('risco')"
+                aria-pressed="false"
+            >
+                Em risco
+            </button>
+
+            <button
+                type="button"
+                class="crm-filtro-segmento"
+                data-filtro-segmento-crm="inativo"
+                onclick="selecionarFiltroSegmentoCRM('inativo')"
+                aria-pressed="false"
+            >
+                Inativos
+            </button>
+        </div>
+
+        <small
+            id="crm-filtro-segmento-status"
+            class="crm-filtro-segmento-status"
+        >
+            Carregando clientes...
+        </small>
+    `;
+
+    linhaBusca.insertAdjacentElement(
+        "afterend",
+        area
+    );
+
+    aplicarFiltroSegmentoCRM();
+
+    console.info(
+        "Filtros operacionais do CRM inicializados."
+    );
+}
+
+
+function observarAtualizacoesSegmentoCRM() {
+    const tbody =
+        document.getElementById(
+            "lista-clientes-crm"
+        );
+
+    if (!tbody) {
+        return;
+    }
+
+    if (
+        tbody.dataset
+            .observerFiltroSegmentoCrm
+        === "ativo"
+    ) {
+        return;
+    }
+
+    tbody.dataset
+        .observerFiltroSegmentoCrm =
+        "ativo";
+
+    const observer =
+        new MutationObserver(
+            () => {
+                aplicarFiltroSegmentoCRM();
+            }
+        );
+
+    observer.observe(
+        tbody,
+        {
+            childList: true,
+        }
+    );
+}
+
+
+window.selecionarFiltroSegmentoCRM =
+    selecionarFiltroSegmentoCRM;
+
+
 function registrarListenersCRM() {
     if (listenersCRMRegistrados) {
         return;
     }
 
     listenersCRMRegistrados = true;
+
+    garantirFiltrosSegmentoCRM();
+    observarAtualizacoesSegmentoCRM();
 
     const inputBusca = document.getElementById("busca-clientes-crm");
     const botaoBuscar = document.getElementById("btn-buscar-clientes-crm");
@@ -6004,6 +8319,91 @@ function registrarListenersCRM() {
                 );
             }
         });
+    }
+}
+
+
+function atualizarPainelRetencaoCRM(
+    clientes
+) {
+    const lista =
+        Array.isArray(clientes)
+            ? clientes
+            : [];
+
+    let emRisco = 0;
+    let inativos = 0;
+    let emCooldown = 0;
+    let acaoAgora = 0;
+
+    const podeRegistrarReativacao =
+        usuarioAdminPodeRegistrarInteracaoCRM();
+
+    for (const cliente of lista) {
+        const segmentacao =
+            classificarClienteCRM(cliente);
+
+        const elegivelReativacao =
+            ["risco", "inativo"].includes(
+                segmentacao.codigo
+            );
+
+        if (segmentacao.codigo === "risco") {
+            emRisco += 1;
+        }
+
+        if (segmentacao.codigo === "inativo") {
+            inativos += 1;
+        }
+
+        if (!elegivelReativacao) {
+            continue;
+        }
+
+        const cooldown =
+            obterEstadoCooldownReativacaoCRM(
+                cliente
+            );
+
+        if (cooldown.ativo) {
+            emCooldown += 1;
+        } else if (
+            podeRegistrarReativacao
+        ) {
+            acaoAgora += 1;
+        }
+    }
+
+    const valores = {
+        "crm-retencao-risco": emRisco,
+        "crm-retencao-inativos": inativos,
+        "crm-retencao-cooldown": emCooldown,
+        "crm-retencao-acao-agora": acaoAgora,
+    };
+
+    for (
+        const [id, valor]
+        of Object.entries(valores)
+    ) {
+        const elemento =
+            document.getElementById(id);
+
+        if (elemento) {
+            elemento.textContent =
+                String(valor);
+        }
+    }
+
+    const painel =
+        document.getElementById(
+            "crm-painel-retencao"
+        );
+
+    if (painel) {
+        painel.dataset.possuiAcao =
+            acaoAgora > 0
+                ? "true"
+                : "false";
     }
 }
 
@@ -6051,6 +8451,10 @@ async function carregarClientesCRM(busca = "") {
         document.getElementById("visor-ticket-medio-crm").textContent =
             formatarMoeda(dados.ticket_medio_geral || 0);
 
+        atualizarPainelRetencaoCRM(
+            dados.clientes || []
+        );
+
         tbody.innerHTML = "";
 
         if (!dados.clientes || !dados.clientes.length) {
@@ -6068,16 +8472,35 @@ async function carregarClientesCRM(busca = "") {
         for (const cliente of dados.clientes) {
             const tr = document.createElement("tr");
 
+            const segmentacao =
+                classificarClienteCRM(
+                    cliente
+                );
+
+            tr.dataset.segmentoCrm =
+                segmentacao.codigo;
+
             tr.innerHTML = `
                 <td>
                     <span class="cliente-nome-crm">
                         ${cliente.nome || "Cliente"}
                     </span>
 
+                    <span
+                        class="crm-segmento-badge segmento-${segmentacao.codigo}"
+                        title="${segmentacao.descricao}"
+                    >
+                        ${segmentacao.rotulo}
+                    </span>
+
                     <span class="cliente-detalhe-crm">
                         Último serviço:
                         ${cliente.ultimo_servico || "-"}
                     </span>
+
+                    ${montarResumoUltimaInteracaoCRM(
+                        cliente
+                    )}
                 </td>
 
                 <td>${cliente.telefone || "-"}</td>
@@ -6090,13 +8513,35 @@ async function carregarClientesCRM(busca = "") {
                 <td>${formatarDataBR(cliente.ultima_visita)}</td>
                 <td>${formatarDataBR(cliente.proximo_agendamento)}</td>
                 <td>
-                    <button
-                        type="button"
-                        class="btn-mini-crm"
-                        onclick="abrirHistoricoCliente('${cliente.telefone}')"
-                    >
-                        Histórico
-                    </button>
+                    <div class="crm-acoes-cliente">
+                        <button
+                            type="button"
+                            class="btn-mini-crm"
+                            onclick="abrirWhatsAppClienteCRM('${encodeURIComponent(cliente.telefone || "")}', '${encodeURIComponent(cliente.nome || "Cliente")}', 'conversa')"
+                        >
+                            WhatsApp
+                        </button>
+
+                        <button
+                            type="button"
+                            class="btn-mini-crm crm-acao-link"
+                            onclick="abrirWhatsAppClienteCRM('${encodeURIComponent(cliente.telefone || "")}', '${encodeURIComponent(cliente.nome || "Cliente")}', 'agendamento')"
+                        >
+                            Enviar link
+                        </button>
+
+                        ${montarAcaoReativacaoClienteCRM(
+                            cliente
+                        )}
+
+                        <button
+                            type="button"
+                            class="btn-mini-crm"
+                            onclick="abrirHistoricoCliente('${cliente.telefone}')"
+                        >
+                            Hist\u00f3rico
+                        </button>
+                    </div>
                 </td>
             `;
 
@@ -7096,6 +9541,120 @@ async function atualizarPainelAdmin() {
 }
 
 
+
+function atualizarPrioridadeInsightDashboardAdmin() {
+    const card = document.getElementById(
+        "dashboard-insight-dia"
+    );
+
+    const titulo = document.getElementById(
+        "dashboard-insight-titulo"
+    );
+
+    const texto = document.getElementById(
+        "dashboard-insight-texto"
+    );
+
+    if (!card || !titulo || !texto) {
+        return;
+    }
+
+    const conteudo = (
+        `${titulo.textContent || ""} ${texto.textContent || ""}`
+    )
+        .trim()
+        .toLowerCase();
+
+    const termosCriticos = [
+        "cancelamento pendente",
+        "cancelamentos pendentes",
+        "cliente faltou",
+        "clientes faltaram",
+        "atrasado",
+        "atrasados",
+        "pagamento pendente",
+        "pagamentos pendentes",
+        "comiss\u00e3o pendente",
+        "comiss\u00f5es pendentes",
+        "agenda lotada",
+        "sem hor\u00e1rio dispon\u00edvel",
+        "erro",
+        "risco",
+    ];
+
+    const termosPositivos = [
+        "tudo certo",
+        "sem pend",
+        "agenda tranquila",
+        "opera\u00e7\u00e3o normal",
+        "sem alerta",
+    ];
+
+    const temCritico = termosCriticos.some(
+        (termo) => conteudo.includes(termo)
+    );
+
+    const temPositivo = termosPositivos.some(
+        (termo) => conteudo.includes(termo)
+    );
+
+    card.classList.remove(
+        "dashboard-insight-prioridade-alta",
+        "dashboard-insight-prioridade-baixa"
+    );
+
+    if (temCritico) {
+        card.classList.add(
+            "dashboard-insight-prioridade-alta"
+        );
+        return;
+    }
+
+    if (temPositivo) {
+        card.classList.add(
+            "dashboard-insight-prioridade-baixa"
+        );
+    }
+}
+
+
+function iniciarObservacaoInsightDashboardAdmin() {
+    const titulo = document.getElementById(
+        "dashboard-insight-titulo"
+    );
+
+    const texto = document.getElementById(
+        "dashboard-insight-texto"
+    );
+
+    if (!titulo || !texto) {
+        return;
+    }
+
+    atualizarPrioridadeInsightDashboardAdmin();
+
+    const observer = new MutationObserver(() => {
+        atualizarPrioridadeInsightDashboardAdmin();
+    });
+
+    observer.observe(titulo, {
+        childList: true,
+        characterData: true,
+        subtree: true,
+    });
+
+    observer.observe(texto, {
+        childList: true,
+        characterData: true,
+        subtree: true,
+    });
+}
+
+
+window.atualizarPrioridadeInsightDashboardAdmin =
+    atualizarPrioridadeInsightDashboardAdmin;
+
+
 window.onload = iniciarPainel;
 window.dispensarAvisoAdmin = dispensarAvisoAdmin;
 window.abrirModalChamadoAdmin = abrirModalChamadoAdmin;
@@ -7112,8 +9671,2178 @@ window.assinarPlanoMercadoPagoAdmin = assinarPlanoMercadoPagoAdmin;
 window.atualizarAvisoBloqueioAdmin = atualizarAvisoBloqueioAdmin;
 
 
+
+function iniciarNavegacaoConfiguracoesAdmin() {
+    const navegacao = document.querySelector(
+        ".configuracoes-nav-admin"
+    );
+
+    if (!navegacao) {
+        return;
+    }
+
+    navegacao.addEventListener("click", (event) => {
+        const botao = event.target.closest(
+            "[data-config-destino]"
+        );
+
+        if (!botao) {
+            return;
+        }
+
+        const destinoId =
+            botao.dataset.configDestino;
+
+        const destino =
+            document.getElementById(destinoId);
+
+        if (!destino) {
+            return;
+        }
+
+        destino.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+        });
+
+        navegacao
+            .querySelectorAll("[data-config-destino]")
+            .forEach((item) => {
+                item.classList.toggle(
+                    "ativo",
+                    item === botao
+                );
+            });
+    });
+}
+
+
+
+function configurarMenuLateralRetratilAdmin() {
+    const sidebar = document.querySelector(
+        ".admin-sidebar"
+    );
+
+    if (!sidebar) {
+        return;
+    }
+
+    if (
+        document.getElementById(
+            "btn-fechar-sidebar-admin"
+        )
+    ) {
+        return;
+    }
+
+    const btnFechar =
+        document.createElement("button");
+
+    btnFechar.type = "button";
+    btnFechar.id =
+        "btn-fechar-sidebar-admin";
+    btnFechar.className =
+        "btn-fechar-sidebar-admin";
+    btnFechar.setAttribute(
+        "aria-label",
+        "Fechar menu lateral"
+    );
+    btnFechar.innerHTML = "&times;";
+
+
+    const btnAbrir =
+        document.createElement("button");
+
+    btnAbrir.type = "button";
+    btnAbrir.id =
+        "btn-abrir-sidebar-admin";
+    btnAbrir.className =
+        "btn-abrir-sidebar-admin";
+    btnAbrir.setAttribute(
+        "aria-label",
+        "Abrir menu lateral"
+    );
+    btnAbrir.innerHTML = "&#9776;";
+
+
+    const overlay =
+        document.createElement("div");
+
+    overlay.id =
+        "overlay-sidebar-admin";
+    overlay.className =
+        "overlay-sidebar-admin";
+
+
+    sidebar.prepend(btnFechar);
+    document.body.appendChild(btnAbrir);
+    document.body.appendChild(overlay);
+
+
+    function fecharSidebarAdmin() {
+        document.body.classList.add(
+            "admin-sidebar-retraida"
+        );
+
+        btnAbrir.setAttribute(
+            "aria-expanded",
+            "false"
+        );
+    }
+
+
+    function abrirSidebarAdmin() {
+        document.body.classList.remove(
+            "admin-sidebar-retraida"
+        );
+
+        btnAbrir.setAttribute(
+            "aria-expanded",
+            "true"
+        );
+    }
+
+
+    btnFechar.addEventListener(
+        "click",
+        fecharSidebarAdmin
+    );
+
+    btnAbrir.addEventListener(
+        "click",
+        abrirSidebarAdmin
+    );
+
+    overlay.addEventListener(
+        "click",
+        fecharSidebarAdmin
+    );
+
+
+    document.addEventListener(
+        "keydown",
+        (event) => {
+            if (event.key === "Escape") {
+                fecharSidebarAdmin();
+            }
+        }
+    );
+
+
+    sidebar.addEventListener(
+        "click",
+        (event) => {
+            const item = event.target.closest(
+                ".admin-nav-item"
+            );
+
+            if (
+                item
+                && window.innerWidth <= 1100
+            ) {
+                fecharSidebarAdmin();
+            }
+        }
+    );
+
+
+    document.addEventListener(
+        "click",
+        (event) => {
+            if (
+                window.innerWidth > 1100
+                || document.body.classList.contains(
+                    "admin-sidebar-retraida"
+                )
+            ) {
+                return;
+            }
+
+            const clicouSidebar =
+                sidebar.contains(event.target);
+
+            const clicouAbrir =
+                btnAbrir.contains(event.target);
+
+            const clicouMenuPainel =
+                Boolean(
+                    event.target.closest(
+                        ".btn-menu-mobile"
+                    )
+                );
+
+            if (
+                !clicouSidebar
+                && !clicouAbrir
+                && !clicouMenuPainel
+            ) {
+                fecharSidebarAdmin();
+            }
+        }
+    );
+
+
+    window.fecharSidebarAdmin =
+        fecharSidebarAdmin;
+
+    window.abrirSidebarAdmin =
+        abrirSidebarAdmin;
+
+
+    /*
+     * Estado inicial responsivo:
+     *
+     * - desktop largo: sidebar aberta
+     * - tablet/mobile: sidebar fechada
+     *
+     * Depois da inicializacao, o usuario controla
+     * normalmente pelo botao "Menu do painel".
+     */
+
+    if (window.innerWidth <= 1100) {
+        fecharSidebarAdmin();
+    } else {
+        abrirSidebarAdmin();
+    }
+}
+
+
+
+function normalizarTextoAcaoAgendaAdmin(valor) {
+    return String(valor || "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+}
+
+
+function criarMenuMaisAcoesAgendaAdmin() {
+    const detalhes = document.createElement(
+        "details"
+    );
+
+    detalhes.className =
+        "agenda-mais-acoes-admin";
+
+    const resumo = document.createElement(
+        "summary"
+    );
+
+    resumo.textContent = "Mais a\u00e7\u00f5es";
+
+    const conteudo = document.createElement(
+        "div"
+    );
+
+    conteudo.className =
+        "agenda-mais-acoes-conteudo";
+
+    detalhes.appendChild(resumo);
+    detalhes.appendChild(conteudo);
+
+    return {
+        detalhes,
+        conteudo,
+    };
+}
+
+
+function fecharMenusAcoesAgendaAdmin(
+    excecao = null
+) {
+    document
+        .querySelectorAll(
+            ".agenda-mais-acoes-admin[open]"
+        )
+        .forEach((menu) => {
+            if (menu !== excecao) {
+                menu.removeAttribute("open");
+            }
+        });
+}
+
+
+function alternarDetalhesLinhaAgendaAdmin(
+    botao
+) {
+    const linha =
+        botao?.closest("tr");
+
+    if (!linha) {
+        return;
+    }
+
+    const linhaDetalhes =
+        linha.nextElementSibling;
+
+    if (
+        !linhaDetalhes
+        || !linhaDetalhes.querySelector(
+            ".linha-detalhes-agendamento"
+        )
+    ) {
+        return;
+    }
+
+    const vaiAbrir =
+        linhaDetalhes.hidden;
+
+    linhaDetalhes.hidden = !vaiAbrir;
+
+    botao.textContent = vaiAbrir
+        ? "Ocultar detalhes"
+        : "Detalhes";
+}
+
+
+function organizarAcoesTabelaAgendaAdmin() {
+    const tbody = document.getElementById(
+        "lista-agendamentos"
+    );
+
+    if (!tbody) {
+        return;
+    }
+
+    const linhas = Array.from(
+        tbody.querySelectorAll("tr")
+    );
+
+    for (const linha of linhas) {
+
+        if (
+            linha.dataset.acoesCompactadas === "1"
+        ) {
+            continue;
+        }
+
+        const container =
+            linha.querySelector(
+                ".acoes-agendamento"
+            );
+
+        if (!container) {
+            continue;
+        }
+
+        const botoes = Array.from(
+            container.querySelectorAll(
+                ":scope > button"
+            )
+        );
+
+        const wrappersWhatsapp =
+            Array.from(
+                container.querySelectorAll(
+                    ":scope > .acoes-whatsapp-agendamento"
+                )
+            );
+
+        if (
+            !botoes.length
+            && !wrappersWhatsapp.length
+        ) {
+            continue;
+        }
+
+        const principais = [];
+        const secundarias = [];
+
+        botoes.forEach((botao) => {
+            const texto =
+                normalizarTextoAcaoAgendaAdmin(
+                    botao.textContent
+                );
+
+            if (
+                texto === "confirmar"
+                || texto === "concluir"
+            ) {
+                principais.push(botao);
+            } else {
+                secundarias.push(botao);
+            }
+        });
+
+
+        const proximaLinha =
+            linha.nextElementSibling;
+
+        const possuiDetalhes =
+            Boolean(
+                proximaLinha
+                && proximaLinha.querySelector(
+                    ".linha-detalhes-agendamento"
+                )
+            );
+
+
+        if (possuiDetalhes) {
+            proximaLinha.hidden = true;
+        }
+
+
+        container.innerHTML = "";
+
+        principais.forEach((botao) => {
+            botao.classList.add(
+                "acao-agenda-principal"
+            );
+
+            container.appendChild(botao);
+        });
+
+
+        const {
+            detalhes,
+            conteudo,
+        } = criarMenuMaisAcoesAgendaAdmin();
+
+
+        secundarias.forEach((botao) => {
+            botao.classList.add(
+                "acao-agenda-secundaria"
+            );
+
+            conteudo.appendChild(botao);
+        });
+
+
+        wrappersWhatsapp.forEach(
+            (wrapper) => {
+
+                const botoesWhatsapp =
+                    Array.from(
+                        wrapper.querySelectorAll(
+                            "button"
+                        )
+                    );
+
+                botoesWhatsapp.forEach(
+                    (botao) => {
+
+                        botao.classList.add(
+                            "acao-agenda-secundaria"
+                        );
+
+                        conteudo.appendChild(
+                            botao
+                        );
+                    }
+                );
+            }
+        );
+
+
+        if (possuiDetalhes) {
+            const btnDetalhes =
+                document.createElement(
+                    "button"
+                );
+
+            btnDetalhes.type = "button";
+            btnDetalhes.className =
+                "acao-agenda-secundaria";
+
+            btnDetalhes.textContent =
+                "Detalhes";
+
+            btnDetalhes.addEventListener(
+                "click",
+                () => {
+                    alternarDetalhesLinhaAgendaAdmin(
+                        btnDetalhes
+                    );
+
+                    detalhes.removeAttribute(
+                        "open"
+                    );
+                }
+            );
+
+            conteudo.appendChild(
+                btnDetalhes
+            );
+        }
+
+
+        if (conteudo.children.length) {
+
+            detalhes.addEventListener(
+                "toggle",
+                () => {
+                    if (detalhes.open) {
+                        fecharMenusAcoesAgendaAdmin(
+                            detalhes
+                        );
+                    }
+                }
+            );
+
+            container.appendChild(
+                detalhes
+            );
+        }
+
+
+        linha.dataset.acoesCompactadas =
+            "1";
+    }
+}
+
+
+function organizarAcoesAgendaVisualAdmin() {
+    const container = document.getElementById(
+        "agenda-visual-lista"
+    );
+
+    if (!container) {
+        return;
+    }
+
+    const cards = container.querySelectorAll(
+        ".agenda-evento-card.agendamento"
+    );
+
+    cards.forEach((card) => {
+
+        if (
+            card.dataset.acoesCompactadas === "1"
+        ) {
+            return;
+        }
+
+        const botoes = Array.from(
+            card.querySelectorAll("button")
+        );
+
+        if (botoes.length <= 2) {
+            card.dataset.acoesCompactadas = "1";
+            return;
+        }
+
+        const principais = [];
+        const secundarias = [];
+
+        botoes.forEach((botao) => {
+            const texto =
+                normalizarTextoAcaoAgendaAdmin(
+                    botao.textContent
+                );
+
+            if (
+                texto === "confirmar"
+                || texto === "concluir"
+            ) {
+                principais.push(botao);
+            } else {
+                secundarias.push(botao);
+            }
+        });
+
+
+        if (!secundarias.length) {
+            card.dataset.acoesCompactadas = "1";
+            return;
+        }
+
+
+        let containerOriginal =
+            botoes[0]?.parentElement;
+
+        if (
+            !containerOriginal
+            || containerOriginal === card
+        ) {
+            containerOriginal =
+                document.createElement("div");
+
+            containerOriginal.className =
+                "agenda-evento-acoes";
+
+            card.appendChild(
+                containerOriginal
+            );
+        }
+
+
+        containerOriginal.innerHTML = "";
+
+
+        principais.forEach((botao) => {
+            botao.classList.add(
+                "acao-agenda-principal"
+            );
+
+            containerOriginal.appendChild(
+                botao
+            );
+        });
+
+
+        const {
+            detalhes,
+            conteudo,
+        } = criarMenuMaisAcoesAgendaAdmin();
+
+
+        secundarias.forEach((botao) => {
+            botao.classList.add(
+                "acao-agenda-secundaria"
+            );
+
+            conteudo.appendChild(botao);
+        });
+
+
+        detalhes.addEventListener(
+            "toggle",
+            () => {
+                if (detalhes.open) {
+                    fecharMenusAcoesAgendaAdmin(
+                        detalhes
+                    );
+                }
+            }
+        );
+
+
+        containerOriginal.appendChild(
+            detalhes
+        );
+
+
+        card.dataset.acoesCompactadas =
+            "1";
+    });
+}
+
+
+function iniciarOrganizacaoAcoesAgendaAdmin() {
+    const tabela = document.getElementById(
+        "lista-agendamentos"
+    );
+
+    const visual = document.getElementById(
+        "agenda-visual-lista"
+    );
+
+
+    if (tabela) {
+        const observerTabela =
+            new MutationObserver(() => {
+                organizarAcoesTabelaAgendaAdmin();
+            });
+
+        observerTabela.observe(
+            tabela,
+            {
+                childList: true,
+                subtree: true,
+            }
+        );
+    }
+
+
+    if (visual) {
+        const observerVisual =
+            new MutationObserver(() => {
+                organizarAcoesAgendaVisualAdmin();
+            });
+
+        observerVisual.observe(
+            visual,
+            {
+                childList: true,
+                subtree: true,
+            }
+        );
+    }
+
+
+    organizarAcoesTabelaAgendaAdmin();
+    organizarAcoesAgendaVisualAdmin();
+
+
+    document.addEventListener(
+        "click",
+        (event) => {
+
+            if (
+                !event.target.closest(
+                    ".agenda-mais-acoes-admin"
+                )
+            ) {
+                fecharMenusAcoesAgendaAdmin();
+            }
+        }
+    );
+}
+
+
+window.organizarAcoesTabelaAgendaAdmin =
+    organizarAcoesTabelaAgendaAdmin;
+
+window.organizarAcoesAgendaVisualAdmin =
+    organizarAcoesAgendaVisualAdmin;
+
+
+
+let filtroFilaEsperaAdminAtual = "pendentes";
+
+
+function cardFilaEsperaEhFinalizadoAdmin(card) {
+    return (
+        card.classList.contains("status-agendado")
+        || card.classList.contains("status-cancelado")
+        || card.classList.contains("status-expirado")
+    );
+}
+
+
+
+function cardFilaEsperaEhArquivadoAdmin(card) {
+    return card.classList.contains(
+        "status-arquivado"
+    );
+}
+
+
+function aplicarFiltroFilaEsperaAdmin(
+    filtro = filtroFilaEsperaAdminAtual
+) {
+    filtroFilaEsperaAdminAtual = filtro;
+
+    const container = document.getElementById(
+        "lista-fila-espera-admin"
+    );
+
+    if (!container) {
+        return;
+    }
+
+    const cards = container.querySelectorAll(
+        ".fila-espera-card-admin"
+    );
+
+    cards.forEach((card) => {
+        const finalizado =
+            cardFilaEsperaEhFinalizadoAdmin(card);
+
+        let mostrar = true;
+
+        if (filtro === "pendentes") {
+            mostrar = !finalizado;
+        }
+
+        const arquivado =
+            cardFilaEsperaEhArquivadoAdmin(card);
+
+        if (filtro === "pendentes") {
+            mostrar =
+                !finalizado
+                && !arquivado;
+        }
+
+        if (filtro === "finalizados") {
+            mostrar =
+                finalizado
+                && !arquivado;
+        }
+
+        if (filtro === "arquivados") {
+            mostrar = arquivado;
+        }
+
+        if (filtro === "todos") {
+            mostrar = true;
+        }
+
+        card.hidden = !mostrar;
+    });
+
+
+    document
+        .querySelectorAll(
+            "[data-fila-filtro-admin]"
+        )
+        .forEach((botao) => {
+            const ativo =
+                botao.dataset.filaFiltroAdmin
+                === filtro;
+
+            botao.classList.toggle(
+                "ativo",
+                ativo
+            );
+
+            botao.setAttribute(
+                "aria-pressed",
+                String(ativo)
+            );
+        });
+}
+
+
+
+
+function garantirBotaoExcluirFilaEsperaAdmin(card) {
+    if (!card) {
+        return;
+    }
+
+
+    if (!usuarioAdminPodeGerenciarFilaEspera()) {
+        return;
+    }
+
+    if (
+        !card.classList.contains(
+            "status-arquivado"
+        )
+    ) {
+        return;
+    }
+
+    if (
+        card.querySelector(
+            ".btn-excluir-fila-admin"
+        )
+    ) {
+        return;
+    }
+
+    const acoes = card.querySelector(
+        ".fila-espera-card-acoes"
+    );
+
+    if (!acoes) {
+        return;
+    }
+
+    const itemId = Number(
+        card.dataset.filaItemId || 0
+    );
+
+    if (!itemId) {
+        return;
+    }
+
+    const botao =
+        document.createElement(
+            "button"
+        );
+
+    botao.type = "button";
+
+    botao.className =
+        "btn-excluir-fila-admin";
+
+    botao.textContent =
+        "Excluir definitivamente";
+
+    botao.addEventListener(
+        "click",
+        () => {
+            excluirItemFilaEsperaAdmin(
+                itemId
+            );
+        }
+    );
+
+    acoes.appendChild(botao);
+}
+
+
+function garantirBotaoArquivarFilaEsperaAdmin(card) {
+    if (!card) {
+        return;
+    }
+
+
+    if (!usuarioAdminPodeGerenciarFilaEspera()) {
+        return;
+    }
+
+    if (
+        card.classList.contains(
+            "status-arquivado"
+        )
+    ) {
+        return;
+    }
+
+    if (
+        card.querySelector(
+            ".btn-arquivar-fila-admin"
+        )
+    ) {
+        return;
+    }
+
+    const acoes = card.querySelector(
+        ".fila-espera-card-acoes"
+    );
+
+    if (!acoes) {
+        return;
+    }
+
+    const itemId = Number(
+        card.dataset.filaItemId || 0
+    );
+
+    if (!itemId) {
+        return;
+    }
+
+    const botao =
+        document.createElement("button");
+
+    botao.type = "button";
+
+    botao.className =
+        "btn-secundario btn-arquivar-fila-admin";
+
+    botao.textContent =
+        "Arquivar";
+
+    botao.addEventListener(
+        "click",
+        () => {
+            arquivarItemFilaEsperaAdmin(
+                itemId
+            );
+        }
+    );
+
+    acoes.appendChild(botao);
+}
+
+
+function organizarDetalhesFilaEsperaAdmin() {
+    const container = document.getElementById(
+        "lista-fila-espera-admin"
+    );
+
+    if (!container) {
+        return;
+    }
+
+    container
+        .querySelectorAll(
+            ".fila-espera-card-admin"
+        )
+        .forEach((card) => {
+
+            garantirBotaoArquivarFilaEsperaAdmin(
+                card
+            );
+
+            garantirBotaoExcluirFilaEsperaAdmin(
+                card
+            );
+
+            if (
+                card.dataset.detalhesOrganizados
+                === "1"
+            ) {
+                return;
+            }
+
+            const blocoDetalhes =
+                card.querySelector(
+                    ".fila-espera-card-detalhes"
+                );
+
+            const observacao =
+                card.querySelector(
+                    ".fila-espera-observacao-admin"
+                );
+
+            const acoes =
+                card.querySelector(
+                    ".fila-espera-card-acoes"
+                );
+
+
+            if (!blocoDetalhes) {
+                card.dataset.detalhesOrganizados =
+                    "1";
+
+                return;
+            }
+
+
+            const detalhes =
+                document.createElement(
+                    "details"
+                );
+
+            detalhes.className =
+                "fila-espera-detalhes-retraiveis-admin";
+
+
+            const resumo =
+                document.createElement(
+                    "summary"
+                );
+
+            resumo.textContent =
+                "Ver detalhes";
+
+
+            const conteudo =
+                document.createElement(
+                    "div"
+                );
+
+            conteudo.className =
+                "fila-espera-detalhes-conteudo-admin";
+
+
+            conteudo.appendChild(
+                blocoDetalhes
+            );
+
+
+            if (observacao) {
+                conteudo.appendChild(
+                    observacao
+                );
+            }
+
+
+            detalhes.appendChild(
+                resumo
+            );
+
+            detalhes.appendChild(
+                conteudo
+            );
+
+
+            if (acoes) {
+                card.insertBefore(
+                    detalhes,
+                    acoes
+                );
+            } else {
+                card.appendChild(
+                    detalhes
+                );
+            }
+
+
+            card.dataset.detalhesOrganizados =
+                "1";
+        });
+}
+
+
+function garantirFiltrosFilaEsperaAdmin() {
+    const secao = document.getElementById(
+        "secao-fila-espera"
+    );
+
+    if (!secao) {
+        return false;
+    }
+
+
+    const resumo = secao.querySelector(
+        ".fila-espera-admin-resumo"
+    );
+
+    if (
+        resumo
+        && !document.getElementById(
+            "fila-espera-filtros-admin"
+        )
+    ) {
+        const filtros =
+            document.createElement("div");
+
+        filtros.id =
+            "fila-espera-filtros-admin";
+
+        filtros.className =
+            "fila-espera-filtros-admin";
+
+        filtros.innerHTML = `
+            <div>
+                <span>Visualizar</span>
+                <strong>
+                    Priorize quem ainda precisa de atendimento
+                </strong>
+            </div>
+
+            <div class="fila-espera-filtros-acoes-admin">
+                <button
+                    type="button"
+                    data-fila-filtro-admin="pendentes"
+                    class="ativo"
+                    aria-pressed="true"
+                >
+                    Pendentes
+                </button>
+
+                <button
+                    type="button"
+                    data-fila-filtro-admin="finalizados"
+                    aria-pressed="false"
+                >
+                    Finalizados
+                </button>
+
+                <button
+                    type="button"
+                    data-fila-filtro-admin="arquivados"
+                    aria-pressed="false"
+                >
+                    Arquivados
+                </button>
+
+                <button
+                    type="button"
+                    data-fila-filtro-admin="todos"
+                    aria-pressed="false"
+                >
+                    Todos
+                </button>
+            </div>
+        `;
+
+
+        resumo.insertAdjacentElement(
+            "afterend",
+            filtros
+        );
+
+
+        filtros.addEventListener(
+            "click",
+            (event) => {
+                const botao =
+                    event.target.closest(
+                        "[data-fila-filtro-admin]"
+                    );
+
+                if (!botao) {
+                    return;
+                }
+
+                aplicarFiltroFilaEsperaAdmin(
+                    botao.dataset.filaFiltroAdmin
+                );
+            }
+        );
+    }
+
+
+    const lista = document.getElementById(
+        "lista-fila-espera-admin"
+    );
+
+
+    if (
+        lista
+        && lista.dataset.refinoObservado !== "1"
+    ) {
+        const observer =
+            new MutationObserver(() => {
+                organizarDetalhesFilaEsperaAdmin();
+
+                aplicarFiltroFilaEsperaAdmin();
+            });
+
+
+        observer.observe(
+            lista,
+            {
+                childList: true,
+                subtree: true,
+            }
+        );
+
+
+        lista.dataset.refinoObservado =
+            "1";
+    }
+
+
+    organizarDetalhesFilaEsperaAdmin();
+
+    aplicarFiltroFilaEsperaAdmin();
+
+    return true;
+}
+
+
+function iniciarRefinoFilaEsperaAdmin() {
+    let tentativas = 0;
+
+    const timer = window.setInterval(
+        () => {
+            tentativas += 1;
+
+            const pronto =
+                garantirFiltrosFilaEsperaAdmin();
+
+            if (
+                pronto
+                || tentativas >= 40
+            ) {
+                window.clearInterval(
+                    timer
+                );
+            }
+        },
+        250
+    );
+}
+
+
+window.aplicarFiltroFilaEsperaAdmin =
+    aplicarFiltroFilaEsperaAdmin;
+
+
 document.addEventListener("DOMContentLoaded", () => {
+    iniciarRefinoFilaEsperaAdmin();
+    iniciarOrganizacaoAcoesAgendaAdmin();
+    configurarMenuLateralRetratilAdmin();
+    iniciarNavegacaoConfiguracoesAdmin();
+    iniciarObservacaoInsightDashboardAdmin();
+
     setTimeout(() => {
         exibirBannerFuncionalidadesAdmin();
     }, 700);
 });
+
+
+
+function garantirAlertaFilaEsperaDashboardAdmin() {
+    let card = document.getElementById(
+        "dashboard-fila-espera-alerta"
+    );
+
+    if (card) {
+        return card;
+    }
+
+    const referencia = document.getElementById(
+        "dashboard-insight-dia"
+    );
+
+    if (!referencia || !referencia.parentElement) {
+        return null;
+    }
+
+    card = document.createElement("section");
+
+    card.id = "dashboard-fila-espera-alerta";
+    card.className =
+        "dashboard-fila-espera-alerta";
+    card.hidden = true;
+    card.setAttribute("aria-hidden", "true");
+
+    card.innerHTML = `
+        <div class="dashboard-fila-espera-alerta-conteudo">
+            <div>
+                <span>Fila de espera</span>
+
+                <strong id="dashboard-fila-espera-titulo">
+                    Existem clientes aguardando
+                </strong>
+
+                <p id="dashboard-fila-espera-texto">
+                    Verifique oportunidades para preencher horarios vagos.
+                </p>
+            </div>
+
+            <div class="dashboard-fila-espera-alerta-acoes">
+                <strong id="dashboard-fila-espera-quantidade">
+                    0
+                </strong>
+
+                <button
+                    type="button"
+                    onclick="mostrarSecaoAdmin('secao-fila-espera')"
+                >
+                    Ver fila
+                </button>
+            </div>
+        </div>
+    `;
+
+    referencia.insertAdjacentElement(
+        "afterend",
+        card
+    );
+
+    return card;
+}
+
+
+function atualizarAlertaFilaEsperaDashboardAdmin(
+    itens = []
+) {
+    const card =
+        garantirAlertaFilaEsperaDashboardAdmin();
+
+    if (!card) {
+        return;
+    }
+
+    if (
+        typeof usuarioAdminPodeVerFilaEspera === "function"
+        && !usuarioAdminPodeVerFilaEspera()
+    ) {
+        card.hidden = true;
+        card.setAttribute("aria-hidden", "true");
+        return;
+    }
+
+    const lista = Array.isArray(itens)
+        ? itens
+        : [];
+
+    const aguardando = lista.filter(
+        (item) =>
+            String(item?.status || "")
+                .trim()
+                .toLowerCase() === "aguardando"
+    ).length;
+
+    const quantidade = document.getElementById(
+        "dashboard-fila-espera-quantidade"
+    );
+
+    const titulo = document.getElementById(
+        "dashboard-fila-espera-titulo"
+    );
+
+    const texto = document.getElementById(
+        "dashboard-fila-espera-texto"
+    );
+
+    if (quantidade) {
+        quantidade.textContent = String(aguardando);
+    }
+
+    if (aguardando <= 0) {
+        card.hidden = true;
+        card.setAttribute("aria-hidden", "true");
+        return;
+    }
+
+    card.hidden = false;
+    card.setAttribute("aria-hidden", "false");
+
+    if (titulo) {
+        titulo.textContent = (
+            aguardando === 1
+                ? "1 cliente aguardando oportunidade"
+                : `${aguardando} clientes aguardando oportunidade`
+        );
+    }
+
+    if (texto) {
+        texto.textContent =
+            "Confira a fila e aproveite horarios vagos para converter espera em agendamento.";
+    }
+}
+
+
+window.atualizarAlertaFilaEsperaDashboardAdmin =
+    atualizarAlertaFilaEsperaDashboardAdmin;
+
+
+/* Fila de espera - Sprint 4.7B */
+let filaEsperaAdminCache = [];
+
+function usuarioAdminPodeVerFilaEspera() {
+    if (usuarioAdminEhGestor && usuarioAdminEhGestor()) {
+        return true;
+    }
+
+    if (usuarioAdminEhRecepcao && usuarioAdminEhRecepcao()) {
+        return true;
+    }
+
+    return usuarioAdminTemPermissao
+        && (
+            usuarioAdminTemPermissao("ver_fila_espera")
+            || usuarioAdminTemPermissao("gerenciar_fila_espera")
+        );
+}
+
+
+function usuarioAdminPodeGerenciarFilaEspera() {
+    if (
+        usuarioAdminEhGestor
+        && usuarioAdminEhGestor()
+    ) {
+        return true;
+    }
+
+    return Boolean(
+        usuarioAdminTemPermissao
+        && usuarioAdminTemPermissao(
+            "gerenciar_fila_espera"
+        )
+    );
+}
+
+
+function traduzirStatusFilaEsperaAdmin(status) {
+    const mapa = {
+        aguardando: "Aguardando",
+        chamado: "Chamado",
+        agendado: "Agendado",
+        cancelado: "Cancelado",
+        expirado: "Expirado",
+        arquivado: "Arquivado",
+    };
+
+    return mapa[String(status || "").toLowerCase()] || status || "Aguardando";
+}
+
+
+function formatarDataFilaEsperaAdmin(data) {
+    if (!data) {
+        return "-";
+    }
+
+    const partes = String(data).split("-");
+
+    if (partes.length === 3) {
+        return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+
+    return String(data);
+}
+
+function formatarPeriodoFilaEsperaAdmin(periodo) {
+    const mapa = {
+        manha: "Manha",
+        tarde: "Tarde",
+        noite: "Noite",
+        qualquer: "Qualquer",
+    };
+
+    return mapa[String(periodo || "").toLowerCase()] || periodo || "Qualquer";
+}
+
+function criarEstruturaFilaEsperaAdmin() {
+    if (document.getElementById("secao-fila-espera")) {
+        return;
+    }
+
+    const podeVer = usuarioAdminPodeVerFilaEspera();
+
+    const referenciaTab = document.querySelector(".admin-tab");
+    const containerTabs = referenciaTab ? referenciaTab.parentElement : null;
+
+    if (containerTabs) {
+        const botao = document.createElement("button");
+        botao.type = "button";
+        botao.className = "admin-tab admin-nav-item";
+        botao.dataset.secao = "secao-fila-espera";
+        botao.innerHTML = `
+            <span class="admin-nav-icon">⏳</span>
+            <span>Fila de espera</span>
+        `;
+        botao.onclick = () => {
+            mostrarSecaoAdmin("secao-fila-espera");
+            carregarFilaEsperaAdmin();
+        };
+
+        if (!podeVer) {
+            botao.hidden = true;
+            botao.style.display = "none";
+        }
+
+        containerTabs.appendChild(botao);
+    }
+
+    const referenciaSecao = document.querySelector(".admin-section, .secao-admin, section[id^='secao-']");
+    const containerPrincipal = referenciaSecao ? referenciaSecao.parentElement : document.querySelector("main") || document.body;
+
+    const secao = document.createElement("section");
+    secao.id = "secao-fila-espera";
+    secao.className = "secao-admin";
+
+    if (!podeVer) {
+        secao.hidden = true;
+        secao.style.display = "none";
+    }
+
+    secao.innerHTML = `
+        <div class="fila-espera-admin-header">
+            <div>
+                <span class="admin-kicker">Operacao</span>
+                <h2>Fila de espera</h2>
+                <p>
+                    Acompanhe clientes interessados em horarios indisponiveis e organize retornos pelo atendimento.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                class="btn-secundario"
+                onclick="carregarFilaEsperaAdmin()"
+            >
+                Atualizar fila
+            </button>
+        </div>
+
+        <div class="fila-espera-admin-resumo">
+            <article>
+                <small>Aguardando</small>
+                <strong id="fila-espera-total-aguardando">0</strong>
+            </article>
+            <article>
+                <small>Chamados</small>
+                <strong id="fila-espera-total-chamado">0</strong>
+            </article>
+            <article>
+                <small>Finalizados</small>
+                <strong id="fila-espera-total-finalizados">0</strong>
+            </article>
+        </div>
+
+        <div id="lista-fila-espera-admin" class="lista-fila-espera-admin">
+            Carregando fila de espera...
+        </div>
+    `;
+
+    containerPrincipal.appendChild(secao);
+}
+
+
+function atualizarTextoFilaEsperaAdmin(id, valor) {
+    const elemento = document.getElementById(id);
+
+    if (elemento) {
+        elemento.textContent = valor;
+    }
+}
+
+function atualizarResumoFilaEsperaAdmin(itens) {
+    const aguardando = itens.filter((item) => item.status === "aguardando").length;
+    const chamado = itens.filter((item) => item.status === "chamado").length;
+    const finalizados = itens.filter((item) => {
+        return ["agendado", "cancelado", "expirado"].includes(item.status);
+    }).length;
+
+    atualizarTextoFilaEsperaAdmin("fila-espera-total-aguardando", aguardando);
+    atualizarTextoFilaEsperaAdmin("fila-espera-total-chamado", chamado);
+    atualizarTextoFilaEsperaAdmin("fila-espera-total-finalizados", finalizados);
+}
+
+function renderizarFilaEsperaAdmin(itens) {
+    const container = document.getElementById("lista-fila-espera-admin");
+
+    if (!container) {
+        return;
+    }
+
+    const lista = Array.isArray(itens) ? itens : [];
+
+    atualizarResumoFilaEsperaAdmin(lista);
+    atualizarAlertaFilaEsperaDashboardAdmin(lista);
+
+    if (!lista.length) {
+        container.innerHTML = `
+            <div class="estado-vazio-admin">
+                Nenhum cliente na fila de espera.
+            </div>
+        `;
+        return;
+    }
+
+    const podeGerenciar =
+        usuarioAdminPodeGerenciarFilaEspera();
+
+    container.innerHTML = lista.map((item) => {
+        const status = String(item.status || "aguardando").toLowerCase();
+        const acoesDesabilitadas = [
+            "agendado",
+            "cancelado",
+            "expirado",
+            "arquivado",
+        ].includes(status);
+
+        return `
+            <article
+                class="fila-espera-card-admin status-${status}"
+                data-fila-item-id="${item.id}"
+            >
+                <div class="fila-espera-card-topo">
+                    <div>
+                        <h3>${item.cliente_nome || "Cliente sem nome"}</h3>
+                        <p>${item.telefone_cliente || "Telefone nao informado"}</p>
+                    </div>
+
+                    <span class="badge-fila-espera-admin">${traduzirStatusFilaEsperaAdmin(status)}</span>
+                </div>
+
+                <div class="fila-espera-card-detalhes">
+                    <span><strong>Servico:</strong> ${item.servico || "Nao informado"}</span>
+                    <span><strong>Profissional:</strong> ${item.profissional_preferido || "Sem preferencia"}</span>
+                    <span><strong>Data:</strong> ${formatarDataFilaEsperaAdmin(item.data_desejada)}</span>
+                    <span><strong>Periodo:</strong> ${formatarPeriodoFilaEsperaAdmin(item.periodo_preferido)}</span>
+                </div>
+
+                ${item.observacao ? `<p class="fila-espera-observacao-admin">${item.observacao}</p>` : ""}
+
+                ${podeGerenciar ? `
+                <div class="fila-espera-card-acoes">
+                    ${
+                        !acoesDesabilitadas
+                            ? `
+                    <button
+                        type="button"
+                        class="btn-primario"
+                        onclick="abrirConversaoFilaEsperaAdmin(${item.id})"
+                    >
+                        Criar agendamento
+                    </button>
+                    `
+                            : ""
+                    }
+
+                    <button
+                        type="button"
+                        class="btn-secundario"
+                        onclick="atualizarStatusFilaEsperaAdmin(${item.id}, 'chamado')"
+                        ${acoesDesabilitadas ? "disabled" : ""}
+                    >
+                        Chamar
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn-secundario"
+                        onclick="atualizarStatusFilaEsperaAdmin(${item.id}, 'cancelado')"
+                        ${acoesDesabilitadas ? "disabled" : ""}
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn-secundario"
+                        onclick="atualizarStatusFilaEsperaAdmin(${item.id}, 'expirado')"
+                        ${acoesDesabilitadas ? "disabled" : ""}
+                    >
+                        Expirar
+                    </button>
+                </div>
+                ` : ""}
+
+            </article>
+        `;
+    }).join("");
+}
+
+async function carregarFilaEsperaAdmin() {
+    if (!usuarioAdminPodeVerFilaEspera()) {
+        return;
+    }
+
+    const container = document.getElementById("lista-fila-espera-admin");
+
+    if (container) {
+        container.innerHTML = "Carregando fila de espera...";
+    }
+
+    try {
+        const resposta = await apiRequest(`/api/${tenantSlugLogado}/admin/fila-espera`, {
+            auth: true,
+        });
+
+        filaEsperaAdminCache = resposta?.fila_espera || [];
+        renderizarFilaEsperaAdmin(filaEsperaAdminCache);
+    } catch (erro) {
+        console.error("Erro ao carregar fila de espera:", erro);
+
+        if (container) {
+            container.innerHTML = `
+                <div class="estado-vazio-admin">
+                    Nao foi possivel carregar a fila de espera.
+                </div>
+            `;
+        }
+    }
+}
+
+
+
+async function excluirItemFilaEsperaAdmin(itemId) {
+    if (!usuarioAdminPodeGerenciarFilaEspera()) {
+        alert(
+            "Seu perfil nao tem permissao para gerenciar a fila de espera."
+        );
+
+        return;
+    }
+
+    const confirmacao = window.prompt(
+        "Esta exclusao e permanente.\n\n"
+        + "Digite EXCLUIR para confirmar."
+    );
+
+    if (
+        String(confirmacao || "")
+            .trim()
+            .toUpperCase()
+        !== "EXCLUIR"
+    ) {
+        return;
+    }
+
+    try {
+        await apiRequest(
+            `/api/${tenantSlugLogado}/admin/fila-espera/${itemId}`,
+            {
+                method: "DELETE",
+                auth: true,
+            }
+        );
+
+        await carregarFilaEsperaAdmin();
+
+    } catch (erro) {
+        console.error(
+            "Erro ao excluir item da fila de espera:",
+            erro
+        );
+
+        alert(
+            erro.message
+            || "Nao foi possivel excluir o item da fila de espera."
+        );
+    }
+}
+
+
+window.excluirItemFilaEsperaAdmin =
+    excluirItemFilaEsperaAdmin;
+
+
+async function arquivarItemFilaEsperaAdmin(itemId) {
+    if (!usuarioAdminPodeGerenciarFilaEspera()) {
+        alert(
+            "Seu perfil nao tem permissao para gerenciar a fila de espera."
+        );
+        return;
+    }
+
+    const confirmou = window.confirm(
+        "Arquivar este item da fila de espera?"
+    );
+
+    if (!confirmou) {
+        return;
+    }
+
+    await atualizarStatusFilaEsperaAdmin(
+        itemId,
+        "arquivado"
+    );
+}
+
+
+window.arquivarItemFilaEsperaAdmin =
+    arquivarItemFilaEsperaAdmin;
+
+
+async function atualizarStatusFilaEsperaAdmin(itemId, status) {
+    if (!usuarioAdminPodeGerenciarFilaEspera()) {
+        alert("Seu perfil nao tem permissao para gerenciar a fila de espera.");
+        return;
+    }
+
+    try {
+        await apiRequest(`/api/${tenantSlugLogado}/admin/fila-espera/${itemId}/status`, {
+            method: "PUT",
+            auth: true,
+            body: { status },
+        });
+
+        await carregarFilaEsperaAdmin();
+    } catch (erro) {
+        console.error("Erro ao atualizar status da fila de espera:", erro);
+        alert(erro.message || "Nao foi possivel atualizar o status da fila de espera.");
+    }
+}
+
+function iniciarFilaEsperaAdminQuandoDisponivel() {
+    let tentativas = 0;
+
+    const timer = setInterval(() => {
+        tentativas += 1;
+
+        if (typeof tenantSlugLogado !== "undefined" && tenantSlugLogado) {
+            criarEstruturaFilaEsperaAdmin();
+
+            if (usuarioAdminPodeVerFilaEspera()) {
+                carregarFilaEsperaAdmin();
+            }
+
+            clearInterval(timer);
+            return;
+        }
+
+        if (tentativas >= 20) {
+            clearInterval(timer);
+        }
+    }, 300);
+}
+
+
+let itemFilaConversaoAdmin = null;
+
+
+function fecharConversaoFilaEsperaAdmin() {
+    const modal = document.getElementById("modal-conversao-fila-admin");
+
+    if (modal) {
+        modal.remove();
+    }
+
+    itemFilaConversaoAdmin = null;
+}
+
+
+async function carregarHorariosConversaoFilaAdmin() {
+    const selectHorario = document.getElementById("fila-conversao-horario");
+    const campoData = document.getElementById("fila-conversao-data");
+    const selectProfissional = document.getElementById("fila-conversao-profissional");
+
+    if (!selectHorario || !campoData || !selectProfissional || !itemFilaConversaoAdmin) {
+        return;
+    }
+
+    const data = campoData.value;
+    const profissional = selectProfissional.value;
+
+    selectHorario.innerHTML = `
+        <option value="">Carregando horarios...</option>
+    `;
+
+    if (!data || !profissional) {
+        selectHorario.innerHTML = `
+            <option value="">Selecione data e profissional</option>
+        `;
+        return;
+    }
+
+    try {
+        const servicosResposta = await apiRequest(
+            `/api/${tenantSlugLogado}/servicos`,
+            {
+                method: "GET",
+                auth: true,
+            }
+        );
+
+        const servicos = Array.isArray(servicosResposta)
+            ? servicosResposta
+            : servicosResposta?.servicos || [];
+
+        const servico = servicos.find(
+            (item) =>
+                String(item.nome || "").trim().toLowerCase()
+                === String(itemFilaConversaoAdmin.servico || "").trim().toLowerCase()
+        );
+
+        if (!servico) {
+            throw new Error("Servico da fila nao encontrado no catalogo.");
+        }
+
+        const duracao = Number(servico.duracao || 0);
+
+        if (!duracao) {
+            throw new Error("Duracao do servico nao informada.");
+        }
+
+        const resposta = await apiRequest(
+            `/api/${tenantSlugLogado}/horarios/${encodeURIComponent(data)}/${duracao}/${encodeURIComponent(profissional)}`
+        );
+
+        const horarios = resposta?.horarios_disponiveis || [];
+
+        if (!horarios.length) {
+            selectHorario.innerHTML = `
+                <option value="">Nenhum horario disponivel</option>
+            `;
+            return;
+        }
+
+        selectHorario.innerHTML = `
+            <option value="">Selecione um horario</option>
+            ${horarios
+                .map(
+                    (horario) =>
+                        `<option value="${horario}">${horario}</option>`
+                )
+                .join("")}
+        `;
+    } catch (erro) {
+        selectHorario.innerHTML = `
+            <option value="">Erro ao carregar horarios</option>
+        `;
+
+        exibirMensagemAdmin(
+            erro?.message || "Nao foi possivel carregar os horarios."
+        );
+    }
+}
+
+
+async function abrirConversaoFilaEsperaAdmin(itemId) {
+    try {
+        const resposta = await apiRequest(
+            `/api/${tenantSlugLogado}/admin/fila-espera`,
+            {
+                auth: true,
+            }
+        );
+
+        const lista = Array.isArray(resposta?.fila_espera)
+            ? resposta.fila_espera
+            : [];
+
+        const item = lista.find(
+            (registro) => Number(registro.id) === Number(itemId)
+        );
+
+        if (!item) {
+            exibirMensagemAdmin("Item da fila nao encontrado.");
+            return;
+        }
+
+        itemFilaConversaoAdmin = item;
+
+        fecharConversaoFilaEsperaAdmin();
+        itemFilaConversaoAdmin = item;
+
+        const modal = document.createElement("div");
+
+        modal.id = "modal-conversao-fila-admin";
+        modal.className = "modal-conversao-fila-admin";
+
+        modal.innerHTML = `
+            <div class="modal-conversao-fila-conteudo">
+                <div class="modal-conversao-fila-topo">
+                    <div>
+                        <span class="admin-kicker">Fila de espera</span>
+                        <h3>Criar agendamento</h3>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="btn-secundario"
+                        onclick="fecharConversaoFilaEsperaAdmin()"
+                    >
+                        Fechar
+                    </button>
+                </div>
+
+                <div class="modal-conversao-fila-resumo">
+                    <p><strong>Cliente:</strong> ${item.cliente_nome || "-"}</p>
+                    <p><strong>Telefone:</strong> ${item.telefone_cliente || "-"}</p>
+                    <p><strong>Servico:</strong> ${item.servico || "-"}</p>
+                </div>
+
+                <form
+                    id="form-conversao-fila-admin"
+                    onsubmit="confirmarConversaoFilaEsperaAdmin(event)"
+                >
+                    <label>
+                        Data
+                        <input
+                            id="fila-conversao-data"
+                            type="date"
+                            value="${item.data_desejada || ""}"
+                            required
+                        >
+                    </label>
+
+                    <label>
+                        Profissional
+                        <select
+                            id="fila-conversao-profissional"
+                            required
+                        >
+                            <option value="">Carregando...</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        Horario
+                        <select
+                            id="fila-conversao-horario"
+                            required
+                        >
+                            <option value="">Selecione data e profissional</option>
+                        </select>
+                    </label>
+
+                    <div class="modal-conversao-fila-acoes">
+                        <button
+                            type="button"
+                            class="btn-secundario"
+                            onclick="fecharConversaoFilaEsperaAdmin()"
+                        >
+                            Cancelar
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="btn-primario"
+                        >
+                            Confirmar agendamento
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        const respostaProfissionais = await apiRequest(
+            `/api/${tenantSlugLogado}/profissionais`,
+            {
+                auth: true,
+            }
+        );
+
+        const profissionais = Array.isArray(respostaProfissionais)
+            ? respostaProfissionais
+            : respostaProfissionais?.profissionais || [];
+
+        const selectProfissional = document.getElementById(
+            "fila-conversao-profissional"
+        );
+
+        selectProfissional.innerHTML = `
+            <option value="">Selecione um profissional</option>
+            ${profissionais
+                .map((profissional) => {
+                    const nome =
+                        profissional.nome
+                        || profissional.nome_profissional
+                        || "";
+
+                    return `<option value="${nome}">${nome}</option>`;
+                })
+                .join("")}
+        `;
+
+        if (item.profissional_preferido) {
+            selectProfissional.value = item.profissional_preferido;
+        }
+
+        document
+            .getElementById("fila-conversao-data")
+            ?.addEventListener(
+                "change",
+                carregarHorariosConversaoFilaAdmin
+            );
+
+        selectProfissional.addEventListener(
+            "change",
+            carregarHorariosConversaoFilaAdmin
+        );
+
+        await carregarHorariosConversaoFilaAdmin();
+    } catch (erro) {
+        tratarErro(erro);
+    }
+}
+
+
+async function confirmarConversaoFilaEsperaAdmin(event) {
+    event.preventDefault();
+
+    if (!itemFilaConversaoAdmin) {
+        exibirMensagemAdmin("Item da fila nao selecionado.");
+        return;
+    }
+
+    const data =
+        document.getElementById("fila-conversao-data")?.value || "";
+
+    const profissional =
+        document.getElementById("fila-conversao-profissional")?.value || "";
+
+    const horario =
+        document.getElementById("fila-conversao-horario")?.value || "";
+
+    if (!data || !profissional || !horario) {
+        exibirMensagemAdmin(
+            "Selecione data, profissional e horario."
+        );
+        return;
+    }
+
+    try {
+        const resposta = await apiRequest(
+            `/api/${tenantSlugLogado}/admin/fila-espera/${itemFilaConversaoAdmin.id}/agendar`,
+            {
+                method: "POST",
+                auth: true,
+                body: {
+                    data,
+                    profissional,
+                    horario,
+                },
+            }
+        );
+
+        fecharConversaoFilaEsperaAdmin();
+
+        exibirMensagemAdmin(
+            resposta?.mensagem
+            || "Agendamento criado com sucesso."
+        );
+
+        await carregarFilaEsperaAdmin();
+
+        if (typeof carregarAgendamentos === "function") {
+            await carregarAgendamentos();
+        }
+
+        if (typeof carregarAgendaVisualDia === "function") {
+            await carregarAgendaVisualDia({
+                forcar: true,
+            });
+        }
+    } catch (erro) {
+        tratarErro(erro);
+    }
+}
+
+
+window.abrirConversaoFilaEsperaAdmin =
+    abrirConversaoFilaEsperaAdmin;
+
+window.fecharConversaoFilaEsperaAdmin =
+    fecharConversaoFilaEsperaAdmin;
+
+window.confirmarConversaoFilaEsperaAdmin =
+    confirmarConversaoFilaEsperaAdmin;
+
+window.carregarHorariosConversaoFilaAdmin =
+    carregarHorariosConversaoFilaAdmin;
+
+
+window.carregarFilaEsperaAdmin = carregarFilaEsperaAdmin;
+window.atualizarStatusFilaEsperaAdmin = atualizarStatusFilaEsperaAdmin;
+window.criarEstruturaFilaEsperaAdmin = criarEstruturaFilaEsperaAdmin;
+
+iniciarFilaEsperaAdminQuandoDisponivel();

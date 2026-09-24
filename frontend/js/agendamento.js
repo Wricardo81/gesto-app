@@ -293,7 +293,7 @@ function aplicarIdentidadePublica(config) {
 
     if (tituloPublicoEmpresa) {
         tituloPublicoEmpresa.innerText =
-            `Agende seu hor?rio na ${nomePublico}`;
+            `Agende seu hor\u00e1rio na ${nomePublico}`;
     }
 
     const subtituloPublicoEmpresa = document.getElementById(
@@ -303,7 +303,7 @@ function aplicarIdentidadePublica(config) {
     if (subtituloPublicoEmpresa) {
         subtituloPublicoEmpresa.innerText =
             config.descricao
-            || "Escolha o servi?o, profissional, data e hor?rio dispon?vel. A confirma??o ? r?pida e simples.";
+            || "Escolha o servi\u00e7o, profissional, data e hor\u00e1rio dispon\u00edvel. A confirma\u00e7\u00e3o \u00e9 r\u00e1pida e simples.";
     }
 
     const logoBox = document.getElementById("logo-loja");
@@ -360,7 +360,7 @@ async function carregarConfiguracoes() {
         || config.acesso_ativo === false
     ) {
         mostrarAvisoAssinaturaInativa(
-            "O acesso deste estabelecimento est? bloqueado manualmente pela administra??o da plataforma."
+            "O acesso deste estabelecimento est\u00e1 bloqueado manualmente pela administra\u00e7\u00e3o da plataforma."
         );
 
         const formulario = document.getElementById("form-agendamento");
@@ -697,7 +697,7 @@ function renderizarProfissionaisPublicos(profissionais) {
     container.innerHTML = "";
 
     if (!profissionais.length) {
-        container.innerText = "Nenhum profissional dispon?vel.";
+        container.innerText = "Nenhum profissional dispon\u00edvel.";
         return;
     }
 
@@ -1208,3 +1208,485 @@ window.addEventListener(
     "DOMContentLoaded",
     iniciarAplicativo
 );
+
+
+/* Fila de espera publica - Sprint 4.7C */
+function obterValorFilaEsperaPublica(id) {
+    const campo = document.getElementById(id);
+    return campo ? String(campo.value || "").trim() : "";
+}
+
+function obterServicoFilaEsperaPublica() {
+    if (typeof reserva !== "undefined" && reserva?.servico) {
+        if (typeof reserva.servico === "string") {
+            return reserva.servico;
+        }
+
+        return reserva.servico.nome || "";
+    }
+
+    return obterValorFilaEsperaPublica("fila-publica-servico");
+}
+
+function obterProfissionalFilaEsperaPublica() {
+    if (typeof reserva !== "undefined" && reserva?.profissional) {
+        if (typeof reserva.profissional === "string") {
+            return reserva.profissional;
+        }
+
+        return reserva.profissional.nome || "";
+    }
+
+    return obterValorFilaEsperaPublica("fila-publica-profissional");
+}
+
+function preencherFilaEsperaComReservaPublica() {
+    const servico = obterServicoFilaEsperaPublica();
+    const profissional = obterProfissionalFilaEsperaPublica();
+
+    const campoServico = document.getElementById("fila-publica-servico");
+    const campoProfissional = document.getElementById("fila-publica-profissional");
+    const campoData = document.getElementById("fila-publica-data");
+
+    if (campoServico && servico) {
+        campoServico.value = servico;
+    }
+
+    if (campoProfissional && profissional) {
+        campoProfissional.value = profissional;
+    }
+
+    if (campoData && typeof reserva !== "undefined" && reserva?.data) {
+        campoData.value = reserva.data;
+    }
+}
+
+function criarEstilosFilaEsperaPublica() {
+    if (document.getElementById("estilos-fila-espera-publica")) {
+        return;
+    }
+
+    const style = document.createElement("style");
+    style.id = "estilos-fila-espera-publica";
+    style.textContent = `
+        .fila-espera-publica {
+            margin: 28px auto;
+            max-width: 920px;
+            padding: 20px;
+            border: 1px solid rgba(148, 163, 184, 0.26);
+            border-radius: 22px;
+            background: rgba(15, 23, 42, 0.48);
+        }
+
+        .fila-espera-publica h2 {
+            margin: 0 0 8px;
+            font-size: 1.35rem;
+        }
+
+        .fila-espera-publica-convite {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+        }
+
+        .fila-espera-publica-convite > div {
+            flex: 1;
+        }
+
+        .fila-espera-publica-destaque {
+            border-color: rgba(100, 255, 218, 0.48);
+            box-shadow: 0 0 0 1px rgba(100, 255, 218, 0.08);
+        }
+
+        #conteudo-fila-espera-publica {
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 1px solid rgba(148, 163, 184, 0.18);
+        }
+
+        #conteudo-fila-espera-publica[hidden] {
+            display: none !important;
+        }
+
+        @media (max-width: 640px) {
+            .fila-espera-publica {
+                margin: 20px 12px;
+                padding: 16px;
+            }
+
+            .fila-espera-publica-convite {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .fila-espera-publica-convite button {
+                width: 100%;
+            }
+
+            .fila-espera-publica-acoes {
+                flex-direction: column;
+            }
+
+            .fila-espera-publica-acoes button {
+                width: 100%;
+            }
+        }
+
+        .fila-espera-publica p {
+            margin: 0 0 16px;
+            opacity: 0.82;
+        }
+
+        .fila-espera-publica-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 12px;
+        }
+
+        .fila-espera-publica label {
+            display: grid;
+            gap: 6px;
+            font-size: 0.9rem;
+        }
+
+        .fila-espera-publica input,
+        .fila-espera-publica select,
+        .fila-espera-publica textarea {
+            width: 100%;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            border-radius: 12px;
+            padding: 10px 12px;
+            background: rgba(2, 6, 23, 0.42);
+            color: inherit;
+        }
+
+        .fila-espera-publica textarea {
+            min-height: 82px;
+            resize: vertical;
+        }
+
+        .fila-espera-publica-acoes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-top: 14px;
+        }
+
+        .fila-espera-publica-feedback {
+            min-height: 20px;
+            font-size: 0.9rem;
+            opacity: 0.88;
+        }
+    `;
+
+    document.head.appendChild(style);
+}
+
+
+function abrirFilaEsperaPublica() {
+    const formulario = document.getElementById("conteudo-fila-espera-publica");
+    const botao = document.getElementById("btn-abrir-fila-espera-publica");
+
+    if (formulario) {
+        formulario.hidden = false;
+        formulario.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+        });
+    }
+
+    if (botao) {
+        botao.hidden = true;
+    }
+
+    preencherFilaEsperaComReservaPublica();
+
+    const nome = document.getElementById("fila-publica-nome");
+
+    if (nome) {
+        setTimeout(() => nome.focus(), 250);
+    }
+}
+
+function fecharFilaEsperaPublica() {
+    const formulario = document.getElementById("conteudo-fila-espera-publica");
+    const botao = document.getElementById("btn-abrir-fila-espera-publica");
+
+    if (formulario) {
+        formulario.hidden = true;
+    }
+
+    if (botao) {
+        botao.hidden = false;
+    }
+}
+
+function paginaPublicaIndicaSemHorarios() {
+    const texto = String(document.body?.innerText || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+
+    const sinais = [
+        "nenhum horario disponivel",
+        "nao ha horarios disponiveis",
+        "sem horarios disponiveis",
+        "nenhum horario encontrado",
+    ];
+
+    return sinais.some((sinal) => texto.includes(sinal));
+}
+
+function atualizarDestaqueFilaEsperaPublica() {
+    const secao = document.getElementById("fila-espera-publica");
+
+    if (!secao) {
+        return;
+    }
+
+    const semHorarios = paginaPublicaIndicaSemHorarios();
+
+    secao.classList.toggle(
+        "fila-espera-publica-destaque",
+        semHorarios
+    );
+
+    const titulo = document.getElementById("titulo-fila-espera-publica");
+    const texto = document.getElementById("texto-fila-espera-publica");
+
+    if (titulo) {
+        titulo.textContent = semHorarios
+            ? "Nao encontrou horario disponivel?"
+            : "Precisa de outro horario?";
+    }
+
+    if (texto) {
+        texto.textContent = semHorarios
+            ? "Entre na fila de espera e deixe seus dados. Se surgir uma vaga, a equipe podera entrar em contato com voce."
+            : "Se os horarios atuais nao servirem para voce, entre na fila de espera.";
+    }
+}
+
+function observarDisponibilidadeParaFilaEsperaPublica() {
+    if (window.observadorFilaEsperaPublica) {
+        return;
+    }
+
+    let timer = null;
+
+    const observer = new MutationObserver(() => {
+        clearTimeout(timer);
+
+        timer = setTimeout(() => {
+            atualizarDestaqueFilaEsperaPublica();
+            preencherFilaEsperaComReservaPublica();
+        }, 150);
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+    });
+
+    window.observadorFilaEsperaPublica = observer;
+
+    atualizarDestaqueFilaEsperaPublica();
+}
+
+
+function criarFormularioFilaEsperaPublica() {
+    if (document.getElementById("fila-espera-publica")) {
+        preencherFilaEsperaComReservaPublica();
+        return;
+    }
+
+    criarEstilosFilaEsperaPublica();
+
+    const referencia = document.querySelector("main") || document.body;
+
+    const secao = document.createElement("section");
+    secao.id = "fila-espera-publica";
+    secao.className = "fila-espera-publica";
+
+    secao.innerHTML = `
+        <div class="fila-espera-publica-convite">
+            <div>
+                <h2 id="titulo-fila-espera-publica">Precisa de outro horario?</h2>
+                <p id="texto-fila-espera-publica">
+                    Se os horarios atuais nao servirem para voce, entre na fila de espera.
+                </p>
+            </div>
+
+            <button
+                id="btn-abrir-fila-espera-publica"
+                type="button"
+                class="btn-primario"
+                onclick="abrirFilaEsperaPublica()"
+            >
+                Entrar na fila
+            </button>
+        </div>
+
+        <div id="conteudo-fila-espera-publica" hidden>
+        <form id="form-fila-espera-publica">
+            <div class="fila-espera-publica-grid">
+                <label>
+                    Nome
+                    <input id="fila-publica-nome" type="text" minlength="2" required>
+                </label>
+
+                <label>
+                    WhatsApp
+                    <input id="fila-publica-telefone" type="tel" minlength="8" required>
+                </label>
+
+                <label>
+                    Servico desejado
+                    <input id="fila-publica-servico" type="text" minlength="2" required>
+                </label>
+
+                <label>
+                    Profissional preferido
+                    <input id="fila-publica-profissional" type="text" placeholder="Opcional">
+                </label>
+
+                <label>
+                    Data desejada
+                    <input id="fila-publica-data" type="date">
+                </label>
+
+                <label>
+                    Periodo preferido
+                    <select id="fila-publica-periodo">
+                        <option value="qualquer">Qualquer</option>
+                        <option value="manha">Manha</option>
+                        <option value="tarde">Tarde</option>
+                        <option value="noite">Noite</option>
+                    </select>
+                </label>
+            </div>
+
+            <label style="margin-top: 12px;">
+                Observacao
+                <textarea id="fila-publica-observacao" placeholder="Ex.: tenho preferencia por horario depois das 15h."></textarea>
+            </label>
+
+            <div class="fila-espera-publica-acoes">
+                <button type="submit" class="btn-primario">
+                    Entrar na fila de espera
+                </button>
+
+                <button
+                    type="button"
+                    class="btn-secundario"
+                    onclick="fecharFilaEsperaPublica()"
+                >
+                    Agora nao
+                </button>
+
+                <span id="fila-publica-feedback" class="fila-espera-publica-feedback"></span>
+            </div>
+        </form>
+        </div>
+    `;
+
+    referencia.appendChild(secao);
+
+    const form = document.getElementById("form-fila-espera-publica");
+
+    if (form) {
+        form.addEventListener("submit", enviarFilaEsperaPublica);
+    }
+
+    preencherFilaEsperaComReservaPublica();
+}
+
+async function enviarFilaEsperaPublica(event) {
+    event.preventDefault();
+
+    const feedback = document.getElementById("fila-publica-feedback");
+    const botao = event.target.querySelector("button[type='submit']");
+
+    const payload = {
+        cliente_nome: obterValorFilaEsperaPublica("fila-publica-nome"),
+        telefone_cliente: obterValorFilaEsperaPublica("fila-publica-telefone"),
+        servico: obterValorFilaEsperaPublica("fila-publica-servico"),
+        profissional_preferido: obterValorFilaEsperaPublica("fila-publica-profissional") || null,
+        data_desejada: obterValorFilaEsperaPublica("fila-publica-data") || null,
+        periodo_preferido: obterValorFilaEsperaPublica("fila-publica-periodo") || "qualquer",
+        observacao: obterValorFilaEsperaPublica("fila-publica-observacao") || null,
+    };
+
+    if (!payload.cliente_nome || !payload.telefone_cliente || !payload.servico) {
+        if (feedback) {
+            feedback.textContent = "Preencha nome, WhatsApp e servico.";
+        }
+        return;
+    }
+
+    try {
+        if (botao) {
+            botao.disabled = true;
+            botao.textContent = "Enviando...";
+        }
+
+        if (feedback) {
+            feedback.textContent = "Enviando solicitacao...";
+        }
+
+        await apiRequest(`/api/${encodeURIComponent(tenantSlug)}/fila-espera`, {
+            method: "POST",
+            body: payload,
+        });
+
+        event.target.reset();
+
+        if (feedback) {
+            feedback.textContent = "Pronto. Voce entrou na fila de espera.";
+        }
+
+        preencherFilaEsperaComReservaPublica();
+    } catch (erro) {
+        console.error("Erro ao entrar na fila de espera:", erro);
+
+        if (feedback) {
+            feedback.textContent = erro.message || "Nao foi possivel entrar na fila agora.";
+        }
+    } finally {
+        if (botao) {
+            botao.disabled = false;
+            botao.textContent = "Entrar na fila de espera";
+        }
+    }
+}
+
+function iniciarFilaEsperaPublicaQuandoDisponivel() {
+    let tentativas = 0;
+
+    const timer = setInterval(() => {
+        tentativas += 1;
+
+        if (typeof tenantSlug !== "undefined" && tenantSlug) {
+            criarFormularioFilaEsperaPublica();
+            observarDisponibilidadeParaFilaEsperaPublica();
+            clearInterval(timer);
+            return;
+        }
+
+        if (tentativas >= 20) {
+            clearInterval(timer);
+        }
+    }, 300);
+}
+
+window.criarFormularioFilaEsperaPublica = criarFormularioFilaEsperaPublica;
+window.enviarFilaEsperaPublica = enviarFilaEsperaPublica;
+window.abrirFilaEsperaPublica = abrirFilaEsperaPublica;
+window.fecharFilaEsperaPublica = fecharFilaEsperaPublica;
+window.atualizarDestaqueFilaEsperaPublica = atualizarDestaqueFilaEsperaPublica;
+
+iniciarFilaEsperaPublicaQuandoDisponivel();
+

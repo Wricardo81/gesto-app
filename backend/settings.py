@@ -10,14 +10,13 @@ class Settings(BaseSettings):
     app_env: str = "development"
 
     # Ambiente
-    app_env: str = "development"
 
     # Banco de dados
     database_url: str = "sqlite:///./gesto.db"
     database_direct_url: str = ""
 
     # JWT
-    jwt_secret_key: str
+    jwt_secret_key: str | None = None
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24 * 7
 
@@ -51,6 +50,15 @@ class Settings(BaseSettings):
     mercado_pago_access_token: str | None = None
     mercado_pago_webhook_secret: str | None = None
     mercado_pago_notification_url: str | None = None
+
+    # WhatsApp Cloud API / Meta
+    whatsapp_verify_token: str | None = None
+    whatsapp_app_secret: str | None = None
+    whatsapp_access_token: str | None = None
+    whatsapp_graph_api_version: str | None = None
+    whatsapp_graph_api_base_url: str = "https://graph.facebook.com"
+    whatsapp_http_timeout_seconds: int = 20
+    whatsapp_transport_mode: str = "fake"
 
     # Trial / Teste gratuito
     trial_dias_padrao: int = 7

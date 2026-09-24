@@ -1,7 +1,7 @@
 from sqlalchemy import Boolean, Column, Date, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 
 from database import Base
-from datetime import datetime
+from datetime import UTC, datetime
 
 
 # ==========================================
@@ -184,6 +184,142 @@ class Profissional(Base):
     comissao_valor = Column(Float, default=0.0, nullable=False)
 
 
+
+
+class ComissaoAtendimento(Base):
+    __tablename__ = "comissoes_atendimentos"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "barbearia_slug",
+            "agendamento_id",
+            name="uq_comissao_atendimento_tenant_agendamento",
+        ),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    barbearia_slug = Column(
+        String,
+        index=True,
+        nullable=False,
+    )
+
+    agendamento_id = Column(
+        Integer,
+        index=True,
+        nullable=False,
+    )
+
+    profissional_nome = Column(
+        String,
+        index=True,
+        nullable=False,
+    )
+
+    servico = Column(
+        String,
+        nullable=True,
+    )
+
+    valor_atendimento = Column(
+        Float,
+        nullable=False,
+    )
+
+    comissao_tipo = Column(
+        String,
+        nullable=False,
+    )
+
+    comissao_regra_valor = Column(
+        Float,
+        nullable=False,
+    )
+
+    valor_comissao = Column(
+        Float,
+        nullable=False,
+    )
+
+    status = Column(
+        String,
+        default="pendente",
+        nullable=False,
+        index=True,
+    )
+
+    repasse_id = Column(
+        Integer,
+        nullable=True,
+        index=True,
+    )
+
+    gerado_em = Column(
+        DateTime,
+        default=lambda: datetime.now(UTC).replace(tzinfo=None),
+        nullable=False,
+    )
+
+    pago_em = Column(
+        DateTime,
+        nullable=True,
+    )
+
+
+class RepasseProfissional(Base):
+    __tablename__ = "repasses_profissionais"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    barbearia_slug = Column(
+        String,
+        index=True,
+        nullable=False,
+    )
+
+    profissional_nome = Column(
+        String,
+        index=True,
+        nullable=False,
+    )
+
+    valor = Column(
+        Float,
+        nullable=False,
+    )
+
+    periodo_inicio = Column(
+        Date,
+        nullable=True,
+    )
+
+    periodo_fim = Column(
+        Date,
+        nullable=True,
+    )
+
+    observacao = Column(
+        String,
+        nullable=True,
+    )
+
+    registrado_por = Column(
+        String,
+        nullable=True,
+    )
+
+    pago_em = Column(
+        DateTime,
+        default=lambda: datetime.now(UTC).replace(tzinfo=None),
+        nullable=False,
+    )
+
+    criado_em = Column(
+        DateTime,
+        default=lambda: datetime.now(UTC).replace(tzinfo=None),
+        nullable=False,
+    )
 
 
 class ServicoProfissional(Base):
@@ -425,3 +561,483 @@ class ChamadoSuporte(Base):
         DateTime,
         nullable=True,
     )
+
+class FilaEspera(Base):
+    __tablename__ = "fila_espera"
+
+    id = Column(Integer, primary_key=True, index=True)
+    barbearia_slug = Column(String, index=True, nullable=False)
+
+    cliente_nome = Column(String, nullable=False)
+    telefone_cliente = Column(String, nullable=False)
+
+    servico = Column(String, nullable=False)
+    profissional_preferido = Column(String, nullable=True)
+
+    data_desejada = Column(Date, nullable=True)
+    periodo_preferido = Column(String, nullable=True)
+
+    prioridade = Column(String, default="normal", nullable=False)
+    status = Column(String, default="aguardando", nullable=False)
+
+    observacao = Column(Text, nullable=True)
+    origem = Column(String, default="agenda_publica", nullable=False)
+
+    chamado_em = Column(DateTime, nullable=True)
+    agendado_em = Column(DateTime, nullable=True)
+    cancelado_em = Column(DateTime, nullable=True)
+    expirado_em = Column(DateTime, nullable=True)
+
+    criado_em = Column(
+        DateTime,
+        default=lambda: datetime.now(UTC).replace(
+            tzinfo=None
+        ),
+        nullable=False,
+    )
+    atualizado_em = Column(
+        DateTime,
+        default=lambda: datetime.now(UTC).replace(
+            tzinfo=None
+        ),
+        onupdate=lambda: datetime.now(UTC).replace(
+            tzinfo=None
+        ),
+        nullable=False,
+    )
+
+
+# ==========================================
+# CRM - HISTORICO DE INTERACOES
+# ==========================================
+class InteracaoClienteCRM(Base):
+    __tablename__ = "interacoes_clientes_crm"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True,
+    )
+
+    barbearia_slug = Column(
+        String,
+        index=True,
+        nullable=False,
+    )
+
+    telefone_cliente = Column(
+        String,
+        index=True,
+        nullable=False,
+    )
+
+    cliente_nome = Column(
+        String,
+        nullable=True,
+    )
+
+    tipo = Column(
+        String(40),
+        index=True,
+        nullable=False,
+    )
+
+    canal = Column(
+        String(30),
+        default="whatsapp",
+        nullable=False,
+    )
+
+    origem = Column(
+        String(40),
+        default="crm_admin",
+        nullable=False,
+    )
+
+    usuario_nome = Column(
+        String,
+        nullable=True,
+    )
+
+    usuario_email = Column(
+        String,
+        nullable=True,
+    )
+
+    usuario_papel = Column(
+        String(40),
+        nullable=True,
+    )
+
+    criado_em = Column(
+        DateTime,
+        default=lambda: datetime.now(
+            UTC
+        ).replace(tzinfo=None),
+        nullable=False,
+        index=True,
+    )
+
+# ==========================================
+# WHATSAPP BOOKING - SESSAO CONVERSACIONAL
+# ==========================================
+class SessaoBookingWhatsApp(Base):
+    __tablename__ = "sessoes_booking_whatsapp"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True,
+    )
+
+    barbearia_slug = Column(
+        String,
+        index=True,
+        nullable=False,
+    )
+
+    telefone_cliente = Column(
+        String,
+        index=True,
+        nullable=False,
+    )
+
+    status = Column(
+        String(30),
+        default="ativa",
+        nullable=False,
+        index=True,
+    )
+
+    etapa = Column(
+        String(50),
+        default="inicio",
+        nullable=False,
+        index=True,
+    )
+
+    cliente_nome = Column(
+        String,
+        nullable=True,
+    )
+
+    servico = Column(
+        String,
+        nullable=True,
+    )
+
+    profissional = Column(
+        String,
+        nullable=True,
+    )
+
+    data = Column(
+        Date,
+        nullable=True,
+    )
+
+    horario = Column(
+        String(10),
+        nullable=True,
+    )
+
+    canal = Column(
+        String(30),
+        default="whatsapp",
+        nullable=False,
+    )
+
+    criado_em = Column(
+        DateTime,
+        default=lambda: datetime.now(
+            UTC
+        ).replace(tzinfo=None),
+        nullable=False,
+    )
+
+    atualizado_em = Column(
+        DateTime,
+        default=lambda: datetime.now(
+            UTC
+        ).replace(tzinfo=None),
+        onupdate=lambda: datetime.now(
+            UTC
+        ).replace(tzinfo=None),
+        nullable=False,
+    )
+
+    expira_em = Column(
+        DateTime,
+        nullable=False,
+        index=True,
+    )
+
+# ==========================================
+# WHATSAPP - IDENTIDADE TECNICA DO TENANT
+# ==========================================
+class IntegracaoWhatsAppTenant(Base):
+    __tablename__ = "integracoes_whatsapp"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "barbearia_slug",
+            name="uq_integracao_whatsapp_tenant",
+        ),
+        UniqueConstraint(
+            "phone_number_id",
+            name="uq_integracao_whatsapp_phone_number_id",
+        ),
+    )
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True,
+    )
+
+    barbearia_slug = Column(
+        String,
+        nullable=False,
+        index=True,
+    )
+
+    phone_number_id = Column(
+        String(120),
+        nullable=False,
+        index=True,
+    )
+
+    business_account_id = Column(
+        String(120),
+        nullable=True,
+        index=True,
+    )
+
+    numero_exibicao = Column(
+        String(40),
+        nullable=True,
+    )
+
+    ativo = Column(
+        Boolean,
+        default=True,
+        nullable=False,
+        index=True,
+    )
+
+    criado_em = Column(
+        DateTime,
+        default=lambda: datetime.now(
+            UTC
+        ).replace(tzinfo=None),
+        nullable=False,
+    )
+
+    atualizado_em = Column(
+        DateTime,
+        default=lambda: datetime.now(
+            UTC
+        ).replace(tzinfo=None),
+        onupdate=lambda: datetime.now(
+            UTC
+        ).replace(tzinfo=None),
+        nullable=False,
+    )
+
+# ==========================================
+# WHATSAPP - IDEMPOTENCIA DE EVENTOS
+# ==========================================
+class EventoWhatsAppRecebido(Base):
+    __tablename__ = "eventos_whatsapp_recebidos"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "provedor",
+            "message_id",
+            name="uq_evento_whatsapp_provedor_message_id",
+        ),
+    )
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True,
+    )
+
+    provedor = Column(
+        String(40),
+        nullable=False,
+        index=True,
+    )
+
+    message_id = Column(
+        String(200),
+        nullable=False,
+        index=True,
+    )
+
+    phone_number_id = Column(
+        String(120),
+        nullable=False,
+        index=True,
+    )
+
+    barbearia_slug = Column(
+        String,
+        nullable=True,
+        index=True,
+    )
+
+    telefone_cliente = Column(
+        String(40),
+        nullable=False,
+        index=True,
+    )
+
+    status = Column(
+        String(30),
+        nullable=False,
+        default="processando",
+        index=True,
+    )
+
+    resposta_json = Column(
+        Text,
+        nullable=True,
+    )
+
+    erro = Column(
+        Text,
+        nullable=True,
+    )
+
+    criado_em = Column(
+        DateTime,
+        default=lambda: datetime.now(
+            UTC
+        ).replace(tzinfo=None),
+        nullable=False,
+    )
+
+    processado_em = Column(
+        DateTime,
+        nullable=True,
+    )
+
+
+# ==========================================
+# WHATSAPP - OUTBOX DURAVEL
+# ==========================================
+class OutboxMensagemWhatsApp(Base):
+    __tablename__ = "outbox_mensagens_whatsapp"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "provedor",
+            "chave_idempotencia",
+            name="uq_outbox_whatsapp_provedor_chave",
+        ),
+    )
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True,
+    )
+
+    provedor = Column(
+        String(40),
+        nullable=False,
+        index=True,
+    )
+
+    chave_idempotencia = Column(
+        String(240),
+        nullable=False,
+        index=True,
+    )
+
+    barbearia_slug = Column(
+        String,
+        nullable=False,
+        index=True,
+    )
+
+    phone_number_id = Column(
+        String(120),
+        nullable=False,
+        index=True,
+    )
+
+    telefone_destino = Column(
+        String(40),
+        nullable=False,
+        index=True,
+    )
+
+    texto = Column(
+        Text,
+        nullable=False,
+    )
+
+    status = Column(
+        String(30),
+        nullable=False,
+        default="pendente",
+        index=True,
+    )
+
+    tentativas = Column(
+        Integer,
+        nullable=False,
+        default=0,
+    )
+
+    provider_message_id = Column(
+        String(240),
+        nullable=True,
+        index=True,
+    )
+
+    ultimo_erro = Column(
+        Text,
+        nullable=True,
+    )
+
+    criado_em = Column(
+        DateTime,
+        default=lambda: datetime.now(
+            UTC
+        ).replace(tzinfo=None),
+        nullable=False,
+    )
+
+    atualizado_em = Column(
+        DateTime,
+        default=lambda: datetime.now(
+            UTC
+        ).replace(tzinfo=None),
+        onupdate=lambda: datetime.now(
+            UTC
+        ).replace(tzinfo=None),
+        nullable=False,
+    )
+
+    enviado_em = Column(
+        DateTime,
+        nullable=True,
+    )
+
+
+    processando_desde = Column(
+        DateTime,
+        nullable=True,
+        index=True,
+    )
+
+    proxima_tentativa_em = Column(
+        DateTime,
+        nullable=True,
+        index=True,
+    )
+

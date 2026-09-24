@@ -1,12 +1,13 @@
 from datetime import date
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 
 import models
 from database import SessaoLocal
-from security import validar_tenant_logado
+from security import validar_tenant_logado, obter_contexto_usuario_logado
+from pydantic import BaseModel
 
 
 router = APIRouter(
@@ -51,6 +52,289 @@ def calcular_ticket_medio(
     return faturamento_total / total_concluidos
 
 
+
+class RegistrarInteracaoClienteCRM(BaseModel):
+    tipo: str
+    cliente_nome: str | None = None
+
+
+TIPOS_INTERACAO_REATIVACAO_CRM = {
+    "reativacao_risco",
+    "reativacao_inativo",
+}
+
+
+def usuario_pode_registrar_interacao_crm(
+    contexto: dict,
+) -> bool:
+    papel = str(
+        contexto.get("papel")
+        or ""
+    ).strip().lower()
+
+    permissoes = {
+        str(permissao).strip()
+        for permissao
+        in (
+            contexto.get("permissoes")
+            or []
+        )
+        if str(permissao).strip()
+    }
+
+    return (
+        papel == "gestor"
+        or "*" in permissoes
+        or "editar_cliente" in permissoes
+    )
+
+
+def usuario_pode_ler_interacoes_crm(
+    contexto: dict,
+) -> bool:
+    papel = str(
+        contexto.get("papel")
+        or ""
+    ).strip().lower()
+
+    permissoes = {
+        str(permissao).strip()
+        for permissao
+        in (
+            contexto.get("permissoes")
+            or []
+        )
+        if str(permissao).strip()
+    }
+
+    return (
+        papel == "gestor"
+        or "*" in permissoes
+        or "ver_clientes" in permissoes
+        or "gerenciar_clientes" in permissoes
+        or "editar_cliente" in permissoes
+    )
+
+
+def serializar_interacao_cliente_crm(
+    interacao,
+) -> dict:
+    return {
+        "id": interacao.id,
+        "telefone_cliente":
+            interacao.telefone_cliente,
+        "cliente_nome":
+            interacao.cliente_nome,
+        "tipo": interacao.tipo,
+        "canal": interacao.canal,
+        "origem": interacao.origem,
+        "usuario_nome":
+            interacao.usuario_nome,
+        "usuario_email":
+            interacao.usuario_email,
+        "usuario_papel":
+            interacao.usuario_papel,
+        "criado_em":
+            serializar_data(
+                interacao.criado_em
+            ),
+    }
+
+
+def cliente_existe_no_tenant(
+    db: Session,
+    tenant_slug: str,
+    telefone_normalizado: str,
+) -> bool:
+    agendamentos = (
+        db.query(models.Agendamento)
+        .filter(
+            models.Agendamento.barbearia_slug
+            == tenant_slug
+        )
+        .all()
+    )
+
+    return any(
+        normalizar_telefone(
+            agendamento.telefone_cliente
+        )
+        == telefone_normalizado
+        for agendamento in agendamentos
+    )
+
+
+
+@router.post(
+    "/{tenant_slug}/admin/clientes/{telefone}/interacoes",
+    status_code=201,
+)
+def registrar_interacao_cliente_crm(
+    tenant_slug: str,
+    telefone: str,
+    dados: RegistrarInteracaoClienteCRM,
+    db: Session = Depends(get_db),
+    contexto: dict = Depends(
+        obter_contexto_usuario_logado
+    ),
+    _tenant_autorizado: str = Depends(
+        validar_tenant_logado
+    ),
+):
+    if not usuario_pode_registrar_interacao_crm(
+        contexto
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Voce nao possui permissao para "
+                "registrar interacoes de clientes."
+            ),
+        )
+
+    telefone_normalizado = normalizar_telefone(
+        telefone
+    )
+
+    if not telefone_normalizado:
+        raise HTTPException(
+            status_code=422,
+            detail="Telefone invalido.",
+        )
+
+    tipo = str(
+        dados.tipo or ""
+    ).strip().lower()
+
+    if tipo not in TIPOS_INTERACAO_REATIVACAO_CRM:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "Tipo de interacao CRM invalido."
+            ),
+        )
+
+    if not cliente_existe_no_tenant(
+        db,
+        tenant_slug,
+        telefone_normalizado,
+    ):
+        raise HTTPException(
+            status_code=404,
+            detail="Cliente nao encontrado.",
+        )
+
+    cliente_nome = str(
+        dados.cliente_nome or ""
+    ).strip() or None
+
+    interacao = models.InteracaoClienteCRM(
+        barbearia_slug=tenant_slug,
+        telefone_cliente=
+            telefone_normalizado,
+        cliente_nome=cliente_nome,
+        tipo=tipo,
+        canal="whatsapp",
+        origem="crm_admin",
+        usuario_nome=(
+            contexto.get("nome")
+            or None
+        ),
+        usuario_email=(
+            contexto.get("email")
+            or None
+        ),
+        usuario_papel=(
+            contexto.get("papel")
+            or None
+        ),
+    )
+
+    db.add(interacao)
+    db.commit()
+    db.refresh(interacao)
+
+    return {
+        "mensagem":
+            "Interacao CRM registrada.",
+        "interacao":
+            serializar_interacao_cliente_crm(
+                interacao
+            ),
+    }
+
+
+@router.get(
+    "/{tenant_slug}/admin/clientes/{telefone}/interacoes"
+)
+def listar_interacoes_cliente_crm(
+    tenant_slug: str,
+    telefone: str,
+    limite: int = Query(
+        default=20,
+        ge=1,
+        le=100,
+    ),
+    db: Session = Depends(get_db),
+    contexto: dict = Depends(
+        obter_contexto_usuario_logado
+    ),
+    _tenant_autorizado: str = Depends(
+        validar_tenant_logado
+    ),
+):
+    if not usuario_pode_ler_interacoes_crm(
+        contexto
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Voce nao possui permissao "
+                "para visualizar interacoes "
+                "de clientes."
+            ),
+        )
+
+    telefone_normalizado = normalizar_telefone(
+        telefone
+    )
+
+    if not telefone_normalizado:
+        raise HTTPException(
+            status_code=422,
+            detail="Telefone invalido.",
+        )
+
+    interacoes = (
+        db.query(
+            models.InteracaoClienteCRM
+        )
+        .filter(
+            models.InteracaoClienteCRM.barbearia_slug
+            == tenant_slug,
+            models.InteracaoClienteCRM.telefone_cliente
+            == telefone_normalizado,
+        )
+        .order_by(
+            models.InteracaoClienteCRM.criado_em.desc(),
+            models.InteracaoClienteCRM.id.desc(),
+        )
+        .limit(limite)
+        .all()
+    )
+
+    return {
+        "telefone": telefone_normalizado,
+        "quantidade": len(interacoes),
+        "interacoes": [
+            serializar_interacao_cliente_crm(
+                interacao
+            )
+            for interacao in interacoes
+        ],
+    }
+
+
 @router.get("/{tenant_slug}/admin/clientes")
 def listar_clientes_admin(
     tenant_slug: str,
@@ -69,6 +353,35 @@ def listar_clientes_admin(
         )
         .all()
     )
+
+    interacoes_crm = (
+        db.query(models.InteracaoClienteCRM)
+        .filter(
+            models.InteracaoClienteCRM.barbearia_slug
+            == tenant_slug
+        )
+        .order_by(
+            models.InteracaoClienteCRM.criado_em.desc(),
+            models.InteracaoClienteCRM.id.desc(),
+        )
+        .all()
+    )
+
+    ultima_interacao_por_telefone = {}
+
+    for interacao in interacoes_crm:
+        telefone_interacao = normalizar_telefone(
+            interacao.telefone_cliente
+        )
+
+        if (
+            telefone_interacao
+            and telefone_interacao
+            not in ultima_interacao_por_telefone
+        ):
+            ultima_interacao_por_telefone[
+                telefone_interacao
+            ] = interacao
 
     clientes_por_telefone = {}
 
@@ -180,6 +493,20 @@ def listar_clientes_admin(
 
         cliente["proximo_agendamento"] = serializar_data(
             cliente["proximo_agendamento"]
+        )
+
+        ultima_interacao = (
+            ultima_interacao_por_telefone.get(
+                cliente["telefone"]
+            )
+        )
+
+        cliente["ultima_interacao_crm"] = (
+            serializar_interacao_cliente_crm(
+                ultima_interacao
+            )
+            if ultima_interacao
+            else None
         )
 
         clientes.append(cliente)

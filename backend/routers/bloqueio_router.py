@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 import models
 from database import SessaoLocal
-from security import validar_tenant_logado
+from security import validar_tenant_logado, obter_contexto_usuario_logado
 
 
 router = APIRouter(
@@ -22,6 +22,28 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def validar_acesso_bloqueios_admin(contexto_usuario: dict) -> None:
+    papel = str(contexto_usuario.get("papel") or "").strip().lower()
+    permissoes = set(contexto_usuario.get("permissoes") or [])
+
+    if "*" in permissoes:
+        return
+
+    if papel in {"gestor", "recepcao"}:
+        return
+
+    if (
+        "gerenciar_bloqueios" in permissoes
+        or "gerenciar_agenda" in permissoes
+    ):
+        return
+
+    raise HTTPException(
+        status_code=403,
+        detail="Seu perfil nao possui permissao para gerenciar bloqueios de agenda.",
+    )
 
 
 class NovoBloqueioAgenda(BaseModel):
@@ -101,7 +123,10 @@ def listar_bloqueios_admin(
     data: str | None = Query(default=None),
     db: Session = Depends(get_db),
     _tenant_autorizado: str = Depends(validar_tenant_logado),
+    contexto_usuario: dict = Depends(obter_contexto_usuario_logado),
 ):
+    validar_acesso_bloqueios_admin(contexto_usuario)
+
     consulta = db.query(models.BloqueioAgenda).filter(
         models.BloqueioAgenda.barbearia_slug == tenant_slug
     )
@@ -133,7 +158,10 @@ def criar_bloqueio_admin(
     dados: NovoBloqueioAgenda,
     db: Session = Depends(get_db),
     _tenant_autorizado: str = Depends(validar_tenant_logado),
+    contexto_usuario: dict = Depends(obter_contexto_usuario_logado),
 ):
+    validar_acesso_bloqueios_admin(contexto_usuario)
+
     data_bloqueio = converter_data(dados.data)
 
     if data_bloqueio < date.today():
@@ -210,7 +238,10 @@ def remover_bloqueio_admin(
     bloqueio_id: int,
     db: Session = Depends(get_db),
     _tenant_autorizado: str = Depends(validar_tenant_logado),
+    contexto_usuario: dict = Depends(obter_contexto_usuario_logado),
 ):
+    validar_acesso_bloqueios_admin(contexto_usuario)
+
     bloqueio = (
         db.query(models.BloqueioAgenda)
         .filter(

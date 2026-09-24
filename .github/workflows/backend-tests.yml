@@ -1,0 +1,67 @@
+name: Backend Tests
+
+on:
+  pull_request:
+    branches:
+      - master
+
+  push:
+    branches:
+      - sprint-7-booking-whatsapp
+
+jobs:
+  backend-tests:
+    name: Pytest backend
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      APP_ENV: test
+      WHATSAPP_TRANSPORT_MODE: fake
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Compile critical modules
+        run: |
+          python -m py_compile \
+            main.py \
+            models.py \
+            settings.py \
+            security.py \
+            services/booking_whatsapp_service.py \
+            services/whatsapp_outbox_service.py \
+            services/whatsapp_webhook_service.py \
+            scripts/executar_outbox_whatsapp.py
+
+      - name: Run JWT settings contract
+        env:
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+        run: |
+          unset JWT_SECRET_KEY
+          python -m pytest tests/test_settings_jwt_contract.py -q
+
+      - name: Run backend test suite
+        env:
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+          JWT_SECRET_KEY: ci-test-secret-not-production-0123456789abcdef
+        run: |
+          python -m pytest tests --ignore=tests/test_settings_jwt_contract.py -q

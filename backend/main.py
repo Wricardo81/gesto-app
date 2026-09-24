@@ -15,8 +15,10 @@ from middleware.observability import ObservabilityMiddleware
 # Importando os roteadores refatorados
 from routers import profissional_router
 from routers import agendamento_router
+from routers import comissao_router
 from routers import servico_router
 from routers import servico_profissional_router
+from routers import fila_espera_router
 from routers import configuracao_router
 from routers import auth_router
 from routers import saas_router
@@ -28,6 +30,7 @@ from routers import suporte_router
 from routers import assinatura_stripe_router
 from routers import mercado_pago_router
 from routers import usuario_operacional_router
+from routers import whatsapp_webhook_router
 
 configurar_logging()
 
@@ -82,8 +85,10 @@ stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 # Registrando as rotas isoladas
 app.include_router(profissional_router.router)
 app.include_router(agendamento_router.router)
+app.include_router(comissao_router.router)
 app.include_router(servico_router.router)
 app.include_router(servico_profissional_router.router)
+app.include_router(fila_espera_router.router)
 app.include_router(configuracao_router.router)
 app.include_router(auth_router.router)
 app.include_router(saas_router.router)
@@ -96,6 +101,7 @@ app.include_router(suporte_router.router)
 app.include_router(assinatura_stripe_router.router)
 app.include_router(mercado_pago_router.router)
 app.include_router(usuario_operacional_router.router)
+app.include_router(whatsapp_webhook_router.router)
 
 # ==========================================
 # MÓDULO MESTRE: PAINEL SAAS & STRIPE

@@ -293,7 +293,7 @@ function aplicarIdentidadePublica(config) {
 
     if (tituloPublicoEmpresa) {
         tituloPublicoEmpresa.innerText =
-            `Agende seu hor?rio na ${nomePublico}`;
+            `Agende seu hor\u00e1rio na ${nomePublico}`;
     }
 
     const subtituloPublicoEmpresa = document.getElementById(
@@ -303,7 +303,7 @@ function aplicarIdentidadePublica(config) {
     if (subtituloPublicoEmpresa) {
         subtituloPublicoEmpresa.innerText =
             config.descricao
-            || "Escolha o servi?o, profissional, data e hor?rio dispon?vel. A confirma??o ? r?pida e simples.";
+            || "Escolha o servi\u00e7o, profissional, data e hor\u00e1rio dispon\u00edvel. A confirma\u00e7\u00e3o \u00e9 r\u00e1pida e simples.";
     }
 
     const logoBox = document.getElementById("logo-loja");
@@ -360,7 +360,7 @@ async function carregarConfiguracoes() {
         || config.acesso_ativo === false
     ) {
         mostrarAvisoAssinaturaInativa(
-            "O acesso deste estabelecimento est? bloqueado manualmente pela administra??o da plataforma."
+            "O acesso deste estabelecimento est\u00e1 bloqueado manualmente pela administra\u00e7\u00e3o da plataforma."
         );
 
         const formulario = document.getElementById("form-agendamento");
@@ -697,7 +697,7 @@ function renderizarProfissionaisPublicos(profissionais) {
     container.innerHTML = "";
 
     if (!profissionais.length) {
-        container.innerText = "Nenhum profissional dispon?vel.";
+        container.innerText = "Nenhum profissional dispon\u00edvel.";
         return;
     }
 

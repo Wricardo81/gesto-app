@@ -124,7 +124,7 @@ def normalizar_papel_operacional(payload: dict) -> str:
     }:
         return PAPEL_GESTOR
 
-    if papel_normalizado in {"recepcao", "recep??o", "atendimento"}:
+    if papel_normalizado in {"recepcao", "atendimento"}:
         return PAPEL_RECEPCAO
 
     if papel_normalizado in {"prestador", "profissional", "colaborador"}:

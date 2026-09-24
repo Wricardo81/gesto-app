@@ -4580,7 +4580,7 @@ async function carregarServicos(opcoes = {}) {
     carregandoServicosAdmin = true;
 
     area.innerHTML = criarEstadoVazioAdmin({
-        icone: "??",
+        icone: "\u23F3",
         titulo: "Carregando servicos",
         descricao: "Buscando servicos e profissionais aptos.",
     });
@@ -4605,7 +4605,7 @@ async function carregarServicos(opcoes = {}) {
 
         if (!servicos.length) {
             area.innerHTML = criarEstadoVazioAdmin({
-                icone: "??",
+                icone: "\u23F3",
                 titulo: "Nenhum servico cadastrado ainda",
                 descricao: "Cadastre os servicos para que os clientes possam agendar.",
                 textoBotao: "Cadastrar servico",

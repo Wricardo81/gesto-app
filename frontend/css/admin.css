@@ -5686,17 +5686,17 @@ p {
 
 #secao-configuracoes
 .config-grupo-admin[data-config-grupo="marca"]::before {
-    content: "Marca e presen?a digital";
+    content: "Marca e presença digital";
 }
 
 #secao-configuracoes
 .config-grupo-admin[data-config-grupo="comunicacao"]::before {
-    content: "Comunica??o com o cliente";
+    content: "Comunicação com o cliente";
 }
 
 #secao-configuracoes
 .config-grupo-admin[data-config-grupo="equipe"]::before {
-    content: "Opera??o da equipe";
+    content: "Operação da equipe";
 }
 
 

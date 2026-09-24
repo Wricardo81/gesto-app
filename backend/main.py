@@ -30,6 +30,7 @@ from routers import suporte_router
 from routers import assinatura_stripe_router
 from routers import mercado_pago_router
 from routers import usuario_operacional_router
+from routers import whatsapp_webhook_router
 
 configurar_logging()
 
@@ -100,6 +101,7 @@ app.include_router(suporte_router.router)
 app.include_router(assinatura_stripe_router.router)
 app.include_router(mercado_pago_router.router)
 app.include_router(usuario_operacional_router.router)
+app.include_router(whatsapp_webhook_router.router)
 
 # ==========================================
 # MÓDULO MESTRE: PAINEL SAAS & STRIPE

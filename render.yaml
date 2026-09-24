@@ -1,0 +1,15 @@
+services:
+  - type: cron
+    name: gesto-app-whatsapp-outbox
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python scripts/executar_outbox_whatsapp.py --limite 50
+    schedule: "* * * * *"
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: APP_ENV
+        value: production
+      - key: WHATSAPP_TRANSPORT_MODE
+        value: fake

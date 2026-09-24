@@ -7661,3 +7661,2225 @@ button.ativo {
     background:
         rgba(248, 113, 113, 0.10);
 }
+
+
+/* =========================================================
+   SPRINT 6.0 - FATIA 1
+   CRM acionavel
+========================================================= */
+
+#secao-clientes-crm .crm-acoes-cliente {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+#secao-clientes-crm
+.crm-acoes-cliente
+.btn-mini-crm {
+    min-height: 28px;
+    padding: 5px 8px;
+    white-space: nowrap;
+}
+
+#secao-clientes-crm
+.crm-acoes-cliente
+.crm-acao-link {
+    font-weight: 800;
+}
+
+@media (max-width: 780px) {
+    #secao-clientes-crm
+    .crm-acoes-cliente {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #secao-clientes-crm
+    .crm-acoes-cliente
+    .btn-mini-crm {
+        width: 100%;
+    }
+}
+
+
+/* =========================================================
+   SPRINT 6.0 - FATIA 2
+   Segmentacao inteligente do CRM
+========================================================= */
+
+#secao-clientes-crm
+.crm-segmento-badge {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    margin-top: 4px;
+    padding: 3px 7px;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 1;
+    opacity: 0.9;
+}
+
+#secao-clientes-crm
+.crm-segmento-badge.segmento-novo {
+    opacity: 0.75;
+}
+
+#secao-clientes-crm
+.crm-segmento-badge.segmento-recorrente {
+    font-weight: 900;
+}
+
+#secao-clientes-crm
+.crm-segmento-badge.segmento-risco {
+    border-style: dashed;
+}
+
+#secao-clientes-crm
+.crm-segmento-badge.segmento-inativo {
+    opacity: 0.62;
+}
+
+#secao-clientes-crm
+tr[data-segmento-crm="risco"] {
+    background:
+        linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.025),
+            transparent 45%
+        );
+}
+
+#secao-clientes-crm
+tr[data-segmento-crm="inativo"] {
+    opacity: 0.78;
+}
+
+
+/* =========================================================
+   SPRINT 6.0 - FATIA 3
+   Filtros operacionais do CRM
+========================================================= */
+
+#secao-clientes-crm
+.crm-filtros-segmento {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin:
+        -2px
+        0
+        14px;
+}
+
+#secao-clientes-crm
+.crm-filtros-segmento-botoes {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+#secao-clientes-crm
+.crm-filtro-segmento {
+    appearance: none;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    background: transparent;
+    padding: 6px 10px;
+    font: inherit;
+    font-size: 0.76rem;
+    font-weight: 700;
+    cursor: pointer;
+    opacity: 0.72;
+    transition:
+        transform 120ms ease,
+        opacity 120ms ease,
+        border-color 120ms ease;
+}
+
+#secao-clientes-crm
+.crm-filtro-segmento:hover {
+    opacity: 1;
+    transform: translateY(-1px);
+}
+
+#secao-clientes-crm
+.crm-filtro-segmento.ativo {
+    opacity: 1;
+    border-color: currentColor;
+    font-weight: 900;
+}
+
+#secao-clientes-crm
+.crm-filtro-segmento-status {
+    opacity: 0.68;
+    font-size: 0.74rem;
+}
+
+#secao-clientes-crm
+tr[hidden] {
+    display: none !important;
+}
+
+@media (max-width: 780px) {
+    #secao-clientes-crm
+    .crm-filtros-segmento {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    #secao-clientes-crm
+    .crm-filtros-segmento-botoes {
+        width: 100%;
+    }
+}
+
+
+/* =========================================================
+   SPRINT 6.0 - FATIA 4A
+   Contraste visual e acessibilidade do CRM
+========================================================= */
+
+/* ---------------------------------------------------------
+   Texto e leitura
+--------------------------------------------------------- */
+
+#secao-clientes-crm {
+    --crm-texto-forte: #F8FAFC;
+    --crm-texto-secundario: #CBD5E1;
+    --crm-borda: rgba(148, 163, 184, 0.32);
+    --crm-superficie: rgba(15, 23, 42, 0.72);
+    --crm-superficie-hover: rgba(30, 41, 59, 0.9);
+
+    --crm-ciano: #64FFDA;
+    --crm-ciano-fundo: rgba(100, 255, 218, 0.13);
+
+    --crm-azul: #93C5FD;
+    --crm-azul-fundo: rgba(59, 130, 246, 0.16);
+
+    --crm-amarelo: #FCD34D;
+    --crm-amarelo-fundo: rgba(245, 158, 11, 0.16);
+
+    --crm-vermelho: #FDA4AF;
+    --crm-vermelho-fundo: rgba(244, 63, 94, 0.15);
+}
+
+
+#secao-clientes-crm
+.descricao-bloco,
+
+#secao-clientes-crm
+.cliente-detalhe-crm,
+
+#secao-clientes-crm
+.crm-filtro-segmento-status {
+    color: var(--crm-texto-secundario);
+    opacity: 1;
+}
+
+
+#secao-clientes-crm
+.cliente-nome-crm {
+    color: var(--crm-texto-forte);
+}
+
+
+/* ---------------------------------------------------------
+   Badges de segmentacao
+--------------------------------------------------------- */
+
+#secao-clientes-crm
+.crm-segmento-badge {
+    border-width: 1px;
+    border-style: solid;
+    opacity: 1;
+    font-weight: 850;
+    letter-spacing: 0.015em;
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.025);
+}
+
+
+#secao-clientes-crm
+.crm-segmento-badge.segmento-novo {
+    color: var(--crm-azul);
+    background: var(--crm-azul-fundo);
+    border-color: rgba(147, 197, 253, 0.58);
+    opacity: 1;
+}
+
+
+#secao-clientes-crm
+.crm-segmento-badge.segmento-recorrente {
+    color: var(--crm-ciano);
+    background: var(--crm-ciano-fundo);
+    border-color: rgba(100, 255, 218, 0.58);
+}
+
+
+#secao-clientes-crm
+.crm-segmento-badge.segmento-risco {
+    color: var(--crm-amarelo);
+    background: var(--crm-amarelo-fundo);
+    border-color: rgba(252, 211, 77, 0.64);
+    border-style: solid;
+}
+
+
+#secao-clientes-crm
+.crm-segmento-badge.segmento-inativo {
+    color: var(--crm-vermelho);
+    background: var(--crm-vermelho-fundo);
+    border-color: rgba(253, 164, 175, 0.58);
+    opacity: 1;
+}
+
+
+/* ---------------------------------------------------------
+   Linhas de risco e inatividade
+--------------------------------------------------------- */
+
+#secao-clientes-crm
+tr[data-segmento-crm="risco"] {
+    background:
+        linear-gradient(
+            90deg,
+            rgba(245, 158, 11, 0.075),
+            transparent 52%
+        );
+}
+
+
+#secao-clientes-crm
+tr[data-segmento-crm="inativo"] {
+    background:
+        linear-gradient(
+            90deg,
+            rgba(244, 63, 94, 0.055),
+            transparent 52%
+        );
+
+    opacity: 1;
+}
+
+
+/* ---------------------------------------------------------
+   Filtros operacionais
+--------------------------------------------------------- */
+
+#secao-clientes-crm
+.crm-filtro-segmento {
+    color: var(--crm-texto-secundario);
+    background: var(--crm-superficie);
+    border-color: var(--crm-borda);
+    opacity: 1;
+}
+
+
+#secao-clientes-crm
+.crm-filtro-segmento:hover {
+    color: var(--crm-texto-forte);
+    background: var(--crm-superficie-hover);
+    border-color: rgba(100, 255, 218, 0.48);
+    opacity: 1;
+}
+
+
+#secao-clientes-crm
+.crm-filtro-segmento.ativo {
+    color: #07131A;
+    background: var(--crm-ciano);
+    border-color: var(--crm-ciano);
+    opacity: 1;
+    box-shadow:
+        0 0 0 1px rgba(100, 255, 218, 0.18),
+        0 6px 18px rgba(100, 255, 218, 0.12);
+}
+
+
+#secao-clientes-crm
+.crm-filtro-segmento:focus-visible {
+    outline: 3px solid rgba(100, 255, 218, 0.32);
+    outline-offset: 2px;
+}
+
+
+/* ---------------------------------------------------------
+   Campo de busca
+--------------------------------------------------------- */
+
+#secao-clientes-crm
+.linha-filtros-crm input {
+    color: var(--crm-texto-forte);
+    background: rgba(15, 23, 42, 0.82);
+    border-color: var(--crm-borda);
+}
+
+
+#secao-clientes-crm
+.linha-filtros-crm input::placeholder {
+    color: #94A3B8;
+    opacity: 1;
+}
+
+
+#secao-clientes-crm
+.linha-filtros-crm input:focus {
+    border-color: rgba(100, 255, 218, 0.62);
+    box-shadow:
+        0 0 0 3px rgba(100, 255, 218, 0.10);
+    outline: none;
+}
+
+
+/* ---------------------------------------------------------
+   Acoes do cliente
+--------------------------------------------------------- */
+
+#secao-clientes-crm
+.crm-acoes-cliente
+.btn-mini-crm {
+    color: var(--crm-texto-forte);
+    background: rgba(30, 41, 59, 0.82);
+    border-color: rgba(148, 163, 184, 0.38);
+}
+
+
+#secao-clientes-crm
+.crm-acoes-cliente
+.btn-mini-crm:hover {
+    color: #07131A;
+    background: var(--crm-ciano);
+    border-color: var(--crm-ciano);
+}
+
+
+#secao-clientes-crm
+.crm-acoes-cliente
+.crm-acao-link {
+    color: var(--crm-ciano);
+    background: var(--crm-ciano-fundo);
+    border-color: rgba(100, 255, 218, 0.48);
+}
+
+
+#secao-clientes-crm
+.crm-acoes-cliente
+.crm-acao-link:hover {
+    color: #07131A;
+    background: var(--crm-ciano);
+    border-color: var(--crm-ciano);
+}
+
+
+/* ---------------------------------------------------------
+   Tabela
+--------------------------------------------------------- */
+
+#secao-clientes-crm
+table tbody td {
+    color: #E2E8F0;
+}
+
+
+#secao-clientes-crm
+table thead th {
+    color: #F1F5F9;
+}
+
+
+#secao-clientes-crm
+table tbody tr:hover {
+    background-color:
+        rgba(100, 255, 218, 0.035);
+}
+
+
+/* =========================================================
+   SPRINT 6.0 - FATIA 4B
+   Contraste visual do Dashboard e Fila de Espera
+========================================================= */
+
+
+/* =========================================================
+   DASHBOARD
+========================================================= */
+
+#secao-dashboard {
+    --dash-texto-forte: #F8FAFC;
+    --dash-texto-secundario: #CBD5E1;
+    --dash-borda: rgba(148, 163, 184, 0.34);
+    --dash-superficie: rgba(15, 23, 42, 0.78);
+    --dash-superficie-forte: rgba(15, 23, 42, 0.94);
+    --dash-ciano: #64FFDA;
+}
+
+
+/* ---------------------------------------------------------
+   Cards de metricas
+--------------------------------------------------------- */
+
+#secao-dashboard
+.metric-card {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(15, 23, 42, 0.92),
+            rgba(10, 25, 47, 0.82)
+        );
+
+    border-color:
+        var(--dash-borda);
+
+    box-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.18);
+}
+
+
+#secao-dashboard
+.metric-card p {
+    color:
+        var(--dash-texto-secundario);
+
+    opacity: 1;
+}
+
+
+#secao-dashboard
+.metric-card strong {
+    color:
+        var(--dash-texto-forte);
+}
+
+
+#secao-dashboard
+.metric-card small {
+    color:
+        #B8C5D6;
+
+    opacity: 1;
+}
+
+
+/* ---------------------------------------------------------
+   Card financeiro
+--------------------------------------------------------- */
+
+#secao-dashboard
+.metric-card-financeiro {
+    border-color:
+        rgba(100, 255, 218, 0.46);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(16, 42, 48, 0.68),
+            rgba(10, 25, 47, 0.9)
+        );
+}
+
+
+/* ---------------------------------------------------------
+   Card de alerta
+--------------------------------------------------------- */
+
+#secao-dashboard
+.metric-card-alerta {
+    border-color:
+        rgba(252, 211, 77, 0.52);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(69, 48, 12, 0.30),
+            rgba(15, 23, 42, 0.90)
+        );
+}
+
+
+/* ---------------------------------------------------------
+   Insights
+--------------------------------------------------------- */
+
+#secao-dashboard
+.dashboard-insight-card {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(15, 23, 42, 0.94),
+            rgba(17, 35, 54, 0.84)
+        );
+
+    border-color:
+        rgba(148, 163, 184, 0.34);
+
+    box-shadow:
+        0 14px 30px rgba(0, 0, 0, 0.18);
+}
+
+
+#secao-dashboard
+.dashboard-insight-card span,
+#secao-dashboard
+.dashboard-insight-card p {
+    color:
+        var(--dash-texto-secundario);
+
+    opacity: 1;
+}
+
+
+#secao-dashboard
+.dashboard-insight-card strong {
+    color:
+        var(--dash-texto-forte);
+}
+
+
+/* ---------------------------------------------------------
+   Hoje
+--------------------------------------------------------- */
+
+#secao-dashboard
+.dashboard-hoje-card {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(15, 23, 42, 0.95),
+            rgba(10, 25, 47, 0.88)
+        );
+
+    border-color:
+        rgba(100, 255, 218, 0.28);
+
+    box-shadow:
+        0 16px 34px rgba(0, 0, 0, 0.18);
+}
+
+
+#secao-dashboard
+.dashboard-hoje-topo span,
+#secao-dashboard
+.dashboard-hoje-topo small,
+#secao-dashboard
+.dashboard-hoje-grid span {
+    color:
+        var(--dash-texto-secundario);
+
+    opacity: 1;
+}
+
+
+#secao-dashboard
+.dashboard-hoje-topo h3,
+#secao-dashboard
+.dashboard-hoje-grid strong {
+    color:
+        var(--dash-texto-forte);
+}
+
+
+/* ---------------------------------------------------------
+   Acoes e botoes
+--------------------------------------------------------- */
+
+#secao-dashboard
+.btn-secundario,
+#secao-dashboard
+.dashboard-pro-actions button {
+    color:
+        #E2E8F0;
+
+    background:
+        rgba(30, 41, 59, 0.82);
+
+    border-color:
+        rgba(148, 163, 184, 0.38);
+}
+
+
+#secao-dashboard
+.btn-secundario:hover,
+#secao-dashboard
+.dashboard-pro-actions button:hover {
+    color:
+        #07131A;
+
+    background:
+        var(--dash-ciano);
+
+    border-color:
+        var(--dash-ciano);
+}
+
+
+#secao-dashboard
+button:focus-visible {
+    outline:
+        3px solid rgba(100, 255, 218, 0.32);
+
+    outline-offset: 2px;
+}
+
+
+
+/* =========================================================
+   FILA DE ESPERA
+========================================================= */
+
+/* ---------------------------------------------------------
+   Cabecalho e resumo
+--------------------------------------------------------- */
+
+.fila-espera-admin-header h2 {
+    color: #F8FAFC;
+}
+
+
+.fila-espera-admin-header p {
+    color: #CBD5E1;
+}
+
+
+.fila-espera-admin-resumo article {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(15, 23, 42, 0.92),
+            rgba(10, 25, 47, 0.78)
+        );
+
+    border-color:
+        rgba(148, 163, 184, 0.36);
+
+    box-shadow:
+        0 10px 24px rgba(0, 0, 0, 0.16);
+}
+
+
+.fila-espera-admin-resumo small {
+    color: #CBD5E1;
+    opacity: 1;
+}
+
+
+.fila-espera-admin-resumo strong {
+    color: #F8FAFC;
+}
+
+
+/* ---------------------------------------------------------
+   Card principal
+--------------------------------------------------------- */
+
+.fila-espera-card-admin {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(15, 23, 42, 0.94),
+            rgba(2, 12, 27, 0.90)
+        );
+
+    border-color:
+        rgba(148, 163, 184, 0.34);
+
+    box-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.16);
+}
+
+
+.fila-espera-card-topo h3 {
+    color: #F8FAFC;
+}
+
+
+.fila-espera-card-topo p {
+    color: #CBD5E1;
+    opacity: 1;
+}
+
+
+.fila-espera-card-detalhes {
+    color: #CBD5E1;
+}
+
+
+.fila-espera-card-detalhes strong {
+    color: #F1F5F9;
+}
+
+
+.fila-espera-observacao-admin {
+    color: #D8E1EC;
+    background: rgba(30, 41, 59, 0.64);
+    border: 1px solid rgba(148, 163, 184, 0.28);
+}
+
+
+/* ---------------------------------------------------------
+   Badge base
+--------------------------------------------------------- */
+
+.badge-fila-espera-admin {
+    color: #E2E8F0;
+    background: rgba(30, 41, 59, 0.86);
+    border-color: rgba(148, 163, 184, 0.42);
+
+    font-weight: 800;
+
+    opacity: 1;
+}
+
+
+/* ---------------------------------------------------------
+   Aguardando
+--------------------------------------------------------- */
+
+.fila-espera-card-admin.status-aguardando {
+    border-color:
+        rgba(252, 211, 77, 0.42);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(68, 48, 12, 0.22),
+            rgba(15, 23, 42, 0.94)
+        );
+}
+
+
+.fila-espera-card-admin.status-aguardando
+.badge-fila-espera-admin {
+    color: #FCD34D;
+    background: rgba(245, 158, 11, 0.16);
+    border-color: rgba(252, 211, 77, 0.60);
+}
+
+
+/* ---------------------------------------------------------
+   Chamado
+--------------------------------------------------------- */
+
+.fila-espera-card-admin.status-chamado {
+    border-color:
+        rgba(147, 197, 253, 0.42);
+}
+
+
+.fila-espera-card-admin.status-chamado
+.badge-fila-espera-admin {
+    color: #93C5FD;
+    background: rgba(59, 130, 246, 0.16);
+    border-color: rgba(147, 197, 253, 0.60);
+}
+
+
+/* ---------------------------------------------------------
+   Agendado
+--------------------------------------------------------- */
+
+.fila-espera-card-admin.status-agendado {
+    border-color:
+        rgba(100, 255, 218, 0.42);
+}
+
+
+.fila-espera-card-admin.status-agendado
+.badge-fila-espera-admin {
+    color: #64FFDA;
+    background: rgba(100, 255, 218, 0.13);
+    border-color: rgba(100, 255, 218, 0.58);
+}
+
+
+/* ---------------------------------------------------------
+   Cancelado
+--------------------------------------------------------- */
+
+.fila-espera-card-admin.status-cancelado {
+    border-color:
+        rgba(253, 164, 175, 0.36);
+}
+
+
+.fila-espera-card-admin.status-cancelado
+.badge-fila-espera-admin {
+    color: #FDA4AF;
+    background: rgba(244, 63, 94, 0.14);
+    border-color: rgba(253, 164, 175, 0.54);
+}
+
+
+/* ---------------------------------------------------------
+   Expirado
+--------------------------------------------------------- */
+
+.fila-espera-card-admin.status-expirado {
+    border-color:
+        rgba(192, 132, 252, 0.34);
+}
+
+
+.fila-espera-card-admin.status-expirado
+.badge-fila-espera-admin {
+    color: #D8B4FE;
+    background: rgba(168, 85, 247, 0.14);
+    border-color: rgba(216, 180, 254, 0.50);
+}
+
+
+/* ---------------------------------------------------------
+   Arquivado
+--------------------------------------------------------- */
+
+.fila-espera-card-admin.status-arquivado {
+    border-color:
+        rgba(148, 163, 184, 0.30);
+
+    background:
+        rgba(15, 23, 42, 0.74);
+}
+
+
+.fila-espera-card-admin.status-arquivado
+.badge-fila-espera-admin {
+    color: #CBD5E1;
+    background: rgba(100, 116, 139, 0.18);
+    border-color: rgba(203, 213, 225, 0.42);
+}
+
+
+/* ---------------------------------------------------------
+   Acoes
+--------------------------------------------------------- */
+
+.fila-espera-card-acoes
+.btn-secundario {
+    color: #E2E8F0;
+    background: rgba(30, 41, 59, 0.86);
+    border-color: rgba(148, 163, 184, 0.40);
+}
+
+
+.fila-espera-card-acoes
+.btn-secundario:hover:not(:disabled) {
+    color: #07131A;
+    background: #64FFDA;
+    border-color: #64FFDA;
+}
+
+
+.fila-espera-card-acoes
+.btn-primario {
+    color: #07131A;
+    background: #64FFDA;
+    border-color: #64FFDA;
+}
+
+
+.fila-espera-card-acoes
+button:focus-visible {
+    outline:
+        3px solid rgba(100, 255, 218, 0.32);
+
+    outline-offset: 2px;
+}
+
+
+.fila-espera-card-acoes
+button:disabled {
+    color: #94A3B8;
+    background: rgba(30, 41, 59, 0.46);
+    border-color: rgba(148, 163, 184, 0.20);
+
+    opacity: 0.62;
+    cursor: not-allowed;
+}
+
+
+/* ---------------------------------------------------------
+   Estado vazio
+--------------------------------------------------------- */
+
+.lista-fila-espera-admin
+.estado-vazio-admin {
+    color: #CBD5E1;
+    background: rgba(15, 23, 42, 0.68);
+    border-color: rgba(148, 163, 184, 0.30);
+}
+
+
+/* =========================================================
+   SPRINT 6.0 - FATIA 4B.1
+   Refinamento de tokens, menu mobile e rodape
+========================================================= */
+
+
+/* =========================================================
+   TOKENS / INFORMACOES DISCRETAS
+========================================================= */
+
+/*
+   Mantemos elementos secundarios discretos,
+   mas sem sacrificar legibilidade.
+*/
+
+#secao-dashboard
+.dashboard-insight-card.dashboard-insight-prioridade-baixa {
+    opacity: 0.92;
+}
+
+
+#secao-dashboard
+.dashboard-insight-card.dashboard-insight-prioridade-baixa
+span {
+    font-size: 0.72rem;
+    color: #B8C5D6;
+}
+
+
+#secao-dashboard
+.dashboard-insight-card.dashboard-insight-prioridade-baixa
+strong {
+    color: #E2E8F0;
+}
+
+
+#secao-dashboard
+.dashboard-insight-card.dashboard-insight-prioridade-baixa
+p {
+    color: #B8C5D6;
+}
+
+
+/* ---------------------------------------------------------
+   Tokens / badges da fila
+--------------------------------------------------------- */
+
+#secao-fila-espera
+.badge-fila-espera-admin {
+    min-height: 27px;
+    padding: 6px 11px;
+    font-size: 0.78rem;
+    line-height: 1;
+    letter-spacing: 0.025em;
+}
+
+
+/*
+   Finalizados continuam visualmente secundarios,
+   mas nao ficam apagados.
+*/
+
+#secao-fila-espera
+.fila-espera-card-admin.status-agendado,
+
+#secao-fila-espera
+.fila-espera-card-admin.status-cancelado,
+
+#secao-fila-espera
+.fila-espera-card-admin.status-expirado {
+    opacity: 0.82;
+}
+
+
+#secao-fila-espera
+.fila-espera-card-admin.status-arquivado {
+    opacity: 0.76;
+}
+
+
+/* Arquivado deve continuar neutro, mas legivel */
+
+#secao-fila-espera
+.fila-espera-card-admin.status-arquivado
+.badge-fila-espera-admin {
+    color: #E2E8F0;
+
+    background:
+        rgba(100, 116, 139, 0.24);
+
+    border-color:
+        rgba(203, 213, 225, 0.48);
+}
+
+
+/* =========================================================
+   BOTAO DO MENU MOBILE
+========================================================= */
+
+/*
+   Nao cria um novo menu.
+   Apenas refina o botao existente.
+*/
+
+.btn-menu-mobile {
+    display: none;
+
+    align-items: center;
+    justify-content: center;
+
+    width: auto;
+    min-width: 132px;
+    min-height: 42px;
+
+    margin: 0 0 14px;
+
+    padding: 10px 15px;
+
+    color: #64FFDA;
+
+    background:
+        rgba(100, 255, 218, 0.10);
+
+    border:
+        1px solid rgba(100, 255, 218, 0.38);
+
+    border-radius: 12px;
+
+    font-size: 0.84rem;
+    font-weight: 850;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 6px 16px rgba(0, 0, 0, 0.14);
+
+    transition:
+        background 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease,
+        transform 0.18s ease;
+}
+
+
+.btn-menu-mobile:hover {
+    color: #07131A;
+
+    background: #64FFDA;
+
+    border-color: #64FFDA;
+
+    transform:
+        translateY(-1px);
+}
+
+
+.btn-menu-mobile:focus-visible {
+    outline:
+        3px solid rgba(100, 255, 218, 0.30);
+
+    outline-offset: 2px;
+}
+
+
+@media (max-width: 900px) {
+    .btn-menu-mobile {
+        display: inline-flex;
+    }
+}
+
+
+@media (max-width: 520px) {
+    .btn-menu-mobile {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+
+/* =========================================================
+   RODAPE ADMIN
+========================================================= */
+
+.rodape-creditos {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+
+    gap: 8px 18px;
+
+    margin-top: 44px;
+
+    padding:
+        22px
+        24px;
+
+    text-align: center;
+
+    color: #B8C5D6;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(15, 23, 42, 0.78),
+            rgba(10, 25, 47, 0.62)
+        );
+
+    border:
+        1px solid rgba(148, 163, 184, 0.22);
+
+    border-radius: 18px;
+
+    font-size: 0.78rem;
+    line-height: 1.6;
+
+    box-shadow:
+        0 12px 26px rgba(0, 0, 0, 0.12);
+}
+
+
+.rodape-creditos::before {
+    content: "";
+
+    position: absolute;
+
+    top: -1px;
+    left: 14%;
+
+    width: 72%;
+    height: 1px;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(100, 255, 218, 0.56),
+            transparent
+        );
+}
+
+
+.rodape-creditos strong {
+    color: #F8FAFC;
+
+    font-size: 0.82rem;
+    font-weight: 850;
+}
+
+
+.rodape-creditos span {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 5px;
+
+    color: #B8C5D6;
+}
+
+
+.rodape-creditos a {
+    color: #64FFDA;
+
+    font-weight: 750;
+
+    text-decoration:
+        none;
+}
+
+
+.rodape-creditos a:hover {
+    text-decoration:
+        underline;
+
+    text-underline-offset:
+        3px;
+}
+
+
+.rodape-creditos a:focus-visible {
+    outline:
+        2px solid rgba(100, 255, 218, 0.42);
+
+    outline-offset: 3px;
+
+    border-radius: 4px;
+}
+
+
+@media (max-width: 680px) {
+    .rodape-creditos {
+        flex-direction: column;
+
+        gap: 5px;
+
+        margin-top: 34px;
+
+        padding:
+            20px
+            14px;
+
+        border-radius: 15px;
+    }
+
+    .rodape-creditos span {
+        justify-content: center;
+
+        flex-wrap: wrap;
+    }
+}
+
+
+/* =========================================================
+   SPRINT 6.0 - FATIA 4B.2
+   Um unico controle de menu em tablet/mobile
+========================================================= */
+
+/*
+   O botao "Menu do painel" passa a controlar a sidebar.
+   O pequeno botao de abertura fica redundante nessas telas.
+*/
+
+@media (max-width: 900px) {
+    .btn-abrir-sidebar-admin {
+        display: none !important;
+    }
+
+    .btn-menu-mobile {
+        display: inline-flex;
+
+        align-items: center;
+        justify-content: center;
+
+        min-height: 44px;
+
+        padding:
+            10px
+            16px;
+    }
+}
+
+
+/*
+   Nunca deixa o overlay antigo interferir depois
+   da migracao para a sidebar retratil.
+*/
+
+@media (max-width: 900px) {
+    body.admin-menu-aberto::after {
+        display: none !important;
+        content: none !important;
+    }
+}
+
+
+/* =========================================================
+   SPRINT 6.0 - FATIA 4C
+   Acabamento visual do Financeiro
+========================================================= */
+
+
+/* =========================================================
+   CARD PRINCIPAL
+========================================================= */
+
+#comissoes-repasses-dashboard {
+    --fin-texto-forte: #F8FAFC;
+    --fin-texto-secundario: #CBD5E1;
+    --fin-borda: rgba(148, 163, 184, 0.32);
+    --fin-superficie: rgba(15, 23, 42, 0.88);
+    --fin-ciano: #64FFDA;
+    --fin-amarelo: #FCD34D;
+    --fin-verde: #86EFAC;
+}
+
+
+#comissoes-repasses-dashboard.financeiro-resumo-card {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(15, 23, 42, 0.96),
+            rgba(10, 25, 47, 0.88)
+        );
+
+    border-color:
+        rgba(100, 255, 218, 0.24);
+
+    box-shadow:
+        0 16px 36px rgba(0, 0, 0, 0.18);
+}
+
+
+/* =========================================================
+   CABECALHO
+========================================================= */
+
+#comissoes-repasses-dashboard
+.financeiro-resumo-topo span {
+    color: var(--fin-ciano);
+
+    font-size: 0.72rem;
+
+    opacity: 1;
+}
+
+
+#comissoes-repasses-dashboard
+.financeiro-resumo-topo h3 {
+    color: var(--fin-texto-forte);
+
+    font-size: 1.16rem;
+
+    letter-spacing: -0.015em;
+}
+
+
+#comissoes-repasses-dashboard
+.financeiro-resumo-topo p {
+    color: var(--fin-texto-secundario);
+
+    line-height: 1.6;
+}
+
+
+#comissoes-repasses-dashboard
+.financeiro-resumo-topo small {
+    color: #B8C5D6;
+
+    opacity: 1;
+
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   INDICADORES FINANCEIROS
+========================================================= */
+
+#comissoes-repasses-dashboard
+.financeiro-resumo-grid {
+    gap: 14px;
+}
+
+
+#comissoes-repasses-dashboard
+.financeiro-resumo-grid > div {
+    min-height: 92px;
+
+    padding: 15px 16px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(30, 41, 59, 0.76),
+            rgba(15, 23, 42, 0.72)
+        );
+
+    border-color:
+        rgba(148, 163, 184, 0.30);
+
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+
+#comissoes-repasses-dashboard
+.financeiro-resumo-grid > div:hover {
+    border-color:
+        rgba(100, 255, 218, 0.38);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(30, 41, 59, 0.88),
+            rgba(15, 23, 42, 0.80)
+        );
+}
+
+
+#comissoes-repasses-dashboard
+.financeiro-resumo-grid span {
+    color: #B8C5D6;
+
+    font-size: 0.72rem;
+
+    letter-spacing: 0.055em;
+
+    opacity: 1;
+}
+
+
+#comissoes-repasses-dashboard
+.financeiro-resumo-grid strong {
+    color: var(--fin-texto-forte);
+
+    font-size: 1.38rem;
+
+    font-weight: 850;
+}
+
+
+/* ---------------------------------------------------------
+   Destaques semanticos
+--------------------------------------------------------- */
+
+#visor-comissoes-pendentes-quantidade,
+#visor-comissoes-pendentes-total {
+    color: var(--fin-amarelo) !important;
+}
+
+
+#visor-repasses-quantidade {
+    color: #93C5FD !important;
+}
+
+
+#visor-repasses-total {
+    color: var(--fin-verde) !important;
+}
+
+
+/* =========================================================
+   OPERACAO DE REPASSE
+========================================================= */
+
+.financeiro-repasse-operacao-admin {
+    margin-top: 20px;
+
+    padding: 18px;
+
+    background:
+        rgba(15, 23, 42, 0.72);
+
+    border:
+        1px solid rgba(148, 163, 184, 0.28);
+
+    border-radius: 16px;
+}
+
+
+.financeiro-repasse-operacao-admin label {
+    color: #E2E8F0;
+
+    font-weight: 750;
+}
+
+
+.financeiro-repasse-operacao-admin input,
+.financeiro-repasse-operacao-admin select,
+.financeiro-repasse-operacao-admin textarea {
+    color: #F8FAFC;
+
+    background:
+        rgba(15, 23, 42, 0.86);
+
+    border-color:
+        rgba(148, 163, 184, 0.34);
+}
+
+
+.financeiro-repasse-operacao-admin
+input::placeholder,
+.financeiro-repasse-operacao-admin
+textarea::placeholder {
+    color: #94A3B8;
+
+    opacity: 1;
+}
+
+
+.financeiro-repasse-operacao-admin
+input:focus,
+.financeiro-repasse-operacao-admin
+select:focus,
+.financeiro-repasse-operacao-admin
+textarea:focus {
+    outline:
+        3px solid rgba(100, 255, 218, 0.24);
+
+    outline-offset: 2px;
+
+    border-color:
+        rgba(100, 255, 218, 0.58);
+}
+
+
+/* =========================================================
+   BOTAO REGISTRAR REPASSE
+========================================================= */
+
+#btn-registrar-repasse-admin {
+    min-height: 42px;
+
+    padding:
+        10px
+        16px;
+
+    font-weight: 850;
+}
+
+
+#btn-registrar-repasse-admin:not(:disabled) {
+    color: #07131A;
+
+    background: #64FFDA;
+
+    border-color: #64FFDA;
+
+    box-shadow:
+        0 8px 18px rgba(100, 255, 218, 0.12);
+}
+
+
+#btn-registrar-repasse-admin:not(:disabled):hover {
+    transform:
+        translateY(-1px);
+}
+
+
+#btn-registrar-repasse-admin:disabled {
+    color: #94A3B8;
+
+    background:
+        rgba(30, 41, 59, 0.50);
+
+    border-color:
+        rgba(148, 163, 184, 0.20);
+
+    opacity: 0.72;
+
+    cursor: not-allowed;
+}
+
+
+/* =========================================================
+   HISTORICO DE REPASSES
+========================================================= */
+
+#comissoes-repasses-dashboard
+.financeiro-resumo-detalhes {
+    margin-top: 20px;
+
+    padding-top: 18px;
+
+    border-top:
+        1px solid rgba(148, 163, 184, 0.24);
+}
+
+
+#comissoes-repasses-dashboard
+.financeiro-resumo-detalhes h4 {
+    margin:
+        0
+        0
+        12px;
+
+    color: var(--fin-texto-forte);
+
+    font-size: 0.94rem;
+}
+
+
+#lista-repasses-recentes-admin {
+    display: grid;
+
+    gap: 10px;
+
+    margin: 0;
+
+    padding: 0;
+
+    list-style: none;
+}
+
+
+#lista-repasses-recentes-admin li {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        auto;
+
+    gap:
+        6px
+        14px;
+
+    align-items: center;
+
+    padding:
+        13px
+        14px;
+
+    color:
+        var(--fin-texto-secundario);
+
+    background:
+        rgba(30, 41, 59, 0.58);
+
+    border:
+        1px solid rgba(148, 163, 184, 0.24);
+
+    border-radius: 13px;
+}
+
+
+#lista-repasses-recentes-admin li:hover {
+    border-color:
+        rgba(100, 255, 218, 0.34);
+
+    background:
+        rgba(30, 41, 59, 0.72);
+}
+
+
+#lista-repasses-recentes-admin li strong {
+    color: #F1F5F9;
+
+    font-size: 0.86rem;
+}
+
+
+#lista-repasses-recentes-admin li span {
+    color: #B8C5D6;
+
+    font-size: 0.76rem;
+}
+
+
+#lista-repasses-recentes-admin
+.btn-detalhe-repasse-admin {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+
+    min-height: 34px;
+
+    padding:
+        7px
+        10px;
+
+    color: #64FFDA;
+
+    background:
+        rgba(100, 255, 218, 0.08);
+
+    border:
+        1px solid rgba(100, 255, 218, 0.34);
+
+    border-radius: 10px;
+
+    font-size: 0.74rem;
+    font-weight: 800;
+
+    cursor: pointer;
+}
+
+
+#lista-repasses-recentes-admin
+.btn-detalhe-repasse-admin:hover {
+    color: #07131A;
+
+    background: #64FFDA;
+
+    border-color: #64FFDA;
+}
+
+
+#lista-repasses-recentes-admin
+.btn-detalhe-repasse-admin:focus-visible {
+    outline:
+        3px solid rgba(100, 255, 218, 0.28);
+
+    outline-offset: 2px;
+}
+
+
+/* =========================================================
+   RESPONSIVIDADE
+========================================================= */
+
+@media (max-width: 720px) {
+
+    #comissoes-repasses-dashboard
+    .financeiro-resumo-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+
+    #lista-repasses-recentes-admin li {
+        grid-template-columns:
+            minmax(0, 1fr);
+    }
+
+
+    #lista-repasses-recentes-admin
+    .btn-detalhe-repasse-admin {
+        grid-column: 1;
+        grid-row: auto;
+
+        width: 100%;
+    }
+}
+
+
+@media (max-width: 460px) {
+
+    #comissoes-repasses-dashboard
+    .financeiro-resumo-grid {
+        grid-template-columns:
+            1fr;
+    }
+}
+
+
+/* =========================================================
+   SPRINT 6.0 - FATIA 5A
+   Reativacao manual de clientes por WhatsApp
+========================================================= */
+
+#secao-clientes-crm
+.crm-acoes-cliente
+.crm-acao-reativar {
+    color: #FCD34D;
+
+    background:
+        rgba(245, 158, 11, 0.10);
+
+    border-color:
+        rgba(252, 211, 77, 0.46);
+}
+
+
+#secao-clientes-crm
+.crm-acoes-cliente
+.crm-acao-reativar:hover {
+    color: #111827;
+
+    background: #FCD34D;
+
+    border-color: #FCD34D;
+
+    transform:
+        translateY(-1px);
+}
+
+
+#secao-clientes-crm
+.crm-acoes-cliente
+.crm-acao-reativar:focus-visible {
+    outline:
+        3px solid rgba(252, 211, 77, 0.28);
+
+    outline-offset: 2px;
+}
+
+
+/*
+   Cliente inativo recebe um pequeno reforco visual,
+   mantendo a mesma acao e sem exagerar no destaque.
+*/
+
+#secao-clientes-crm
+tr[data-segmento-crm="inativo"]
+.crm-acao-reativar {
+    color: #FDA4AF;
+
+    background:
+        rgba(244, 63, 94, 0.10);
+
+    border-color:
+        rgba(253, 164, 175, 0.48);
+}
+
+
+#secao-clientes-crm
+tr[data-segmento-crm="inativo"]
+.crm-acao-reativar:hover {
+    color: #111827;
+
+    background: #FDA4AF;
+
+    border-color: #FDA4AF;
+}
+
+
+/* =========================================================
+   SPRINT 6.0 - FATIA 5B.2
+   Historico visivel de reativacoes no CRM
+========================================================= */
+
+#secao-clientes-crm
+.crm-ultima-interacao {
+    margin-top: 5px;
+
+    color: #FCD34D;
+
+    font-size: 0.72rem;
+
+    font-weight: 700;
+
+    line-height: 1.35;
+}
+
+
+#secao-clientes-crm
+tr[data-segmento-crm="inativo"]
+.crm-ultima-interacao {
+    color: #FDA4AF;
+}
+
+
+#secao-clientes-crm
+.crm-ultima-interacao::before {
+    content: "\2022";
+
+    display: inline-block;
+
+    margin-right: 5px;
+
+    color: currentColor;
+}
+
+
+@media (max-width: 720px) {
+    #secao-clientes-crm
+    .crm-ultima-interacao {
+        font-size: 0.76rem;
+    }
+}
+
+
+/* =========================================================
+   SPRINT 6.0 - FATIA 5B.3
+   Protecao contra recontato excessivo
+========================================================= */
+
+#secao-clientes-crm
+.crm-acoes-cliente
+.crm-acao-reativar-cooldown {
+    cursor: not-allowed;
+
+    opacity: 0.76;
+
+    color: #CBD5E1;
+
+    background:
+        rgba(148, 163, 184, 0.10);
+
+    border-color:
+        rgba(148, 163, 184, 0.32);
+
+    box-shadow: none;
+}
+
+
+#secao-clientes-crm
+.crm-acoes-cliente
+.crm-acao-reativar-cooldown:hover {
+    color: #CBD5E1;
+
+    background:
+        rgba(148, 163, 184, 0.10);
+
+    border-color:
+        rgba(148, 163, 184, 0.32);
+
+    transform: none;
+}
+
+
+#secao-clientes-crm
+tr[data-segmento-crm="inativo"]
+.crm-acao-reativar-cooldown,
+#secao-clientes-crm
+tr[data-segmento-crm="risco"]
+.crm-acao-reativar-cooldown {
+    color: #CBD5E1;
+
+    background:
+        rgba(148, 163, 184, 0.10);
+
+    border-color:
+        rgba(148, 163, 184, 0.32);
+}
+
+
+#secao-clientes-crm
+.crm-acoes-cliente
+.crm-acao-reativar-cooldown:focus-visible {
+    outline:
+        3px solid rgba(148, 163, 184, 0.24);
+
+    outline-offset: 2px;
+}
+
+
+/* =========================================================
+   SPRINT 6.0 - FATIA 5B.4
+   Linha do tempo do cliente
+========================================================= */
+
+.modal-historico-cliente
+.card-historico-interacao-crm {
+    border-color:
+        rgba(100, 255, 218, 0.28);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(100, 255, 218, 0.07),
+            rgba(15, 23, 42, 0.28)
+        );
+}
+
+
+.modal-historico-cliente
+.badge-historico-interacao-crm {
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-height: 24px;
+
+    padding: 3px 8px;
+
+    border:
+        1px solid rgba(100, 255, 218, 0.38);
+
+    border-radius: 999px;
+
+    background:
+        rgba(100, 255, 218, 0.10);
+
+    color: #64FFDA;
+
+    font-size: 0.68rem;
+
+    font-weight: 900;
+
+    letter-spacing: 0.04em;
+
+    text-transform: uppercase;
+}
+
+
+.modal-historico-cliente
+.historico-interacao-observacao {
+    margin-top: 8px;
+
+    padding-top: 8px;
+
+    border-top:
+        1px solid rgba(148, 163, 184, 0.14);
+
+    color: var(--texto-secundario);
+
+    font-size: 0.76rem;
+
+    line-height: 1.45;
+}
+
+
+/* =========================================================
+   SPRINT 6.0 - FATIA 5C
+   Painel operacional de retencao
+========================================================= */
+
+#secao-clientes-crm
+.crm-painel-retencao {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 12px;
+
+    margin:
+        14px 0 18px;
+}
+
+
+#secao-clientes-crm
+.crm-retencao-card {
+    position: relative;
+
+    overflow: hidden;
+
+    min-height: 118px;
+
+    padding: 15px 16px;
+
+    border:
+        1px solid rgba(148, 163, 184, 0.18);
+
+    border-radius: 18px;
+
+    background:
+        rgba(15, 23, 42, 0.56);
+
+    box-shadow:
+        0 10px 30px rgba(2, 6, 23, 0.18);
+}
+
+
+#secao-clientes-crm
+.crm-retencao-card::before {
+    content: "";
+
+    position: absolute;
+
+    inset:
+        0 auto 0 0;
+
+    width: 3px;
+
+    border-radius:
+        18px 0 0 18px;
+
+    background:
+        currentColor;
+
+    opacity: 0.80;
+}
+
+
+#secao-clientes-crm
+.crm-retencao-card span {
+    display: block;
+
+    margin-bottom: 6px;
+
+    color: #CBD5E1;
+
+    font-size: 0.78rem;
+
+    font-weight: 800;
+
+    letter-spacing: 0.02em;
+
+    text-transform: uppercase;
+}
+
+
+#secao-clientes-crm
+.crm-retencao-card strong {
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: currentColor;
+
+    font-size: clamp(
+        1.65rem,
+        2vw,
+        2.1rem
+    );
+
+    font-weight: 900;
+
+    line-height: 1;
+}
+
+
+#secao-clientes-crm
+.crm-retencao-card small {
+    display: block;
+
+    color: #94A3B8;
+
+    font-size: 0.74rem;
+
+    line-height: 1.42;
+}
+
+
+#secao-clientes-crm
+.crm-retencao-risco {
+    color: #FCD34D;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(245, 158, 11, 0.10),
+            rgba(15, 23, 42, 0.50)
+        );
+}
+
+
+#secao-clientes-crm
+.crm-retencao-inativo {
+    color: #FDA4AF;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(244, 63, 94, 0.10),
+            rgba(15, 23, 42, 0.50)
+        );
+}
+
+
+#secao-clientes-crm
+.crm-retencao-cooldown {
+    color: #93C5FD;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(59, 130, 246, 0.09),
+            rgba(15, 23, 42, 0.50)
+        );
+}
+
+
+#secao-clientes-crm
+.crm-retencao-acao {
+    color: #64FFDA;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(100, 255, 218, 0.10),
+            rgba(15, 23, 42, 0.50)
+        );
+}
+
+
+#secao-clientes-crm
+.crm-painel-retencao[data-possui-acao="true"]
+.crm-retencao-acao {
+    border-color:
+        rgba(100, 255, 218, 0.42);
+
+    box-shadow:
+        0 0 0 1px rgba(100, 255, 218, 0.05),
+        0 12px 32px rgba(2, 6, 23, 0.24);
+}
+
+
+@media (max-width: 1050px) {
+
+    #secao-clientes-crm
+    .crm-painel-retencao {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+@media (max-width: 620px) {
+
+    #secao-clientes-crm
+    .crm-painel-retencao {
+        grid-template-columns:
+            1fr;
+    }
+
+
+    #secao-clientes-crm
+    .crm-retencao-card {
+        min-height: auto;
+    }
+}

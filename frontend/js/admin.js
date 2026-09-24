@@ -1470,8 +1470,85 @@ async function realizarLogin(event) {
     }
 }
 
-function alternarMenuAdmin() {
-  document.body.classList.toggle("admin-menu-aberto");
+function alternarMenuAdmin(evento = null) {
+    /*
+     * O botao principal de menu usa a sidebar retratil.
+     *
+     * stopPropagation evita que o mesmo clique que abre
+     * a sidebar chegue ao listener global e a feche
+     * imediatamente.
+     */
+
+    if (evento) {
+        evento.preventDefault();
+        evento.stopPropagation();
+    }
+
+    document.body.classList.remove(
+        "admin-menu-aberto"
+    );
+
+    const sidebar =
+        document.querySelector(
+            ".admin-sidebar"
+        );
+
+    if (!sidebar) {
+        return;
+    }
+
+    const sidebarEstaFechada =
+        document.body.classList.contains(
+            "admin-sidebar-retraida"
+        );
+
+    if (sidebarEstaFechada) {
+        if (
+            typeof window.abrirSidebarAdmin
+            === "function"
+        ) {
+            window.abrirSidebarAdmin();
+            return;
+        }
+
+        const botaoAbrir =
+            document.querySelector(
+                ".btn-abrir-sidebar-admin"
+            );
+
+        if (botaoAbrir) {
+            botaoAbrir.click();
+            return;
+        }
+
+        document.body.classList.remove(
+            "admin-sidebar-retraida"
+        );
+
+        return;
+    }
+
+    if (
+        typeof window.fecharSidebarAdmin
+        === "function"
+    ) {
+        window.fecharSidebarAdmin();
+        return;
+    }
+
+    const botaoFechar =
+        sidebar.querySelector(
+            ".btn-fechar-sidebar-admin"
+        );
+
+    if (botaoFechar) {
+        botaoFechar.click();
+        return;
+    }
+
+    document.body.classList.add(
+        "admin-sidebar-retraida"
+    );
 }
 
 
@@ -6881,97 +6958,393 @@ function fecharHistoricoCliente() {
 }
 
 
+function obterTimestampAgendamentoHistoricoCRM(
+    agendamento
+) {
+    const data =
+        String(
+            agendamento?.data || ""
+        ).trim();
+
+    if (!data) {
+        return 0;
+    }
+
+    const horario =
+        String(
+            agendamento?.horario || "00:00"
+        ).trim();
+
+    const dataHora = new Date(
+        `${data}T${horario}:00`
+    );
+
+    if (Number.isNaN(dataHora.getTime())) {
+        return 0;
+    }
+
+    return dataHora.getTime();
+}
+
+
+function obterTimestampInteracaoHistoricoCRM(
+    interacao
+) {
+    const valor =
+        normalizarDataHoraUTCClienteCRM(
+            interacao?.criado_em
+        );
+
+    if (!valor) {
+        return 0;
+    }
+
+    const dataHora = new Date(valor);
+
+    if (Number.isNaN(dataHora.getTime())) {
+        return 0;
+    }
+
+    return dataHora.getTime();
+}
+
+
+function formatarTipoInteracaoHistoricoCRM(
+    tipo
+) {
+    const mapa = {
+        reativacao_risco:
+            "Reativa\u00e7\u00e3o de cliente em risco",
+
+        reativacao_inativo:
+            "Reativa\u00e7\u00e3o de cliente inativo",
+    };
+
+    return (
+        mapa[String(tipo || "").trim()]
+        || "Intera\u00e7\u00e3o CRM"
+    );
+}
+
+
+function formatarDataHoraInteracaoHistoricoCRM(
+    criadoEm
+) {
+    const valor =
+        normalizarDataHoraUTCClienteCRM(
+            criadoEm
+        );
+
+    if (!valor) {
+        return "-";
+    }
+
+    const dataHora = new Date(valor);
+
+    if (Number.isNaN(dataHora.getTime())) {
+        return String(criadoEm || "-");
+    }
+
+    return dataHora.toLocaleString(
+        "pt-BR",
+        {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        }
+    );
+}
+
+
+function montarCardInteracaoHistoricoCRM(
+    interacao
+) {
+    const titulo =
+        formatarTipoInteracaoHistoricoCRM(
+            interacao?.tipo
+        );
+
+    const quando =
+        formatarDataHoraInteracaoHistoricoCRM(
+            interacao?.criado_em
+        );
+
+    const usuario =
+        String(
+            interacao?.usuario_nome
+            || interacao?.usuario_email
+            || "Usu\u00e1rio do painel"
+        ).trim();
+
+    const canal =
+        String(
+            interacao?.canal || "whatsapp"
+        ).trim();
+
+    return `
+        <div
+            class="card-historico-cliente card-historico-interacao-crm"
+        >
+            <div class="card-historico-topo">
+                <strong>
+                    ${escaparHtmlAdmin(titulo)}
+                </strong>
+
+                <span
+                    class="badge-historico-interacao-crm"
+                >
+                    CRM
+                </span>
+            </div>
+
+            <p>
+                <strong>Registrado em:</strong>
+                ${escaparHtmlAdmin(quando)}
+            </p>
+
+            <p>
+                <strong>Canal:</strong>
+                ${escaparHtmlAdmin(canal)}
+            </p>
+
+            <p>
+                <strong>Respons\u00e1vel:</strong>
+                ${escaparHtmlAdmin(usuario)}
+            </p>
+
+            <p class="historico-interacao-observacao">
+                Contato de reativa\u00e7\u00e3o iniciado pelo painel.
+                Este registro n\u00e3o confirma entrega ou leitura
+                da mensagem no WhatsApp.
+            </p>
+        </div>
+    `;
+}
+
+
+function montarCardAgendamentoHistoricoCRM(
+    agendamento
+) {
+    const status =
+        agendamento?.status || "confirmado";
+
+    return `
+        <div class="card-historico-cliente">
+            <div class="card-historico-topo">
+                <strong>
+                    ${agendamento?.servico || "-"}
+                </strong>
+
+                <span
+                    class="badge-status ${classeStatusAgendamento(status)}"
+                >
+                    ${traduzirStatusAgendamento(status)}
+                </span>
+            </div>
+
+            <p>
+                <strong>Data:</strong>
+                ${formatarDataBR(agendamento?.data)}
+                \u00e0s ${agendamento?.horario || "-"}
+            </p>
+
+            <p>
+                <strong>Profissional:</strong>
+                ${agendamento?.profissional || "-"}
+            </p>
+
+            <p>
+                <strong>Valor:</strong>
+                ${formatarMoeda(agendamento?.valor)}
+            </p>
+
+            ${
+                agendamento?.motivo_cancelamento
+                    ? `
+                        <p>
+                            <strong>
+                                Motivo do cancelamento:
+                            </strong>
+                            ${agendamento.motivo_cancelamento}
+                        </p>
+                    `
+                    : ""
+            }
+
+            ${
+                agendamento?.cancelado_em
+                    ? `
+                        <p>
+                            <strong>Cancelado em:</strong>
+                            ${formatarDataHoraBR(
+                                agendamento.cancelado_em
+                            )}
+                        </p>
+                    `
+                    : ""
+            }
+
+            ${
+                agendamento?.observacao_interna
+                    ? `
+                        <p>
+                            <strong>
+                                Observa\u00e7\u00e3o interna:
+                            </strong>
+                            ${agendamento.observacao_interna}
+                        </p>
+                    `
+                    : ""
+            }
+        </div>
+    `;
+}
+
+
 async function abrirHistoricoCliente(telefone) {
-    const telefoneNormalizado = normalizarTelefoneCliente(telefone);
+    const telefoneNormalizado =
+        normalizarTelefoneCliente(
+            telefone
+        );
 
     if (!telefoneNormalizado) {
-        exibirMensagemAdmin("Este agendamento não possui telefone válido.");
+        exibirMensagemAdmin(
+            "Este cliente n\u00e3o possui telefone v\u00e1lido."
+        );
+
         return;
     }
 
-    const modal = garantirModalHistoricoCliente();
-    const resumo = document.getElementById("historico-cliente-resumo");
-    const conteudo = document.getElementById("historico-cliente-conteudo");
+    const modal =
+        garantirModalHistoricoCliente();
+
+    const resumo =
+        document.getElementById(
+            "historico-cliente-resumo"
+        );
+
+    const conteudo =
+        document.getElementById(
+            "historico-cliente-conteudo"
+        );
 
     modal.style.display = "flex";
-    resumo.textContent = "Carregando histórico...";
+
+    resumo.textContent =
+        "Carregando hist\u00f3rico...";
+
     conteudo.innerHTML = "";
 
     try {
-        const dados = await apiRequest(
-            `/api/${tenantSlugLogado}/admin/clientes/historico?telefone=${telefoneNormalizado}`,
-            {
-                auth: true,
-            }
-        );
+        const [
+            dados,
+            dadosInteracoes,
+        ] = await Promise.all([
+            apiRequest(
+                `/api/${tenantSlugLogado}/admin/clientes/historico?telefone=${encodeURIComponent(telefoneNormalizado)}`,
+                {
+                    auth: true,
+                }
+            ),
+
+            apiRequest(
+                `/api/${tenantSlugLogado}/admin/clientes/${encodeURIComponent(telefoneNormalizado)}/interacoes?limite=100`,
+                {
+                    auth: true,
+                }
+            ),
+        ]);
+
+        const agendamentos =
+            Array.isArray(
+                dados?.agendamentos
+            )
+                ? dados.agendamentos
+                : [];
+
+        const interacoes =
+            Array.isArray(
+                dadosInteracoes?.interacoes
+            )
+                ? dadosInteracoes.interacoes
+                : [];
 
         resumo.textContent = `
             Telefone: ${dados.telefone}
-            • ${dados.total_agendamentos} agendamento(s)
-            • ${dados.total_cancelamentos} cancelamento(s)
-            • ${formatarMoeda(dados.faturamento_total_concluido)} concluído(s)
+            \u2022 ${dados.total_agendamentos} agendamento(s)
+            \u2022 ${dados.total_cancelamentos} cancelamento(s)
+            \u2022 ${interacoes.length} intera\u00e7\u00e3o(\u00f5es) CRM
+            \u2022 ${formatarMoeda(
+                dados.faturamento_total_concluido
+            )} conclu\u00eddo(s)
         `;
 
-        if (!dados.agendamentos || !dados.agendamentos.length) {
+        const eventosAgendamento =
+            agendamentos.map(
+                (agendamento) => ({
+                    tipo: "agendamento",
+                    timestamp:
+                        obterTimestampAgendamentoHistoricoCRM(
+                            agendamento
+                        ),
+                    dados: agendamento,
+                })
+            );
+
+        const eventosInteracao =
+            interacoes.map(
+                (interacao) => ({
+                    tipo: "interacao_crm",
+                    timestamp:
+                        obterTimestampInteracaoHistoricoCRM(
+                            interacao
+                        ),
+                    dados: interacao,
+                })
+            );
+
+        const eventos = [
+            ...eventosAgendamento,
+            ...eventosInteracao,
+        ].sort(
+            (a, b) =>
+                b.timestamp - a.timestamp
+        );
+
+        if (!eventos.length) {
             conteudo.innerHTML = `
                 <p class="mensagem-vazia">
-                    Nenhum histórico encontrado para este cliente.
+                    Nenhum hist\u00f3rico encontrado
+                    para este cliente.
                 </p>
             `;
+
             return;
         }
 
-        conteudo.innerHTML = dados.agendamentos
-            .map((agendamento) => {
-                const status = agendamento.status || "confirmado";
+        conteudo.innerHTML =
+            eventos
+                .map((evento) => {
+                    if (
+                        evento.tipo
+                        === "interacao_crm"
+                    ) {
+                        return (
+                            montarCardInteracaoHistoricoCRM(
+                                evento.dados
+                            )
+                        );
+                    }
 
-                return `
-                    <div class="card-historico-cliente">
-                        <div class="card-historico-topo">
-                            <strong>${agendamento.servico || "-"}</strong>
-
-                            <span class="badge-status ${classeStatusAgendamento(status)}">
-                                ${traduzirStatusAgendamento(status)}
-                            </span>
-                        </div>
-
-                        <p>
-                            <strong>Data:</strong>
-                            ${formatarDataBR(agendamento.data)}
-                            às ${agendamento.horario || "-"}
-                        </p>
-
-                        <p>
-                            <strong>Profissional:</strong>
-                            ${agendamento.profissional || "-"}
-                        </p>
-
-                        <p>
-                            <strong>Valor:</strong>
-                            ${formatarMoeda(agendamento.valor)}
-                        </p>
-
-                        ${
-                            agendamento.motivo_cancelamento
-                                ? `<p><strong>Motivo do cancelamento:</strong> ${agendamento.motivo_cancelamento}</p>`
-                                : ""
-                        }
-
-                        ${
-                            agendamento.cancelado_em
-                                ? `<p><strong>Cancelado em:</strong> ${formatarDataHoraBR(agendamento.cancelado_em)}</p>`
-                                : ""
-                        }
-
-                        ${
-                            agendamento.observacao_interna
-                                ? `<p><strong>Observação interna:</strong> ${agendamento.observacao_interna}</p>`
-                                : ""
-                        }
-                    </div>
-                `;
-            })
-            .join("");
+                    return (
+                        montarCardAgendamentoHistoricoCRM(
+                            evento.dados
+                        )
+                    );
+                })
+                .join("");
 
     } catch (erro) {
         tratarErro(erro);
@@ -6983,12 +7356,936 @@ async function abrirHistoricoCliente(telefone) {
 window.abrirHistoricoCliente = abrirHistoricoCliente;
 window.fecharHistoricoCliente = fecharHistoricoCliente;
 
+
+
+function calcularDiasDesdeDataCRM(dataValor) {
+    if (!dataValor) {
+        return null;
+    }
+
+    const partes =
+        String(dataValor)
+            .slice(0, 10)
+            .split("-")
+            .map(Number);
+
+    if (
+        partes.length !== 3
+        || partes.some(
+            (parte) => !Number.isFinite(parte)
+        )
+    ) {
+        return null;
+    }
+
+    const [ano, mes, dia] = partes;
+
+    const dataUTC =
+        Date.UTC(
+            ano,
+            mes - 1,
+            dia
+        );
+
+    const agora = new Date();
+
+    const hojeUTC =
+        Date.UTC(
+            agora.getFullYear(),
+            agora.getMonth(),
+            agora.getDate()
+        );
+
+    const diferenca =
+        Math.floor(
+            (hojeUTC - dataUTC)
+            / 86400000
+        );
+
+    return Math.max(
+        diferenca,
+        0
+    );
+}
+
+
+function classificarClienteCRM(cliente) {
+    const totalAgendamentos =
+        Number(
+            cliente?.total_agendamentos
+            || 0
+        );
+
+    const possuiProximoAgendamento =
+        Boolean(
+            cliente?.proximo_agendamento
+        );
+
+    const diasDesdeUltimaVisita =
+        calcularDiasDesdeDataCRM(
+            cliente?.ultima_visita
+        );
+
+    if (
+        !possuiProximoAgendamento
+        && diasDesdeUltimaVisita !== null
+        && diasDesdeUltimaVisita > 60
+    ) {
+        return {
+            codigo: "inativo",
+            rotulo: "Inativo",
+            descricao:
+                `Sem pr\u00f3ximo agendamento e `
+                + `sem visita h\u00e1 `
+                + `${diasDesdeUltimaVisita} dias.`,
+        };
+    }
+
+    if (
+        !possuiProximoAgendamento
+        && diasDesdeUltimaVisita !== null
+        && diasDesdeUltimaVisita > 30
+    ) {
+        return {
+            codigo: "risco",
+            rotulo: "Em risco",
+            descricao:
+                `Sem pr\u00f3ximo agendamento e `
+                + `sem visita h\u00e1 `
+                + `${diasDesdeUltimaVisita} dias.`,
+        };
+    }
+
+    if (totalAgendamentos >= 2) {
+        return {
+            codigo: "recorrente",
+            rotulo: "Recorrente",
+            descricao:
+                `${totalAgendamentos} agendamentos `
+                + "registrados.",
+        };
+    }
+
+    return {
+        codigo: "novo",
+        rotulo: "Novo",
+        descricao:
+            "Cliente em fase inicial de relacionamento.",
+    };
+}
+
+
+function montarMensagemWhatsAppClienteCRM(
+    nomeCliente,
+    tipo = "conversa"
+) {
+    const nome =
+        String(nomeCliente || "").trim()
+        || "cliente";
+
+    const nomeEmpresa =
+        configuracoesAdminCache?.nome_publico
+        || configuracoesAdminCache?.nome_empresa
+        || tenantSlugLogado
+        || "nossa empresa";
+
+    if (
+        tipo === "reativacao_risco"
+        || tipo === "reativacao_inativo"
+    ) {
+        const linkAgenda =
+            obterUrlPublicaTenantAdmin();
+
+        if (tipo === "reativacao_inativo") {
+            return (
+                `Ol\u00e1, ${nome}! Aqui \u00e9 da ${nomeEmpresa}.\n\n`
+                + "Faz um tempinho que n\u00e3o vemos voc\u00ea "
+                + "por aqui e gostar\u00edamos de receber voc\u00ea "
+                + "novamente.\n\n"
+                + "Quando quiser voltar, voc\u00ea pode consultar "
+                + "os hor\u00e1rios dispon\u00edveis e escolher "
+                + "o melhor pelo link:\n"
+                + `${linkAgenda}\n\n`
+                + "Se preferir, podemos ajudar com o "
+                + "agendamento por aqui."
+            );
+        }
+
+        return (
+            `Ol\u00e1, ${nome}! Aqui \u00e9 da ${nomeEmpresa}.\n\n`
+            + "Passando para saber se podemos ajudar com "
+            + "seu pr\u00f3ximo agendamento.\n\n"
+            + "Voc\u00ea pode consultar os hor\u00e1rios "
+            + "dispon\u00edveis pelo link:\n"
+            + `${linkAgenda}\n\n`
+            + "Se preferir, podemos encontrar um "
+            + "hor\u00e1rio para voc\u00ea por aqui."
+        );
+    }
+
+    if (tipo === "agendamento") {
+        const linkAgenda =
+            obterUrlPublicaTenantAdmin();
+
+        return (
+            `Ol\u00e1, ${nome}! Aqui \u00e9 da ${nomeEmpresa}.\n\n`
+            + "Queremos facilitar seu pr\u00f3ximo agendamento.\n\n"
+            + "Voc\u00ea pode consultar os hor\u00e1rios "
+            + "dispon\u00edveis e escolher o melhor pelo link:\n"
+            + `${linkAgenda}\n\n`
+            + "Se preferir, tamb\u00e9m podemos ajudar por aqui."
+        );
+    }
+
+    return (
+        `Ol\u00e1, ${nome}! Aqui \u00e9 da ${nomeEmpresa}.`
+    );
+}
+
+
+function normalizarDataHoraUTCClienteCRM(
+    dataHora
+) {
+    const valor =
+        String(dataHora || "").trim();
+
+    if (!valor) {
+        return "";
+    }
+
+    if (
+        valor.endsWith("Z")
+        || /[+-]\d{2}:\d{2}$/.test(valor)
+    ) {
+        return valor;
+    }
+
+    return `${valor}Z`;
+}
+
+
+function formatarUltimaInteracaoCRM(
+    dataHora
+) {
+    const valor =
+        normalizarDataHoraUTCClienteCRM(
+            dataHora
+        );
+
+    if (!valor) {
+        return "-";
+    }
+
+    const data = new Date(valor);
+
+    if (Number.isNaN(data.getTime())) {
+        return String(dataHora || "-");
+    }
+
+    const agora = new Date();
+
+    const inicioHoje = new Date(
+        agora.getFullYear(),
+        agora.getMonth(),
+        agora.getDate()
+    );
+
+    const inicioData = new Date(
+        data.getFullYear(),
+        data.getMonth(),
+        data.getDate()
+    );
+
+    const diferencaDias =
+        Math.round(
+            (
+                inicioHoje.getTime()
+                - inicioData.getTime()
+            )
+            / 86400000
+        );
+
+    const horario =
+        data.toLocaleTimeString(
+            "pt-BR",
+            {
+                hour: "2-digit",
+                minute: "2-digit",
+            }
+        );
+
+    if (diferencaDias === 0) {
+        return `hoje \u00e0s ${horario}`;
+    }
+
+    if (diferencaDias === 1) {
+        return `ontem \u00e0s ${horario}`;
+    }
+
+    return data.toLocaleString(
+        "pt-BR",
+        {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        }
+    );
+}
+
+
+function montarResumoUltimaInteracaoCRM(
+    cliente
+) {
+    const interacao =
+        cliente?.ultima_interacao_crm;
+
+    if (!interacao?.criado_em) {
+        return "";
+    }
+
+    const quando =
+        formatarUltimaInteracaoCRM(
+            interacao.criado_em
+        );
+
+    const usuario =
+        String(
+            interacao.usuario_nome || ""
+        ).trim();
+
+    const titulo =
+        usuario
+            ? `Reativa\u00e7\u00e3o registrada por ${usuario}`
+            : "Reativa\u00e7\u00e3o registrada no CRM";
+
+    return `
+        <span
+            class="cliente-detalhe-crm crm-ultima-interacao"
+            title="${escaparHtmlAdmin(titulo)}"
+        >
+            \u00daltima reativa\u00e7\u00e3o:
+            ${escaparHtmlAdmin(quando)}
+        </span>
+    `;
+}
+
+
+async function registrarInteracaoReativacaoClienteCRM(
+    telefone,
+    nomeCliente,
+    tipo
+) {
+    return apiRequest(
+        `/api/${tenantSlugLogado}/admin/clientes/${encodeURIComponent(telefone)}/interacoes`,
+        {
+            method: "POST",
+            auth: true,
+            body: {
+                tipo,
+                cliente_nome:
+                    nomeCliente || null,
+            },
+        }
+    );
+}
+
+
+async function abrirWhatsAppClienteCRM(
+    telefoneCodificado,
+    nomeCodificado,
+    tipo = "conversa"
+) {
+    const telefoneOriginal =
+        decodeURIComponent(
+            String(
+                telefoneCodificado || ""
+            )
+        );
+
+    const nomeCliente =
+        decodeURIComponent(
+            String(
+                nomeCodificado || ""
+            )
+        );
+
+    const telefone =
+        normalizarTelefoneWhatsApp(
+            telefoneOriginal
+        );
+
+    if (!telefone) {
+        exibirMensagemAdmin(
+            "Este cliente n\u00e3o possui telefone v\u00e1lido."
+        );
+
+        return;
+    }
+
+    const mensagem =
+        montarMensagemWhatsAppClienteCRM(
+            nomeCliente,
+            tipo
+        );
+
+    const url =
+        `https://wa.me/${telefone}`
+        + `?text=${encodeURIComponent(mensagem)}`;
+
+    window.open(
+        url,
+        "_blank",
+        "noopener,noreferrer"
+    );
+
+    const ehReativacao =
+        tipo === "reativacao_risco"
+        || tipo === "reativacao_inativo";
+
+    if (!ehReativacao) {
+        return;
+    }
+
+    try {
+        await registrarInteracaoReativacaoClienteCRM(
+            telefoneOriginal,
+            nomeCliente,
+            tipo
+        );
+
+        exibirMensagemAdmin(
+            "Reativa\u00e7\u00e3o registrada no CRM."
+        );
+
+        const buscaAtual =
+            document.getElementById(
+                "busca-clientes-crm"
+            )?.value || "";
+
+        await carregarClientesCRM(
+            buscaAtual
+        );
+
+    } catch (erro) {
+        console.error(
+            "Falha ao registrar reativa\u00e7\u00e3o CRM:",
+            erro
+        );
+
+        exibirMensagemAdmin(
+            "O WhatsApp foi aberto, mas n\u00e3o foi poss\u00edvel registrar a reativa\u00e7\u00e3o no CRM.",
+            "erro"
+        );
+    }
+}
+
+
+window.abrirWhatsAppClienteCRM =
+    abrirWhatsAppClienteCRM;
+
+
+const DIAS_COOLDOWN_REATIVACAO_CRM = 7;
+
+
+function calcularDiasDesdeUltimaInteracaoCRM(
+    cliente
+) {
+    const criadoEm =
+        cliente?.ultima_interacao_crm?.criado_em;
+
+    if (!criadoEm) {
+        return null;
+    }
+
+    const valor =
+        normalizarDataHoraUTCClienteCRM(
+            criadoEm
+        );
+
+    if (!valor) {
+        return null;
+    }
+
+    const data = new Date(valor);
+
+    if (Number.isNaN(data.getTime())) {
+        return null;
+    }
+
+    const agora = new Date();
+
+    const inicioHoje = new Date(
+        agora.getFullYear(),
+        agora.getMonth(),
+        agora.getDate()
+    );
+
+    const inicioInteracao = new Date(
+        data.getFullYear(),
+        data.getMonth(),
+        data.getDate()
+    );
+
+    return Math.max(
+        0,
+        Math.floor(
+            (
+                inicioHoje.getTime()
+                - inicioInteracao.getTime()
+            )
+            / 86400000
+        )
+    );
+}
+
+
+function obterEstadoCooldownReativacaoCRM(
+    cliente
+) {
+    const dias =
+        calcularDiasDesdeUltimaInteracaoCRM(
+            cliente
+        );
+
+    if (
+        dias === null
+        || dias >= DIAS_COOLDOWN_REATIVACAO_CRM
+    ) {
+        return {
+            ativo: false,
+            dias,
+            texto: "",
+            titulo: "",
+        };
+    }
+
+    if (dias === 0) {
+        return {
+            ativo: true,
+            dias,
+            texto: "Reativado hoje",
+            titulo:
+                "Este cliente ja teve uma reativacao registrada hoje.",
+        };
+    }
+
+    if (dias === 1) {
+        return {
+            ativo: true,
+            dias,
+            texto: "Reativado ontem",
+            titulo:
+                "Este cliente teve uma reativacao registrada ontem.",
+        };
+    }
+
+    return {
+        ativo: true,
+        dias,
+        texto: `Reativado ha ${dias} dias`,
+        titulo:
+            `Este cliente teve uma reativacao registrada ha ${dias} dias.`,
+    };
+}
+
+
+function usuarioAdminPodeRegistrarInteracaoCRM() {
+    return (
+        usuarioAdminEhGestor()
+        || (
+            usuarioAdminTemPermissao
+            && usuarioAdminTemPermissao(
+                "editar_cliente"
+            )
+        )
+    );
+}
+
+
+function montarAcaoReativacaoClienteCRM(
+    cliente
+) {
+    if (!usuarioAdminPodeRegistrarInteracaoCRM()) {
+        return "";
+    }
+
+    const segmentacao =
+        classificarClienteCRM(cliente);
+
+    if (
+        !["risco", "inativo"].includes(
+            segmentacao.codigo
+        )
+    ) {
+        return "";
+    }
+
+    const cooldown =
+        obterEstadoCooldownReativacaoCRM(
+            cliente
+        );
+
+    if (cooldown.ativo) {
+        return `
+            <button
+                type="button"
+                class="btn-mini-crm crm-acao-reativar crm-acao-reativar-cooldown"
+                title="${escaparHtmlAdmin(cooldown.titulo)}"
+                disabled
+                aria-disabled="true"
+            >
+                ${escaparHtmlAdmin(cooldown.texto)}
+            </button>
+        `;
+    }
+
+    const tipoMensagem =
+        segmentacao.codigo === "inativo"
+            ? "reativacao_inativo"
+            : "reativacao_risco";
+
+    const telefone =
+        encodeURIComponent(
+            cliente?.telefone || ""
+        );
+
+    const nome =
+        encodeURIComponent(
+            cliente?.nome || "Cliente"
+        );
+
+    const titulo =
+        segmentacao.codigo === "inativo"
+            ? "Reativar cliente inativo"
+            : "Reativar cliente em risco";
+
+    return `
+        <button
+            type="button"
+            class="btn-mini-crm crm-acao-reativar"
+            title="${titulo}"
+            onclick="abrirWhatsAppClienteCRM(
+                '${telefone}',
+                '${nome}',
+                '${tipoMensagem}'
+            )"
+        >
+            Reativar
+        </button>
+    `;
+}
+
+
+let filtroSegmentoCRMAtivo = "todos";
+
+
+function atualizarEstadoBotoesFiltroSegmentoCRM() {
+    const botoes =
+        document.querySelectorAll(
+            "[data-filtro-segmento-crm]"
+        );
+
+    botoes.forEach((botao) => {
+        const filtro =
+            String(
+                botao.dataset.filtroSegmentoCrm
+                || ""
+            );
+
+        const ativo =
+            filtro === filtroSegmentoCRMAtivo;
+
+        botao.classList.toggle(
+            "ativo",
+            ativo
+        );
+
+        botao.setAttribute(
+            "aria-pressed",
+            ativo
+                ? "true"
+                : "false"
+        );
+    });
+}
+
+
+function atualizarResumoFiltroSegmentoCRM(
+    visiveis,
+    total
+) {
+    const resumo =
+        document.getElementById(
+            "crm-filtro-segmento-status"
+        );
+
+    if (!resumo) {
+        return;
+    }
+
+    if (
+        filtroSegmentoCRMAtivo
+        === "todos"
+    ) {
+        resumo.textContent =
+            `${total} cliente`
+            + `${total === 1 ? "" : "s"} exibido`
+            + `${total === 1 ? "" : "s"}.`;
+
+        return;
+    }
+
+    resumo.textContent =
+        `${visiveis} de ${total} cliente`
+        + `${total === 1 ? "" : "s"} `
+        + "neste segmento.";
+}
+
+
+function aplicarFiltroSegmentoCRM(
+    filtro = filtroSegmentoCRMAtivo
+) {
+    const tbody =
+        document.getElementById(
+            "lista-clientes-crm"
+        );
+
+    if (!tbody) {
+        return;
+    }
+
+    const filtroNormalizado =
+        String(
+            filtro || "todos"
+        )
+            .trim()
+            .toLowerCase();
+
+    const filtrosPermitidos =
+        new Set([
+            "todos",
+            "novo",
+            "recorrente",
+            "risco",
+            "inativo",
+        ]);
+
+    filtroSegmentoCRMAtivo =
+        filtrosPermitidos.has(
+            filtroNormalizado
+        )
+            ? filtroNormalizado
+            : "todos";
+
+    const linhas =
+        Array.from(
+            tbody.querySelectorAll(
+                "tr[data-segmento-crm]"
+            )
+        );
+
+    let visiveis = 0;
+
+    linhas.forEach((linha) => {
+        const segmento =
+            String(
+                linha.dataset.segmentoCrm
+                || ""
+            )
+                .trim()
+                .toLowerCase();
+
+        const mostrar =
+            filtroSegmentoCRMAtivo
+                === "todos"
+            || segmento
+                === filtroSegmentoCRMAtivo;
+
+        linha.hidden =
+            !mostrar;
+
+        if (mostrar) {
+            visiveis += 1;
+        }
+    });
+
+    atualizarEstadoBotoesFiltroSegmentoCRM();
+
+    atualizarResumoFiltroSegmentoCRM(
+        visiveis,
+        linhas.length
+    );
+}
+
+
+function selecionarFiltroSegmentoCRM(
+    filtro
+) {
+    aplicarFiltroSegmentoCRM(
+        filtro
+    );
+}
+
+
+function garantirFiltrosSegmentoCRM() {
+    const linhaBusca =
+        document.querySelector(
+            "#secao-clientes-crm "
+            + ".linha-filtros-crm"
+        );
+
+    if (!linhaBusca) {
+        return;
+    }
+
+    if (
+        document.getElementById(
+            "crm-filtros-segmento"
+        )
+    ) {
+        aplicarFiltroSegmentoCRM();
+
+        return;
+    }
+
+    const area =
+        document.createElement(
+            "div"
+        );
+
+    area.id =
+        "crm-filtros-segmento";
+
+    area.className =
+        "crm-filtros-segmento";
+
+    area.innerHTML = `
+        <div class="crm-filtros-segmento-botoes">
+            <button
+                type="button"
+                class="crm-filtro-segmento"
+                data-filtro-segmento-crm="todos"
+                onclick="selecionarFiltroSegmentoCRM('todos')"
+                aria-pressed="true"
+            >
+                Todos
+            </button>
+
+            <button
+                type="button"
+                class="crm-filtro-segmento"
+                data-filtro-segmento-crm="novo"
+                onclick="selecionarFiltroSegmentoCRM('novo')"
+                aria-pressed="false"
+            >
+                Novos
+            </button>
+
+            <button
+                type="button"
+                class="crm-filtro-segmento"
+                data-filtro-segmento-crm="recorrente"
+                onclick="selecionarFiltroSegmentoCRM('recorrente')"
+                aria-pressed="false"
+            >
+                Recorrentes
+            </button>
+
+            <button
+                type="button"
+                class="crm-filtro-segmento"
+                data-filtro-segmento-crm="risco"
+                onclick="selecionarFiltroSegmentoCRM('risco')"
+                aria-pressed="false"
+            >
+                Em risco
+            </button>
+
+            <button
+                type="button"
+                class="crm-filtro-segmento"
+                data-filtro-segmento-crm="inativo"
+                onclick="selecionarFiltroSegmentoCRM('inativo')"
+                aria-pressed="false"
+            >
+                Inativos
+            </button>
+        </div>
+
+        <small
+            id="crm-filtro-segmento-status"
+            class="crm-filtro-segmento-status"
+        >
+            Carregando clientes...
+        </small>
+    `;
+
+    linhaBusca.insertAdjacentElement(
+        "afterend",
+        area
+    );
+
+    aplicarFiltroSegmentoCRM();
+
+    console.info(
+        "Filtros operacionais do CRM inicializados."
+    );
+}
+
+
+function observarAtualizacoesSegmentoCRM() {
+    const tbody =
+        document.getElementById(
+            "lista-clientes-crm"
+        );
+
+    if (!tbody) {
+        return;
+    }
+
+    if (
+        tbody.dataset
+            .observerFiltroSegmentoCrm
+        === "ativo"
+    ) {
+        return;
+    }
+
+    tbody.dataset
+        .observerFiltroSegmentoCrm =
+        "ativo";
+
+    const observer =
+        new MutationObserver(
+            () => {
+                aplicarFiltroSegmentoCRM();
+            }
+        );
+
+    observer.observe(
+        tbody,
+        {
+            childList: true,
+        }
+    );
+}
+
+
+window.selecionarFiltroSegmentoCRM =
+    selecionarFiltroSegmentoCRM;
+
+
 function registrarListenersCRM() {
     if (listenersCRMRegistrados) {
         return;
     }
 
     listenersCRMRegistrados = true;
+
+    garantirFiltrosSegmentoCRM();
+    observarAtualizacoesSegmentoCRM();
 
     const inputBusca = document.getElementById("busca-clientes-crm");
     const botaoBuscar = document.getElementById("btn-buscar-clientes-crm");
@@ -7022,6 +8319,91 @@ function registrarListenersCRM() {
                 );
             }
         });
+    }
+}
+
+
+function atualizarPainelRetencaoCRM(
+    clientes
+) {
+    const lista =
+        Array.isArray(clientes)
+            ? clientes
+            : [];
+
+    let emRisco = 0;
+    let inativos = 0;
+    let emCooldown = 0;
+    let acaoAgora = 0;
+
+    const podeRegistrarReativacao =
+        usuarioAdminPodeRegistrarInteracaoCRM();
+
+    for (const cliente of lista) {
+        const segmentacao =
+            classificarClienteCRM(cliente);
+
+        const elegivelReativacao =
+            ["risco", "inativo"].includes(
+                segmentacao.codigo
+            );
+
+        if (segmentacao.codigo === "risco") {
+            emRisco += 1;
+        }
+
+        if (segmentacao.codigo === "inativo") {
+            inativos += 1;
+        }
+
+        if (!elegivelReativacao) {
+            continue;
+        }
+
+        const cooldown =
+            obterEstadoCooldownReativacaoCRM(
+                cliente
+            );
+
+        if (cooldown.ativo) {
+            emCooldown += 1;
+        } else if (
+            podeRegistrarReativacao
+        ) {
+            acaoAgora += 1;
+        }
+    }
+
+    const valores = {
+        "crm-retencao-risco": emRisco,
+        "crm-retencao-inativos": inativos,
+        "crm-retencao-cooldown": emCooldown,
+        "crm-retencao-acao-agora": acaoAgora,
+    };
+
+    for (
+        const [id, valor]
+        of Object.entries(valores)
+    ) {
+        const elemento =
+            document.getElementById(id);
+
+        if (elemento) {
+            elemento.textContent =
+                String(valor);
+        }
+    }
+
+    const painel =
+        document.getElementById(
+            "crm-painel-retencao"
+        );
+
+    if (painel) {
+        painel.dataset.possuiAcao =
+            acaoAgora > 0
+                ? "true"
+                : "false";
     }
 }
 
@@ -7069,6 +8451,10 @@ async function carregarClientesCRM(busca = "") {
         document.getElementById("visor-ticket-medio-crm").textContent =
             formatarMoeda(dados.ticket_medio_geral || 0);
 
+        atualizarPainelRetencaoCRM(
+            dados.clientes || []
+        );
+
         tbody.innerHTML = "";
 
         if (!dados.clientes || !dados.clientes.length) {
@@ -7086,16 +8472,35 @@ async function carregarClientesCRM(busca = "") {
         for (const cliente of dados.clientes) {
             const tr = document.createElement("tr");
 
+            const segmentacao =
+                classificarClienteCRM(
+                    cliente
+                );
+
+            tr.dataset.segmentoCrm =
+                segmentacao.codigo;
+
             tr.innerHTML = `
                 <td>
                     <span class="cliente-nome-crm">
                         ${cliente.nome || "Cliente"}
                     </span>
 
+                    <span
+                        class="crm-segmento-badge segmento-${segmentacao.codigo}"
+                        title="${segmentacao.descricao}"
+                    >
+                        ${segmentacao.rotulo}
+                    </span>
+
                     <span class="cliente-detalhe-crm">
                         Último serviço:
                         ${cliente.ultimo_servico || "-"}
                     </span>
+
+                    ${montarResumoUltimaInteracaoCRM(
+                        cliente
+                    )}
                 </td>
 
                 <td>${cliente.telefone || "-"}</td>
@@ -7108,13 +8513,35 @@ async function carregarClientesCRM(busca = "") {
                 <td>${formatarDataBR(cliente.ultima_visita)}</td>
                 <td>${formatarDataBR(cliente.proximo_agendamento)}</td>
                 <td>
-                    <button
-                        type="button"
-                        class="btn-mini-crm"
-                        onclick="abrirHistoricoCliente('${cliente.telefone}')"
-                    >
-                        Histórico
-                    </button>
+                    <div class="crm-acoes-cliente">
+                        <button
+                            type="button"
+                            class="btn-mini-crm"
+                            onclick="abrirWhatsAppClienteCRM('${encodeURIComponent(cliente.telefone || "")}', '${encodeURIComponent(cliente.nome || "Cliente")}', 'conversa')"
+                        >
+                            WhatsApp
+                        </button>
+
+                        <button
+                            type="button"
+                            class="btn-mini-crm crm-acao-link"
+                            onclick="abrirWhatsAppClienteCRM('${encodeURIComponent(cliente.telefone || "")}', '${encodeURIComponent(cliente.nome || "Cliente")}', 'agendamento')"
+                        >
+                            Enviar link
+                        </button>
+
+                        ${montarAcaoReativacaoClienteCRM(
+                            cliente
+                        )}
+
+                        <button
+                            type="button"
+                            class="btn-mini-crm"
+                            onclick="abrirHistoricoCliente('${cliente.telefone}')"
+                        >
+                            Hist\u00f3rico
+                        </button>
+                    </div>
                 </td>
             `;
 
@@ -8437,9 +9864,17 @@ function configurarMenuLateralRetratilAdmin() {
             const clicouAbrir =
                 btnAbrir.contains(event.target);
 
+            const clicouMenuPainel =
+                Boolean(
+                    event.target.closest(
+                        ".btn-menu-mobile"
+                    )
+                );
+
             if (
                 !clicouSidebar
                 && !clicouAbrir
+                && !clicouMenuPainel
             ) {
                 fecharSidebarAdmin();
             }
@@ -8452,6 +9887,23 @@ function configurarMenuLateralRetratilAdmin() {
 
     window.abrirSidebarAdmin =
         abrirSidebarAdmin;
+
+
+    /*
+     * Estado inicial responsivo:
+     *
+     * - desktop largo: sidebar aberta
+     * - tablet/mobile: sidebar fechada
+     *
+     * Depois da inicializacao, o usuario controla
+     * normalmente pelo botao "Menu do painel".
+     */
+
+    if (window.innerWidth <= 1100) {
+        fecharSidebarAdmin();
+    } else {
+        abrirSidebarAdmin();
+    }
 }
 
 
@@ -10394,4 +11846,3 @@ window.atualizarStatusFilaEsperaAdmin = atualizarStatusFilaEsperaAdmin;
 window.criarEstruturaFilaEsperaAdmin = criarEstruturaFilaEsperaAdmin;
 
 iniciarFilaEsperaAdminQuandoDisponivel();
-

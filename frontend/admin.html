@@ -111,7 +111,7 @@
         <button
             type="button"
             class="btn-menu-mobile"
-            onclick="alternarMenuAdmin()"
+            onclick="alternarMenuAdmin(event)"
         >
             ☰ Menu do painel
         </button>
@@ -1358,6 +1358,52 @@
                         <p>Ticket médio geral</p>
                         <strong id="visor-ticket-medio-crm">R$ 0,00</strong>
                         <small>Média dos serviços concluídos.</small>
+                    </div>
+                </div>
+
+                <div
+                    id="crm-painel-retencao"
+                    class="crm-painel-retencao"
+                    aria-label="Resumo operacional de reten??o"
+                >
+                    <div class="crm-retencao-card crm-retencao-risco">
+                        <span>Em risco</span>
+
+                        <strong id="crm-retencao-risco">0</strong>
+
+                        <small>
+                            Sem pr&oacute;ximo agendamento h&aacute; mais de 30 dias.
+                        </small>
+                    </div>
+
+                    <div class="crm-retencao-card crm-retencao-inativo">
+                        <span>Inativos</span>
+
+                        <strong id="crm-retencao-inativos">0</strong>
+
+                        <small>
+                            Sem pr&oacute;ximo agendamento h&aacute; mais de 60 dias.
+                        </small>
+                    </div>
+
+                    <div class="crm-retencao-card crm-retencao-cooldown">
+                        <span>Em cooldown</span>
+
+                        <strong id="crm-retencao-cooldown">0</strong>
+
+                        <small>
+                            Reativa&ccedil;&atilde;o registrada nos &uacute;ltimos 7 dias.
+                        </small>
+                    </div>
+
+                    <div class="crm-retencao-card crm-retencao-acao">
+                        <span>A&ccedil;&atilde;o agora</span>
+
+                        <strong id="crm-retencao-acao-agora">0</strong>
+
+                        <small>
+                            Clientes eleg&iacute;veis para reativa&ccedil;&atilde;o hoje.
+                        </small>
                     </div>
                 </div>
 

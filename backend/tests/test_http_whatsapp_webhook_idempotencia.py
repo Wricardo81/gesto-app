@@ -11,6 +11,8 @@ import models
 
 from routers import whatsapp_webhook_simulado_router
 
+from services import whatsapp_webhook_service
+
 
 @pytest.fixture()
 def ambiente_idempotencia():
@@ -266,6 +268,257 @@ def test_message_ids_diferentes_avancam_conversa(
     assert (
         dados["resposta"]["etapa"]
         == "aguardando_profissional"
+    )
+
+
+def test_evento_com_erro_antes_do_tenant_pode_ser_retentado(
+    ambiente_idempotencia,
+    monkeypatch,
+):
+    db = ambiente_idempotencia[
+        "db"
+    ]
+
+    client = ambiente_idempotencia[
+        "client"
+    ]
+
+    resolver_original = (
+        whatsapp_webhook_service
+        .whatsapp_canal_service
+        .resolver_tenant_por_phone_number_id
+    )
+
+    chamadas = {
+        "quantidade":
+            0,
+    }
+
+    def resolver_intermitente(
+        *args,
+        **kwargs,
+    ):
+        chamadas["quantidade"] += 1
+
+        if chamadas["quantidade"] == 1:
+            from fastapi import HTTPException
+
+            raise HTTPException(
+                status_code=503,
+                detail=
+                    "falha temporaria do tenant",
+            )
+
+        return resolver_original(
+            *args,
+            **kwargs,
+        )
+
+    monkeypatch.setattr(
+        whatsapp_webhook_service
+        .whatsapp_canal_service,
+        "resolver_tenant_por_phone_number_id",
+        resolver_intermitente,
+    )
+
+    primeira = enviar(
+        client,
+        message_id=
+            "msg-retry-seguro",
+        texto=
+            "oi",
+    )
+
+    assert (
+        primeira.status_code
+        == 503
+    )
+
+    evento = (
+        db.query(
+            models.EventoWhatsAppRecebido
+        )
+        .filter(
+            models.EventoWhatsAppRecebido
+            .message_id
+            == "msg-retry-seguro",
+        )
+        .one()
+    )
+
+    assert (
+        evento.status
+        == "erro"
+    )
+
+    assert (
+        evento.barbearia_slug
+        is None
+    )
+
+    segunda = enviar(
+        client,
+        message_id=
+            "msg-retry-seguro",
+        texto=
+            "oi",
+    )
+
+    assert (
+        segunda.status_code
+        == 200
+    )
+
+    dados = segunda.json()
+
+    assert (
+        dados["idempotente"]
+        is False
+    )
+
+    db.refresh(
+        evento
+    )
+
+    assert (
+        evento.status
+        == "processado"
+    )
+
+    assert (
+        evento.barbearia_slug
+        == "clinica-a"
+    )
+
+    assert (
+        evento.erro
+        is None
+    )
+
+    assert (
+        db.query(
+            models.EventoWhatsAppRecebido
+        )
+        .filter(
+            models.EventoWhatsAppRecebido
+            .message_id
+            == "msg-retry-seguro",
+        )
+        .count()
+        == 1
+    )
+
+
+def test_evento_com_erro_apos_tenant_continua_bloqueado(
+    ambiente_idempotencia,
+    monkeypatch,
+):
+    db = ambiente_idempotencia[
+        "db"
+    ]
+
+    client = ambiente_idempotencia[
+        "client"
+    ]
+
+    processar_original = (
+        whatsapp_webhook_service
+        .booking_whatsapp_service
+        .processar_mensagem_booking
+    )
+
+    chamadas = {
+        "quantidade":
+            0,
+    }
+
+    def processar_com_falha(
+        *args,
+        **kwargs,
+    ):
+        chamadas["quantidade"] += 1
+
+        if chamadas["quantidade"] == 1:
+            from fastapi import HTTPException
+
+            raise HTTPException(
+                status_code=503,
+                detail=
+                    "falha depois do tenant",
+            )
+
+        return processar_original(
+            *args,
+            **kwargs,
+        )
+
+    monkeypatch.setattr(
+        whatsapp_webhook_service
+        .booking_whatsapp_service,
+        "processar_mensagem_booking",
+        processar_com_falha,
+    )
+
+    primeira = enviar(
+        client,
+        message_id=
+            "msg-retry-incerto",
+        texto=
+            "oi",
+    )
+
+    assert (
+        primeira.status_code
+        == 503
+    )
+
+    evento = (
+        db.query(
+            models.EventoWhatsAppRecebido
+        )
+        .filter(
+            models.EventoWhatsAppRecebido
+            .message_id
+            == "msg-retry-incerto",
+        )
+        .one()
+    )
+
+    assert (
+        evento.status
+        == "erro"
+    )
+
+    assert (
+        evento.barbearia_slug
+        == "clinica-a"
+    )
+
+    segunda = enviar(
+        client,
+        message_id=
+            "msg-retry-incerto",
+        texto=
+            "oi",
+    )
+
+    assert (
+        segunda.status_code
+        == 409
+    )
+
+    db.refresh(
+        evento
+    )
+
+    assert (
+        evento.status
+        == "erro"
+    )
+
+    assert (
+        chamadas["quantidade"]
+        == 1
     )
 
 

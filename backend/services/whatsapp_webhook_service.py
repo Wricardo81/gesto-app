@@ -260,6 +260,51 @@ def criar_registro_evento(
 
     return registro
 
+def evento_erro_pode_ser_retentado(
+    evento: models.EventoWhatsAppRecebido,
+) -> bool:
+    if evento.status != "erro":
+        return False
+
+    # A ausencia de tenant indica que a falha
+    # ocorreu antes de o Booking Assistant
+    # ser chamado. Nesse ponto ainda nao ha
+    # efeito conversacional para duplicar.
+    return not bool(
+        str(
+            evento.barbearia_slug or ""
+        ).strip()
+    )
+
+
+def reabrir_evento_erro_seguro(
+    db: Session,
+    *,
+    evento: models.EventoWhatsAppRecebido,
+):
+    if not evento_erro_pode_ser_retentado(
+        evento
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Evento com erro nao pode "
+                "ser reprocessado com seguranca."
+            ),
+        )
+
+    evento.status = "processando"
+    evento.erro = None
+    evento.processado_em = None
+
+    db.commit()
+    db.refresh(
+        evento
+    )
+
+    return evento
+
+
 def processar_evento_whatsapp_generico(
     db: Session,
     *,
@@ -269,6 +314,8 @@ def processar_evento_whatsapp_generico(
     telefone_cliente: str,
     texto: str,
 ) -> dict:
+    registro = None
+
     evento_existente = buscar_evento_recebido(
         db=db,
         provedor=provedor,
@@ -299,26 +346,41 @@ def processar_evento_whatsapp_generico(
             )
 
         if evento_existente.status == "erro":
-            raise HTTPException(
-                status_code=409,
-                detail=(
-                    "Este evento ja foi recebido "
-                    "e terminou com erro."
-                ),
-            )
+            if evento_erro_pode_ser_retentado(
+                evento_existente
+            ):
+                registro = (
+                    reabrir_evento_erro_seguro(
+                        db=db,
+                        evento=
+                            evento_existente,
+                    )
+                )
 
-    evento_model = EventoWhatsAppSimulado(
-        message_id=message_id,
-        phone_number_id=phone_number_id,
-        telefone_cliente=telefone_cliente,
-        texto=texto,
-    )
+            else:
+                raise HTTPException(
+                    status_code=409,
+                    detail=(
+                        "Este evento ja foi "
+                        "recebido e terminou "
+                        "com erro apos entrar "
+                        "no fluxo de negocio."
+                    ),
+                )
 
-    registro = criar_registro_evento(
-        db=db,
-        provedor=provedor,
-        evento=evento_model,
-    )
+    if registro is None:
+        evento_model = EventoWhatsAppSimulado(
+            message_id=message_id,
+            phone_number_id=phone_number_id,
+            telefone_cliente=telefone_cliente,
+            texto=texto,
+        )
+
+        registro = criar_registro_evento(
+            db=db,
+            provedor=provedor,
+            evento=evento_model,
+        )
 
     if registro is None:
         concorrente = buscar_evento_recebido(

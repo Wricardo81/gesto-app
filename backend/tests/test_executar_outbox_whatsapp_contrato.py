@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 import importlib.util
 import json
 from pathlib import Path
@@ -254,6 +255,119 @@ def test_main_http_exception_retorna_fatal_exit_2(
             "status_code"
         ]
         == 503
+    )
+
+
+def test_metadados_operacionais_preservam_resultado(
+    monkeypatch,
+):
+    executor = carregar_executor()
+
+    monkeypatch.setattr(
+        executor,
+        "perf_counter",
+        lambda: 10.125,
+    )
+
+    momento = datetime(
+        2026,
+        9,
+        28,
+        12,
+        30,
+        0,
+        tzinfo=UTC,
+    )
+
+    resultado = (
+        executor
+        .adicionar_metadados_operacionais(
+            {
+                "executor":
+                    "whatsapp_outbox",
+
+                "status_operacional":
+                    "healthy",
+
+                "selecionadas":
+                    2,
+            },
+            inicio_monotonic=10.0,
+            execucao_id=
+                "execucao-teste-001",
+            executado_em=momento,
+        )
+    )
+
+    assert (
+        resultado["executor"]
+        == "whatsapp_outbox"
+    )
+
+    assert (
+        resultado["status_operacional"]
+        == "healthy"
+    )
+
+    assert (
+        resultado["selecionadas"]
+        == 2
+    )
+
+    assert (
+        resultado["execucao_id"]
+        == "execucao-teste-001"
+    )
+
+    assert (
+        resultado["executado_em_utc"]
+        == "2026-09-28T12:30:00+00:00"
+    )
+
+    assert (
+        resultado["duracao_ms"]
+        == 125.0
+    )
+
+
+def test_metadados_operacionais_nao_aceitam_duracao_negativa(
+    monkeypatch,
+):
+    executor = carregar_executor()
+
+    monkeypatch.setattr(
+        executor,
+        "perf_counter",
+        lambda: 9.0,
+    )
+
+    resultado = (
+        executor
+        .adicionar_metadados_operacionais(
+            {
+                "status_operacional":
+                    "fatal",
+            },
+            inicio_monotonic=10.0,
+            execucao_id=
+                "execucao-teste-002",
+            executado_em=datetime(
+                2026,
+                9,
+                28,
+                tzinfo=UTC,
+            ),
+        )
+    )
+
+    assert (
+        resultado["duracao_ms"]
+        == 0.0
+    )
+
+    assert (
+        resultado["execucao_id"]
+        == "execucao-teste-002"
     )
 
 

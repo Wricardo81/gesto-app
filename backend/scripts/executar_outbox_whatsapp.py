@@ -1,7 +1,10 @@
 import argparse
 import json
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
+from time import perf_counter
+from uuid import uuid4
 
 
 from fastapi import HTTPException
@@ -186,6 +189,50 @@ def montar_resultado_fatal(
     }
 
 
+def adicionar_metadados_operacionais(
+    dados: dict,
+    *,
+    inicio_monotonic: float,
+    execucao_id: str,
+    executado_em=None,
+) -> dict:
+    fim_monotonic = perf_counter()
+
+    duracao_ms = max(
+        0.0,
+        (
+            fim_monotonic
+            - inicio_monotonic
+        )
+        * 1000,
+    )
+
+    momento = (
+        executado_em
+        or datetime.now(
+            UTC
+        )
+    )
+
+    return {
+        **dados,
+
+        "execucao_id":
+            str(
+                execucao_id
+            ),
+
+        "executado_em_utc":
+            momento.isoformat(),
+
+        "duracao_ms":
+            round(
+                duracao_ms,
+                3,
+            ),
+    }
+
+
 def imprimir_json(
     dados: dict,
     *,
@@ -228,6 +275,12 @@ def main(
         argv
     )
 
+    inicio_monotonic = perf_counter()
+
+    execucao_id = str(
+        uuid4()
+    )
+
     try:
         resultado = (
             executar_outbox_whatsapp(
@@ -240,12 +293,28 @@ def main(
             erro
         )
 
+        fatal = adicionar_metadados_operacionais(
+            fatal,
+            inicio_monotonic=
+                inicio_monotonic,
+            execucao_id=
+                execucao_id,
+        )
+
         imprimir_json(
             fatal,
             arquivo=sys.stderr,
         )
 
         return EXIT_FATAL
+
+    resultado = adicionar_metadados_operacionais(
+        resultado,
+        inicio_monotonic=
+            inicio_monotonic,
+        execucao_id=
+            execucao_id,
+    )
 
     imprimir_json(
         resultado

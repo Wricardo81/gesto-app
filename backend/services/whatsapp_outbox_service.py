@@ -16,6 +16,23 @@ STATUS_ENVIADA = "enviada"
 STATUS_ERRO = "erro"
 
 
+class FalhaPersistenciaPosEnvio(
+    RuntimeError
+):
+    def __init__(
+        self,
+        *,
+        provider_message_id: str,
+    ):
+        super().__init__(
+            "Falha ao persistir confirmacao de envio."
+        )
+
+        self.provider_message_id = str(
+            provider_message_id or ""
+        ).strip()
+
+
 def agora_utc_naive() -> datetime:
     return datetime.now(
         UTC
@@ -766,15 +783,28 @@ def tentar_entregar_mensagem_outbox(
 
         raise
 
-    marcar_mensagem_enviada(
-        db,
-        mensagem=mensagem,
-        provider_message_id=
-            resultado.get(
-                "provider_message_id",
-                "",
-            ),
+    provider_message_id = (
+        resultado.get(
+            "provider_message_id",
+            "",
+        )
     )
+
+    try:
+        marcar_mensagem_enviada(
+            db,
+            mensagem=mensagem,
+            provider_message_id=
+                provider_message_id,
+        )
+
+    except Exception as erro:
+        db.rollback()
+
+        raise FalhaPersistenciaPosEnvio(
+            provider_message_id=
+                provider_message_id,
+        ) from erro
 
     return resultado
 
@@ -815,6 +845,32 @@ def processar_lote_outbox(
                     "provider_message_id":
                         resultado.get(
                             "provider_message_id"
+                        ),
+                }
+            )
+
+        except FalhaPersistenciaPosEnvio as erro:
+            falhas.append(
+                {
+                    "outbox_id":
+                        mensagem.id,
+
+                    "status_code":
+                        500,
+
+                    "erro":
+                        (
+                            "Falha ao persistir "
+                            "confirmacao de envio."
+                        ),
+
+                    "entrega_incerta":
+                        True,
+
+                    "provider_message_id":
+                        (
+                            erro.provider_message_id
+                            or None
                         ),
                 }
             )

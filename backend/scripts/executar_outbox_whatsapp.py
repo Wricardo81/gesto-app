@@ -152,16 +152,12 @@ def montar_resultado_fatal(
         )
 
     else:
-        mensagem = str(
-            erro
-        ).strip()
+        mensagem = (
+            "Falha interna no executor "
+            "da outbox."
+        )
 
-        if not mensagem:
-            mensagem = (
-                type(
-                    erro
-                ).__name__
-            )
+        status_code = 500
 
     return {
         "executor":

@@ -309,5 +309,24 @@ def test_main_exception_generica_retorna_fatal_exit_2(
         dados[
             "erro"
         ]
-        == "banco indisponivel"
+        == (
+            "Falha interna no executor "
+            "da outbox."
+        )
+    )
+
+    assert (
+        dados[
+            "status_code"
+        ]
+        == 500
+    )
+
+    serializado = str(
+        dados
+    )
+
+    assert (
+        "banco indisponivel"
+        not in serializado
     )

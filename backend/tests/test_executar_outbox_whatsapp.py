@@ -350,6 +350,142 @@ def test_executor_rollback_em_excecao(
     assert estado["close"] is True
 
 
+def test_resultado_fatal_nao_vaza_detalhe_interno():
+    executor = carregar_executor()
+
+    erro = RuntimeError(
+        "postgresql://usuario:senha@host/banco"
+    )
+
+    resultado = (
+        executor
+        .montar_resultado_fatal(
+            erro
+        )
+    )
+
+    assert (
+        resultado["status_operacional"]
+        == executor.STATUS_FATAL
+    )
+
+    assert (
+        resultado["status_code"]
+        == 500
+    )
+
+    assert (
+        resultado["erro_tipo"]
+        == "RuntimeError"
+    )
+
+    assert (
+        resultado["erro"]
+        == (
+            "Falha interna no executor "
+            "da outbox."
+        )
+    )
+
+    serializado = str(
+        resultado
+    )
+
+    assert "usuario" not in serializado
+    assert "senha" not in serializado
+    assert "host" not in serializado
+    assert "banco" not in serializado
+
+
+def test_executor_rollback_em_falha_estrutural(
+    ambiente_executor,
+    monkeypatch,
+):
+    executor = carregar_executor()
+
+    estado = {
+        "rollback": False,
+        "close": False,
+    }
+
+    sessao_real = (
+        ambiente_executor()
+    )
+
+    rollback_original = (
+        sessao_real.rollback
+    )
+
+    close_original = (
+        sessao_real.close
+    )
+
+    def rollback_spy():
+        estado["rollback"] = True
+
+        return rollback_original()
+
+    def close_spy():
+        estado["close"] = True
+
+        return close_original()
+
+    sessao_real.rollback = (
+        rollback_spy
+    )
+
+    sessao_real.close = (
+        close_spy
+    )
+
+    def factory():
+        return sessao_real
+
+    def falha_estrutural(
+        db,
+        *,
+        transporte,
+        limite,
+    ):
+        raise RuntimeError(
+            "falha estrutural simulada"
+        )
+
+    monkeypatch.setattr(
+        executor.whatsapp_outbox_service,
+        "processar_lote_outbox",
+        falha_estrutural,
+    )
+
+    transporte = (
+        whatsapp_outbound_service
+        .TransporteFakeWhatsApp()
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="falha estrutural simulada",
+    ):
+        (
+            executor
+            .executar_outbox_whatsapp(
+                limite=1,
+                session_factory=factory,
+                transporte=transporte,
+            )
+        )
+
+    assert (
+        estado["rollback"]
+        is True
+    )
+
+    assert (
+        estado["close"]
+        is True
+    )
+
+
 def test_factory_configurada_default_fake(
     monkeypatch,
 ):

@@ -236,6 +236,141 @@ def test_data_valida_lista_horarios_reais(
     ]
 
 
+def test_data_sem_horarios_mantem_data_e_permite_tentar_outra(
+    ambiente_booking_disponibilidade,
+):
+    db = ambiente_booking_disponibilidade[
+        "db"
+    ]
+
+    data_sem_vaga = (
+        ambiente_booking_disponibilidade[
+            "data"
+        ]
+    )
+
+    data_com_vaga = (
+        data_sem_vaga
+        + timedelta(
+            days=1
+        )
+    )
+
+    db.add(
+        models.BloqueioAgenda(
+            barbearia_slug="tenant-a",
+            profissional="Ana",
+            data=data_sem_vaga,
+            dia_inteiro=True,
+            motivo="Agenda bloqueada",
+        )
+    )
+
+    db.commit()
+
+    preparar_ate_profissional(
+        db
+    )
+
+    (
+        booking_whatsapp_service
+        .processar_mensagem_booking(
+            db=db,
+            tenant_slug="tenant-a",
+            telefone_cliente=
+                "81999999999",
+            mensagem="Ana",
+        )
+    )
+
+    resposta_sem_vaga = (
+        booking_whatsapp_service
+        .processar_mensagem_booking(
+            db=db,
+            tenant_slug="tenant-a",
+            telefone_cliente=
+                "81999999999",
+            mensagem=
+                data_sem_vaga.strftime(
+                    "%d/%m/%Y"
+                ),
+        )
+    )
+
+    assert (
+        resposta_sem_vaga[
+            "etapa"
+        ]
+        == "aguardando_data"
+    )
+
+    assert (
+        resposta_sem_vaga[
+            "sessao"
+        ][
+            "data"
+        ]
+        == data_sem_vaga.isoformat()
+    )
+
+    assert (
+        resposta_sem_vaga[
+            "opcoes"
+        ]
+        == []
+    )
+
+    assert (
+        "outra data"
+        in resposta_sem_vaga[
+            "mensagem"
+        ]
+    )
+
+    resposta_nova_data = (
+        booking_whatsapp_service
+        .processar_mensagem_booking(
+            db=db,
+            tenant_slug="tenant-a",
+            telefone_cliente=
+                "81999999999",
+            mensagem=
+                data_com_vaga.strftime(
+                    "%d/%m/%Y"
+                ),
+        )
+    )
+
+    assert (
+        resposta_nova_data[
+            "etapa"
+        ]
+        == "aguardando_horario"
+    )
+
+    assert (
+        resposta_nova_data[
+            "sessao"
+        ][
+            "data"
+        ]
+        == data_com_vaga.isoformat()
+    )
+
+    assert (
+        resposta_nova_data[
+            "opcoes"
+        ]
+    )
+
+    assert (
+        "1. 09:00"
+        in resposta_nova_data[
+            "opcoes"
+        ]
+    )
+
+
 def test_horario_ocupado_nao_aparece(
     ambiente_booking_disponibilidade,
 ):

@@ -923,7 +923,7 @@ def processar_data_booking(
     atualizar_sessao(
         db=db,
         sessao=sessao,
-        etapa="aguardando_horario",
+        etapa="aguardando_data",
         data_agendamento=data_escolhida,
     )
 
@@ -941,6 +941,12 @@ def processar_data_booking(
                 "Envie outra data."
             ),
         )
+
+    atualizar_sessao(
+        db=db,
+        sessao=sessao,
+        etapa="aguardando_horario",
+    )
 
     opcoes = [
         f"{indice}. {horario}"

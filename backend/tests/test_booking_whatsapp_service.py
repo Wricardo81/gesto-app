@@ -96,6 +96,202 @@ def test_reutiliza_mesma_sessao_enquanto_ativa(
     assert total == 1
 
 
+def test_criacao_sem_sessao_adquire_lock_e_reconsulta(
+    db_session,
+    monkeypatch,
+):
+    eventos = []
+
+    lock_original = (
+        booking_whatsapp_service
+        .bloquear_sessao_booking_cliente
+    )
+
+    busca_original = (
+        booking_whatsapp_service
+        .buscar_sessao_ativa_sem_expirar
+    )
+
+    def lock_spy(
+        db,
+        *,
+        tenant_slug,
+        telefone_cliente,
+    ):
+        eventos.append(
+            "lock"
+        )
+
+        return lock_original(
+            db=db,
+            tenant_slug=tenant_slug,
+            telefone_cliente=
+                telefone_cliente,
+        )
+
+    def busca_spy(
+        db,
+        *,
+        tenant_slug,
+        telefone_cliente,
+    ):
+        eventos.append(
+            "reconsulta"
+        )
+
+        return busca_original(
+            db=db,
+            tenant_slug=tenant_slug,
+            telefone_cliente=
+                telefone_cliente,
+        )
+
+    monkeypatch.setattr(
+        booking_whatsapp_service,
+        "bloquear_sessao_booking_cliente",
+        lock_spy,
+    )
+
+    monkeypatch.setattr(
+        booking_whatsapp_service,
+        "buscar_sessao_ativa_sem_expirar",
+        busca_spy,
+    )
+
+    sessao = (
+        booking_whatsapp_service
+        .criar_ou_obter_sessao(
+            db=db_session,
+            tenant_slug="tenant-a",
+            telefone_cliente=
+                "81999999999",
+        )
+    )
+
+    assert (
+        sessao.status
+        == "ativa"
+    )
+
+    assert eventos == [
+        "lock",
+        "reconsulta",
+    ]
+
+
+def test_reconsulta_apos_lock_reutiliza_sessao_concorrente(
+    db_session,
+    monkeypatch,
+):
+    agora = (
+        booking_whatsapp_service
+        .agora_utc_naive()
+    )
+
+    concorrente = (
+        models.SessaoBookingWhatsApp(
+            barbearia_slug=
+                "tenant-a",
+            telefone_cliente=
+                "81999999999",
+            status=
+                "ativa",
+            etapa=
+                "aguardando_servico",
+            canal=
+                "whatsapp",
+            criado_em=
+                agora,
+            atualizado_em=
+                agora,
+            expira_em=(
+                agora
+                + timedelta(
+                    minutes=30
+                )
+            ),
+        )
+    )
+
+    chamadas = {
+        "obter":
+            0,
+    }
+
+    def obter_primeira_vez_none(
+        *args,
+        **kwargs,
+    ):
+        chamadas["obter"] += 1
+
+        return None
+
+    def lock_simulado(
+        db,
+        *,
+        tenant_slug,
+        telefone_cliente,
+    ):
+        db.add(
+            concorrente
+        )
+
+        db.commit()
+
+    monkeypatch.setattr(
+        booking_whatsapp_service,
+        "obter_sessao_ativa",
+        obter_primeira_vez_none,
+    )
+
+    monkeypatch.setattr(
+        booking_whatsapp_service,
+        "bloquear_sessao_booking_cliente",
+        lock_simulado,
+    )
+
+    sessao = (
+        booking_whatsapp_service
+        .criar_ou_obter_sessao(
+            db=db_session,
+            tenant_slug="tenant-a",
+            telefone_cliente=
+                "81999999999",
+        )
+    )
+
+    assert (
+        sessao.id
+        == concorrente.id
+    )
+
+    assert (
+        sessao.etapa
+        == "aguardando_servico"
+    )
+
+    assert (
+        db_session.query(
+            models.SessaoBookingWhatsApp
+        )
+        .filter(
+            models.SessaoBookingWhatsApp
+            .barbearia_slug
+            == "tenant-a",
+
+            models.SessaoBookingWhatsApp
+            .telefone_cliente
+            == "81999999999",
+
+            models.SessaoBookingWhatsApp
+            .status
+            == "ativa",
+        )
+        .count()
+        == 1
+    )
+
+
 def test_sessao_expirada_e_substituida_por_nova(
     db_session,
 ):

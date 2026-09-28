@@ -1,7 +1,10 @@
 import argparse
 import json
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
+from time import perf_counter
+from uuid import uuid4
 
 
 from fastapi import HTTPException
@@ -35,6 +38,28 @@ STATUS_FATAL = "fatal"
 
 EXIT_OK = 0
 EXIT_FATAL = 2
+
+
+def validar_modo_transporte_executor(
+    *,
+    permitir_meta: bool = False,
+) -> str:
+    modo = str(
+        settings.whatsapp_transport_mode
+        or ""
+    ).strip().lower()
+
+    if modo == "meta" and not permitir_meta:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Transporte Meta bloqueado no executor. "
+                "Use --permitir-meta somente apos "
+                "ativacao operacional explicita."
+            ),
+        )
+
+    return modo
 
 
 def criar_transporte_configurado():
@@ -152,16 +177,12 @@ def montar_resultado_fatal(
         )
 
     else:
-        mensagem = str(
-            erro
-        ).strip()
+        mensagem = (
+            "Falha interna no executor "
+            "da outbox."
+        )
 
-        if not mensagem:
-            mensagem = (
-                type(
-                    erro
-                ).__name__
-            )
+        status_code = 500
 
     return {
         "executor":
@@ -187,6 +208,50 @@ def montar_resultado_fatal(
 
         "erro":
             mensagem,
+    }
+
+
+def adicionar_metadados_operacionais(
+    dados: dict,
+    *,
+    inicio_monotonic: float,
+    execucao_id: str,
+    executado_em=None,
+) -> dict:
+    fim_monotonic = perf_counter()
+
+    duracao_ms = max(
+        0.0,
+        (
+            fim_monotonic
+            - inicio_monotonic
+        )
+        * 1000,
+    )
+
+    momento = (
+        executado_em
+        or datetime.now(
+            UTC
+        )
+    )
+
+    return {
+        **dados,
+
+        "execucao_id":
+            str(
+                execucao_id
+            ),
+
+        "executado_em_utc":
+            momento.isoformat(),
+
+        "duracao_ms":
+            round(
+                duracao_ms,
+                3,
+            ),
     }
 
 
@@ -228,11 +293,31 @@ def main(
         ),
     )
 
+    parser.add_argument(
+        "--permitir-meta",
+        action="store_true",
+        help=(
+            "Permite explicitamente o transporte "
+            "Meta. Nao usar antes da ativacao real."
+        ),
+    )
+
     args = parser.parse_args(
         argv
     )
 
+    inicio_monotonic = perf_counter()
+
+    execucao_id = str(
+        uuid4()
+    )
+
     try:
+        validar_modo_transporte_executor(
+            permitir_meta=
+                args.permitir_meta,
+        )
+
         resultado = (
             executar_outbox_whatsapp(
                 limite=args.limite
@@ -244,12 +329,28 @@ def main(
             erro
         )
 
+        fatal = adicionar_metadados_operacionais(
+            fatal,
+            inicio_monotonic=
+                inicio_monotonic,
+            execucao_id=
+                execucao_id,
+        )
+
         imprimir_json(
             fatal,
             arquivo=sys.stderr,
         )
 
         return EXIT_FATAL
+
+    resultado = adicionar_metadados_operacionais(
+        resultado,
+        inicio_monotonic=
+            inicio_monotonic,
+        execucao_id=
+            execucao_id,
+    )
 
     imprimir_json(
         resultado

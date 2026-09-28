@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import pytest
 
 from fastapi import HTTPException
@@ -331,6 +333,256 @@ def test_lote_reprocessa_mensagem_com_erro(
 
     assert mensagem.status == "enviada"
     assert mensagem.tentativas == 2
+
+
+def test_falha_pos_provedor_e_classificada_como_incerta(
+    ambiente_processador_outbox,
+    monkeypatch,
+):
+    db = ambiente_processador_outbox
+
+    mensagem = criar(
+        db,
+        chave="msg-entrega-incerta",
+    )
+
+    transporte = (
+        whatsapp_outbound_service
+        .TransporteFakeWhatsApp()
+    )
+
+    def falhar_persistencia(
+        db,
+        *,
+        mensagem,
+        provider_message_id,
+    ):
+        mensagem.status = "enviada"
+
+        mensagem.provider_message_id = (
+            provider_message_id
+        )
+
+        raise RuntimeError(
+            "segredo-interno-do-banco"
+        )
+
+    monkeypatch.setattr(
+        whatsapp_outbox_service,
+        "marcar_mensagem_enviada",
+        falhar_persistencia,
+    )
+
+    resultado = (
+        whatsapp_outbox_service
+        .processar_lote_outbox(
+            db,
+            transporte=transporte,
+            limite=1,
+        )
+    )
+
+    db.refresh(
+        mensagem
+    )
+
+    assert (
+        resultado["selecionadas"]
+        == 1
+    )
+
+    assert (
+        resultado["enviadas"]
+        == 0
+    )
+
+    assert (
+        resultado["falhas"]
+        == 1
+    )
+
+    erro = (
+        resultado["erros"][0]
+    )
+
+    assert (
+        erro["entrega_incerta"]
+        is True
+    )
+
+    assert (
+        erro["provider_message_id"]
+        == "fake-1"
+    )
+
+    assert (
+        erro["erro"]
+        == (
+            "Falha ao persistir "
+            "confirmacao de envio."
+        )
+    )
+
+    assert (
+        "segredo-interno-do-banco"
+        not in str(
+            resultado
+        )
+    )
+
+    assert len(
+        transporte.envios
+    ) == 1
+
+    assert (
+        mensagem.status
+        == "processando"
+    )
+
+    assert (
+        mensagem.provider_message_id
+        is None
+    )
+
+    assert (
+        mensagem.tentativas
+        == 1
+    )
+
+
+def test_entrega_incerta_expirada_pode_reenviar_at_least_once(
+    ambiente_processador_outbox,
+    monkeypatch,
+):
+    db = ambiente_processador_outbox
+
+    mensagem = criar(
+        db,
+        chave="msg-at-least-once",
+    )
+
+    transporte = (
+        whatsapp_outbound_service
+        .TransporteFakeWhatsApp()
+    )
+
+    persistir_original = (
+        whatsapp_outbox_service
+        .marcar_mensagem_enviada
+    )
+
+    def falhar_persistencia(
+        db,
+        *,
+        mensagem,
+        provider_message_id,
+    ):
+        mensagem.status = "enviada"
+
+        mensagem.provider_message_id = (
+            provider_message_id
+        )
+
+        raise RuntimeError(
+            "falha depois do provedor"
+        )
+
+    monkeypatch.setattr(
+        whatsapp_outbox_service,
+        "marcar_mensagem_enviada",
+        falhar_persistencia,
+    )
+
+    primeiro = (
+        whatsapp_outbox_service
+        .processar_lote_outbox(
+            db,
+            transporte=transporte,
+            limite=1,
+        )
+    )
+
+    assert (
+        primeiro["falhas"]
+        == 1
+    )
+
+    assert (
+        primeiro["erros"][0][
+            "entrega_incerta"
+        ]
+        is True
+    )
+
+    assert len(
+        transporte.envios
+    ) == 1
+
+    db.refresh(
+        mensagem
+    )
+
+    assert (
+        mensagem.status
+        == "processando"
+    )
+
+    mensagem.processando_desde = (
+        whatsapp_outbox_service
+        .agora_utc_naive()
+        - timedelta(
+            seconds=(
+                whatsapp_outbox_service
+                .CLAIM_EXPIRA_SEGUNDOS
+                + 1
+            )
+        )
+    )
+
+    db.commit()
+
+    monkeypatch.setattr(
+        whatsapp_outbox_service,
+        "marcar_mensagem_enviada",
+        persistir_original,
+    )
+
+    segundo = (
+        whatsapp_outbox_service
+        .processar_lote_outbox(
+            db,
+            transporte=transporte,
+            limite=1,
+        )
+    )
+
+    db.refresh(
+        mensagem
+    )
+
+    assert (
+        segundo["enviadas"]
+        == 1
+    )
+
+    assert (
+        segundo["falhas"]
+        == 0
+    )
+
+    assert (
+        mensagem.status
+        == "enviada"
+    )
+
+    assert (
+        mensagem.tentativas
+        == 2
+    )
+
+    assert len(
+        transporte.envios
+    ) == 2
 
 
 def test_limite_e_respeitado(

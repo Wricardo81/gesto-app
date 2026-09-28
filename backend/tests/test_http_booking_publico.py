@@ -427,6 +427,232 @@ def test_agendamento_valido_persiste_com_codigo_publico(
         db.close()
 
 
+def test_criacao_adquire_lock_antes_da_disponibilidade(
+    ambiente_booking_publico,
+    monkeypatch,
+):
+    client = ambiente_booking_publico[
+        "client"
+    ]
+
+    data_alvo = ambiente_booking_publico[
+        "data"
+    ]
+
+    eventos = []
+
+    lock_original = (
+        agendamento_service
+        .agendamento_repository
+        .bloquear_agenda_profissional_dia
+    )
+
+    disponibilidade_original = (
+        agendamento_service
+        .obter_horarios_disponiveis
+    )
+
+    def lock_spy(
+        db,
+        *,
+        tenant_slug,
+        profissional_nome,
+        data_agendamento,
+    ):
+        eventos.append(
+            "lock"
+        )
+
+        return lock_original(
+            db=db,
+            tenant_slug=tenant_slug,
+            profissional_nome=
+                profissional_nome,
+            data_agendamento=
+                data_agendamento,
+        )
+
+    def disponibilidade_spy(
+        *args,
+        **kwargs,
+    ):
+        eventos.append(
+            "disponibilidade"
+        )
+
+        return disponibilidade_original(
+            *args,
+            **kwargs,
+        )
+
+    monkeypatch.setattr(
+        agendamento_service
+        .agendamento_repository,
+        "bloquear_agenda_profissional_dia",
+        lock_spy,
+    )
+
+    monkeypatch.setattr(
+        agendamento_service,
+        "obter_horarios_disponiveis",
+        disponibilidade_spy,
+    )
+
+    resposta = client.post(
+        "/api/tenant-booking/agendar",
+        json=payload_agendamento(
+            data_alvo,
+            "11:00",
+        ),
+    )
+
+    assert (
+        resposta.status_code
+        == 200
+    )
+
+    assert eventos[:2] == [
+        "lock",
+        "disponibilidade",
+    ]
+
+
+def test_disponibilidade_recusa_inicio_que_sobrepoe_servico_longo(
+    ambiente_booking_publico,
+):
+    client = ambiente_booking_publico[
+        "client"
+    ]
+
+    Session = ambiente_booking_publico[
+        "Session"
+    ]
+
+    data_alvo = ambiente_booking_publico[
+        "data"
+    ]
+
+    db = Session()
+
+    try:
+        servico_longo = (
+            models.ServicoBarbearia(
+                barbearia_slug=
+                    "tenant-booking",
+
+                nome=
+                    "Procedimento Longo",
+
+                preco=
+                    120,
+
+                duracao=
+                    60,
+            )
+        )
+
+        db.add(
+            servico_longo
+        )
+
+        db.flush()
+
+        profissional = (
+            db.query(
+                models.Profissional
+            )
+            .filter(
+                models.Profissional
+                .barbearia_slug
+                == "tenant-booking",
+
+                models.Profissional
+                .nome
+                == "Ana",
+            )
+            .first()
+        )
+
+        db.add(
+            models.ServicoProfissional(
+                barbearia_slug=
+                    "tenant-booking",
+
+                servico_id=
+                    servico_longo.id,
+
+                profissional_id=
+                    profissional.id,
+            )
+        )
+
+        db.add(
+            models.Agendamento(
+                barbearia_slug=
+                    "tenant-booking",
+
+                cliente_nome=
+                    "Cliente Longo",
+
+                servico=
+                    "Procedimento Longo",
+
+                profissional=
+                    "Ana",
+
+                data=
+                    data_alvo,
+
+                horario=
+                    "09:00",
+
+                valor=
+                    120,
+
+                telefone_cliente=
+                    "81988888888",
+
+                status=
+                    "confirmado",
+            )
+        )
+
+        db.commit()
+
+    finally:
+        db.close()
+
+    resposta = client.get(
+        url_horarios(
+            data_alvo
+        )
+    )
+
+    assert (
+        resposta.status_code
+        == 200
+    )
+
+    horarios = resposta.json()[
+        "horarios_disponiveis"
+    ]
+
+    assert (
+        "09:00"
+        not in horarios
+    )
+
+    assert (
+        "09:30"
+        not in horarios
+    )
+
+    assert (
+        "10:00"
+        in horarios
+    )
+
+
 def test_agendamento_recusa_horario_que_ficou_ocupado(
     ambiente_booking_publico,
 ):

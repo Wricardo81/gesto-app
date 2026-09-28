@@ -1,3 +1,6 @@
+from datetime import UTC, datetime
+
+import pytest
 import importlib.util
 import json
 from pathlib import Path
@@ -257,6 +260,195 @@ def test_main_http_exception_retorna_fatal_exit_2(
     )
 
 
+def test_executor_fake_nao_exige_opt_in(
+    monkeypatch,
+):
+    executor = carregar_executor()
+
+    monkeypatch.setattr(
+        executor.settings,
+        "whatsapp_transport_mode",
+        "fake",
+    )
+
+    modo = (
+        executor
+        .validar_modo_transporte_executor(
+            permitir_meta=False,
+        )
+    )
+
+    assert modo == "fake"
+
+
+def test_executor_meta_sem_opt_in_e_bloqueado(
+    monkeypatch,
+):
+    executor = carregar_executor()
+
+    monkeypatch.setattr(
+        executor.settings,
+        "whatsapp_transport_mode",
+        "meta",
+    )
+
+    with pytest.raises(
+        executor.HTTPException
+    ) as erro:
+        (
+            executor
+            .validar_modo_transporte_executor(
+                permitir_meta=False,
+            )
+        )
+
+    assert (
+        erro.value.status_code
+        == 503
+    )
+
+    assert (
+        "Meta bloqueado"
+        in str(
+            erro.value.detail
+        )
+    )
+
+
+def test_executor_meta_com_opt_in_expresso_e_permitido(
+    monkeypatch,
+):
+    executor = carregar_executor()
+
+    monkeypatch.setattr(
+        executor.settings,
+        "whatsapp_transport_mode",
+        "meta",
+    )
+
+    modo = (
+        executor
+        .validar_modo_transporte_executor(
+            permitir_meta=True,
+        )
+    )
+
+    assert modo == "meta"
+
+
+def test_metadados_operacionais_preservam_resultado(
+    monkeypatch,
+):
+    executor = carregar_executor()
+
+    monkeypatch.setattr(
+        executor,
+        "perf_counter",
+        lambda: 10.125,
+    )
+
+    momento = datetime(
+        2026,
+        9,
+        28,
+        12,
+        30,
+        0,
+        tzinfo=UTC,
+    )
+
+    resultado = (
+        executor
+        .adicionar_metadados_operacionais(
+            {
+                "executor":
+                    "whatsapp_outbox",
+
+                "status_operacional":
+                    "healthy",
+
+                "selecionadas":
+                    2,
+            },
+            inicio_monotonic=10.0,
+            execucao_id=
+                "execucao-teste-001",
+            executado_em=momento,
+        )
+    )
+
+    assert (
+        resultado["executor"]
+        == "whatsapp_outbox"
+    )
+
+    assert (
+        resultado["status_operacional"]
+        == "healthy"
+    )
+
+    assert (
+        resultado["selecionadas"]
+        == 2
+    )
+
+    assert (
+        resultado["execucao_id"]
+        == "execucao-teste-001"
+    )
+
+    assert (
+        resultado["executado_em_utc"]
+        == "2026-09-28T12:30:00+00:00"
+    )
+
+    assert (
+        resultado["duracao_ms"]
+        == 125.0
+    )
+
+
+def test_metadados_operacionais_nao_aceitam_duracao_negativa(
+    monkeypatch,
+):
+    executor = carregar_executor()
+
+    monkeypatch.setattr(
+        executor,
+        "perf_counter",
+        lambda: 9.0,
+    )
+
+    resultado = (
+        executor
+        .adicionar_metadados_operacionais(
+            {
+                "status_operacional":
+                    "fatal",
+            },
+            inicio_monotonic=10.0,
+            execucao_id=
+                "execucao-teste-002",
+            executado_em=datetime(
+                2026,
+                9,
+                28,
+                tzinfo=UTC,
+            ),
+        )
+    )
+
+    assert (
+        resultado["duracao_ms"]
+        == 0.0
+    )
+
+    assert (
+        resultado["execucao_id"]
+        == "execucao-teste-002"
+    )
+
+
 def test_main_exception_generica_retorna_fatal_exit_2(
     monkeypatch,
     capsys,
@@ -309,5 +501,24 @@ def test_main_exception_generica_retorna_fatal_exit_2(
         dados[
             "erro"
         ]
-        == "banco indisponivel"
+        == (
+            "Falha interna no executor "
+            "da outbox."
+        )
+    )
+
+    assert (
+        dados[
+            "status_code"
+        ]
+        == 500
+    )
+
+    serializado = str(
+        dados
+    )
+
+    assert (
+        "banco indisponivel"
+        not in serializado
     )

@@ -16,6 +16,23 @@ STATUS_ENVIADA = "enviada"
 STATUS_ERRO = "erro"
 
 
+class FalhaPersistenciaPosEnvio(
+    RuntimeError
+):
+    def __init__(
+        self,
+        *,
+        provider_message_id: str,
+    ):
+        super().__init__(
+            "Falha ao persistir confirmacao de envio."
+        )
+
+        self.provider_message_id = str(
+            provider_message_id or ""
+        ).strip()
+
+
 def agora_utc_naive() -> datetime:
     return datetime.now(
         UTC
@@ -178,145 +195,6 @@ def criar_ou_obter_mensagem_outbox(
     )
 
     return registro
-
-
-def marcar_mensagem_enviada(
-    db: Session,
-    *,
-    mensagem:
-        models.OutboxMensagemWhatsApp,
-    provider_message_id: str,
-):
-    identificador = str(
-        provider_message_id or ""
-    ).strip()
-
-    if not identificador:
-        raise HTTPException(
-            status_code=502,
-            detail=(
-                "Provider message id "
-                "nao informado."
-            ),
-        )
-
-    mensagem.status = STATUS_ENVIADA
-    mensagem.provider_message_id = identificador
-    mensagem.ultimo_erro = None
-    mensagem.enviado_em = agora_utc_naive()
-    mensagem.atualizado_em = agora_utc_naive()
-
-    db.commit()
-    db.refresh(
-        mensagem
-    )
-
-    return mensagem
-
-
-def marcar_mensagem_erro(
-    db: Session,
-    *,
-    mensagem:
-        models.OutboxMensagemWhatsApp,
-    erro: str,
-):
-    mensagem.status = STATUS_ERRO
-
-    mensagem.ultimo_erro = str(
-        erro or "erro desconhecido"
-    )
-
-    mensagem.atualizado_em = agora_utc_naive()
-
-    db.commit()
-    db.refresh(
-        mensagem
-    )
-
-    return mensagem
-
-
-def tentar_entregar_mensagem_outbox(
-    db: Session,
-    *,
-    mensagem:
-        models.OutboxMensagemWhatsApp,
-    transporte:
-        whatsapp_outbound_service
-        .TransporteWhatsApp,
-) -> dict:
-    if mensagem.status == STATUS_ENVIADA:
-        return {
-            "enviado":
-                True,
-
-            "idempotente":
-                True,
-
-            "provider":
-                "persistido",
-
-            "provider_message_id":
-                mensagem.provider_message_id,
-        }
-
-    mensagem.tentativas = int(
-        mensagem.tentativas or 0
-    ) + 1
-
-    mensagem.atualizado_em = (
-        agora_utc_naive()
-    )
-
-    db.commit()
-
-    try:
-        resultado = (
-            whatsapp_outbound_service
-            .enviar_texto_whatsapp(
-                transporte=transporte,
-                phone_number_id=
-                    mensagem.phone_number_id,
-                telefone_destino=
-                    mensagem.telefone_destino,
-                texto=mensagem.texto,
-            )
-        )
-
-    except HTTPException as erro:
-        marcar_mensagem_erro(
-            db,
-            mensagem=mensagem,
-            erro=str(
-                erro.detail
-            ),
-        )
-
-        raise
-
-    except Exception as erro:
-        marcar_mensagem_erro(
-            db,
-            mensagem=mensagem,
-            erro=type(
-                erro
-            ).__name__,
-        )
-
-        raise
-
-    marcar_mensagem_enviada(
-        db,
-        mensagem=mensagem,
-        provider_message_id=
-            resultado.get(
-                "provider_message_id",
-                "",
-            ),
-    )
-
-    return resultado
 
 
 STATUS_PROCESSANDO = "processando"
@@ -766,15 +644,28 @@ def tentar_entregar_mensagem_outbox(
 
         raise
 
-    marcar_mensagem_enviada(
-        db,
-        mensagem=mensagem,
-        provider_message_id=
-            resultado.get(
-                "provider_message_id",
-                "",
-            ),
+    provider_message_id = (
+        resultado.get(
+            "provider_message_id",
+            "",
+        )
     )
+
+    try:
+        marcar_mensagem_enviada(
+            db,
+            mensagem=mensagem,
+            provider_message_id=
+                provider_message_id,
+        )
+
+    except Exception as erro:
+        db.rollback()
+
+        raise FalhaPersistenciaPosEnvio(
+            provider_message_id=
+                provider_message_id,
+        ) from erro
 
     return resultado
 
@@ -815,6 +706,32 @@ def processar_lote_outbox(
                     "provider_message_id":
                         resultado.get(
                             "provider_message_id"
+                        ),
+                }
+            )
+
+        except FalhaPersistenciaPosEnvio as erro:
+            falhas.append(
+                {
+                    "outbox_id":
+                        mensagem.id,
+
+                    "status_code":
+                        500,
+
+                    "erro":
+                        (
+                            "Falha ao persistir "
+                            "confirmacao de envio."
+                        ),
+
+                    "entrega_incerta":
+                        True,
+
+                    "provider_message_id":
+                        (
+                            erro.provider_message_id
+                            or None
                         ),
                 }
             )

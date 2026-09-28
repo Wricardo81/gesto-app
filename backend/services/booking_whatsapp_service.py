@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC, date, datetime, timedelta
 
 from fastapi import HTTPException
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 import models
@@ -170,6 +171,74 @@ def marcar_sessoes_expiradas(
     db.commit()
 
 
+def bloquear_sessao_booking_cliente(
+    db: Session,
+    *,
+    tenant_slug: str,
+    telefone_cliente: str,
+) -> None:
+    bind = db.get_bind()
+
+    dialecto = (
+        bind.dialect.name
+        if bind is not None
+        else ""
+    )
+
+    if dialecto != "postgresql":
+        return
+
+    chave = (
+        f"booking-session|"
+        f"{tenant_slug}|"
+        f"{telefone_cliente}"
+    )
+
+    db.execute(
+        text(
+            "SELECT pg_advisory_xact_lock("
+            "hashtext(:chave)"
+            ")"
+        ),
+        {
+            "chave":
+                chave,
+        },
+    )
+
+
+def buscar_sessao_ativa_sem_expirar(
+    db: Session,
+    *,
+    tenant_slug: str,
+    telefone_cliente: str,
+):
+    agora = agora_utc_naive()
+
+    return (
+        db.query(
+            models.SessaoBookingWhatsApp
+        )
+        .filter(
+            models.SessaoBookingWhatsApp.barbearia_slug
+            == tenant_slug,
+
+            models.SessaoBookingWhatsApp.telefone_cliente
+            == telefone_cliente,
+
+            models.SessaoBookingWhatsApp.status
+            == "ativa",
+
+            models.SessaoBookingWhatsApp.expira_em
+            > agora,
+        )
+        .order_by(
+            models.SessaoBookingWhatsApp.id.desc()
+        )
+        .first()
+    )
+
+
 def obter_sessao_ativa(
     db: Session,
     tenant_slug: str,
@@ -243,6 +312,23 @@ def criar_ou_obter_sessao(
         db=db,
         tenant_slug=tenant,
         telefone_cliente=telefone,
+    )
+
+    if sessao_existente:
+        return sessao_existente
+
+    bloquear_sessao_booking_cliente(
+        db=db,
+        tenant_slug=tenant,
+        telefone_cliente=telefone,
+    )
+
+    sessao_existente = (
+        buscar_sessao_ativa_sem_expirar(
+            db=db,
+            tenant_slug=tenant,
+            telefone_cliente=telefone,
+        )
     )
 
     if sessao_existente:
@@ -923,7 +1009,7 @@ def processar_data_booking(
     atualizar_sessao(
         db=db,
         sessao=sessao,
-        etapa="aguardando_horario",
+        etapa="aguardando_data",
         data_agendamento=data_escolhida,
     )
 
@@ -941,6 +1027,12 @@ def processar_data_booking(
                 "Envie outra data."
             ),
         )
+
+    atualizar_sessao(
+        db=db,
+        sessao=sessao,
+        etapa="aguardando_horario",
+    )
 
     opcoes = [
         f"{indice}. {horario}"

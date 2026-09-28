@@ -142,6 +142,18 @@ def criar_novo_agendamento(
             detail="Este profissional nao executa o servico selecionado.",
         )
 
+    (
+        agendamento_repository
+        .bloquear_agenda_profissional_dia(
+            db=db,
+            tenant_slug=tenant_slug,
+            profissional_nome=
+                profissional.nome,
+            data_agendamento=
+                data_formatada,
+        )
+    )
+
     resultado = obter_horarios_disponiveis(
         db=db,
         tenant_slug=tenant_slug,

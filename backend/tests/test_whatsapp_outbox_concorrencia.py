@@ -357,6 +357,214 @@ def test_maximo_tentativas_vira_esgotada(
     )
 
 
+def test_claim_expirado_renova_processando_desde(
+    ambiente_claim,
+):
+    db = ambiente_claim
+
+    mensagem = criar(
+        db,
+        chave="claim-renovado",
+    )
+
+    primeiro_claim = (
+        whatsapp_outbox_service
+        .claim_mensagens_outbox(
+            db,
+            limite=1,
+        )
+    )
+
+    assert len(
+        primeiro_claim
+    ) == 1
+
+    db.refresh(
+        mensagem
+    )
+
+    primeiro_processando_desde = (
+        mensagem.processando_desde
+    )
+
+    mensagem.processando_desde = (
+        whatsapp_outbox_service
+        .agora_utc_naive()
+        - timedelta(
+            seconds=(
+                whatsapp_outbox_service
+                .CLAIM_EXPIRA_SEGUNDOS
+                + 1
+            )
+        )
+    )
+
+    processando_expirado = (
+        mensagem.processando_desde
+    )
+
+    db.commit()
+
+    segundo_claim = (
+        whatsapp_outbox_service
+        .claim_mensagens_outbox(
+            db,
+            limite=1,
+        )
+    )
+
+    db.refresh(
+        mensagem
+    )
+
+    assert len(
+        segundo_claim
+    ) == 1
+
+    assert (
+        segundo_claim[0].id
+        == mensagem.id
+    )
+
+    assert (
+        mensagem.status
+        == "processando"
+    )
+
+    assert (
+        mensagem.processando_desde
+        is not None
+    )
+
+    assert (
+        mensagem.processando_desde
+        > processando_expirado
+    )
+
+    assert (
+        mensagem.processando_desde
+        >= primeiro_processando_desde
+    )
+
+    assert (
+        mensagem.proxima_tentativa_em
+        is None
+    )
+
+
+def test_claim_expirado_recuperado_pode_ser_enviado(
+    ambiente_claim,
+):
+    db = ambiente_claim
+
+    mensagem = criar(
+        db,
+        chave="claim-recuperado-envio",
+        status="processando",
+    )
+
+    mensagem.processando_desde = (
+        whatsapp_outbox_service
+        .agora_utc_naive()
+        - timedelta(
+            seconds=(
+                whatsapp_outbox_service
+                .CLAIM_EXPIRA_SEGUNDOS
+                + 1
+            )
+        )
+    )
+
+    db.commit()
+
+    recuperadas = (
+        whatsapp_outbox_service
+        .claim_mensagens_outbox(
+            db,
+            limite=1,
+        )
+    )
+
+    assert len(
+        recuperadas
+    ) == 1
+
+    transporte = (
+        whatsapp_outbound_service
+        .TransporteFakeWhatsApp()
+    )
+
+    resultado = (
+        whatsapp_outbox_service
+        .tentar_entregar_mensagem_outbox(
+            db=db,
+            mensagem=recuperadas[0],
+            transporte=transporte,
+        )
+    )
+
+    db.refresh(
+        mensagem
+    )
+
+    assert (
+        resultado["enviado"]
+        is True
+    )
+
+    assert (
+        mensagem.status
+        == "enviada"
+    )
+
+    assert (
+        mensagem.tentativas
+        == 1
+    )
+
+    assert (
+        mensagem.processando_desde
+        is None
+    )
+
+    assert (
+        mensagem.proxima_tentativa_em
+        is None
+    )
+
+    assert len(
+        transporte.envios
+    ) == 1
+
+
+@pytest.mark.parametrize(
+    (
+        "tentativas",
+        "esperado",
+    ),
+    [
+        (1, 30),
+        (2, 120),
+        (3, 300),
+        (4, 900),
+        (5, 3600),
+        (6, 3600),
+        (99, 3600),
+    ],
+)
+def test_sequencia_backoff_e_estavel(
+    tentativas,
+    esperado,
+):
+    assert (
+        whatsapp_outbox_service
+        .calcular_backoff_segundos(
+            tentativas
+        )
+        == esperado
+    )
+
+
 def test_mensagem_esgotada_nao_entra_no_claim(
     ambiente_claim,
 ):

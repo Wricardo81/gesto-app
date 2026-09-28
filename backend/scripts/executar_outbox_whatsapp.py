@@ -40,6 +40,28 @@ EXIT_OK = 0
 EXIT_FATAL = 2
 
 
+def validar_modo_transporte_executor(
+    *,
+    permitir_meta: bool = False,
+) -> str:
+    modo = str(
+        settings.whatsapp_transport_mode
+        or ""
+    ).strip().lower()
+
+    if modo == "meta" and not permitir_meta:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Transporte Meta bloqueado no executor. "
+                "Use --permitir-meta somente apos "
+                "ativacao operacional explicita."
+            ),
+        )
+
+    return modo
+
+
 def criar_transporte_configurado():
     return (
         whatsapp_outbound_service
@@ -271,6 +293,15 @@ def main(
         ),
     )
 
+    parser.add_argument(
+        "--permitir-meta",
+        action="store_true",
+        help=(
+            "Permite explicitamente o transporte "
+            "Meta. Nao usar antes da ativacao real."
+        ),
+    )
+
     args = parser.parse_args(
         argv
     )
@@ -282,6 +313,11 @@ def main(
     )
 
     try:
+        validar_modo_transporte_executor(
+            permitir_meta=
+                args.permitir_meta,
+        )
+
         resultado = (
             executar_outbox_whatsapp(
                 limite=args.limite

@@ -1,4 +1,6 @@
 from datetime import UTC, datetime
+
+import pytest
 import importlib.util
 import json
 from pathlib import Path
@@ -256,6 +258,82 @@ def test_main_http_exception_retorna_fatal_exit_2(
         ]
         == 503
     )
+
+
+def test_executor_fake_nao_exige_opt_in(
+    monkeypatch,
+):
+    executor = carregar_executor()
+
+    monkeypatch.setattr(
+        executor.settings,
+        "whatsapp_transport_mode",
+        "fake",
+    )
+
+    modo = (
+        executor
+        .validar_modo_transporte_executor(
+            permitir_meta=False,
+        )
+    )
+
+    assert modo == "fake"
+
+
+def test_executor_meta_sem_opt_in_e_bloqueado(
+    monkeypatch,
+):
+    executor = carregar_executor()
+
+    monkeypatch.setattr(
+        executor.settings,
+        "whatsapp_transport_mode",
+        "meta",
+    )
+
+    with pytest.raises(
+        executor.HTTPException
+    ) as erro:
+        (
+            executor
+            .validar_modo_transporte_executor(
+                permitir_meta=False,
+            )
+        )
+
+    assert (
+        erro.value.status_code
+        == 503
+    )
+
+    assert (
+        "Meta bloqueado"
+        in str(
+            erro.value.detail
+        )
+    )
+
+
+def test_executor_meta_com_opt_in_expresso_e_permitido(
+    monkeypatch,
+):
+    executor = carregar_executor()
+
+    monkeypatch.setattr(
+        executor.settings,
+        "whatsapp_transport_mode",
+        "meta",
+    )
+
+    modo = (
+        executor
+        .validar_modo_transporte_executor(
+            permitir_meta=True,
+        )
+    )
+
+    assert modo == "meta"
 
 
 def test_metadados_operacionais_preservam_resultado(
